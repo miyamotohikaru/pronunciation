@@ -68,7 +68,11 @@ function ensureClip(c: Case): string {
   return f;
 }
 
-const { scorer } = await makeNodeScorer();
+const argv = process.argv.slice(2);
+const opt = (k: string) => (argv.includes(k) ? argv[argv.indexOf(k) + 1] : undefined);
+/** --model-dir / --items: check another model's build */
+const ITEMS = opt("--items") ?? join(ROOT, "public/content/items");
+const { scorer } = await makeNodeScorer({ dir: opt("--model-dir") });
 const summary = { native: [0, 0], error: [0, 0], accent: [0, 0], errorDefault: [0, 0] };
 const flagged = (r: ScoreResult) =>
   r.words.some((w) => w.score < 60) || r.words.some((w) => w.phones.some((p) => p.issue === "substitution" || p.issue === "deletion")) || r.insertions.length > 0;
@@ -77,7 +81,7 @@ const describe = (r: ScoreResult) =>
   r.insertions.map((x) => ` +${x.vowel}`).join("");
 
 for (const c of CASES) {
-  const item = JSON.parse(readFileSync(join(ROOT, "public/content/items", `${c.item}.json`), "utf8")) as ItemData;
+  const item = JSON.parse(readFileSync(join(ITEMS, `${c.item}.json`), "utf8")) as ItemData;
   const src: { words: ItemWord[]; scoring?: ItemData["scoring"] } = c.target === "pair" && item.pairItem ? item.pairItem : item;
   const audio = readWav(ensureClip(c)).samples;
   const words = src.words.map((w) => ({ text: w.text, variants: w.variants }));

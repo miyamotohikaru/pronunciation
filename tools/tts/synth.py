@@ -4,8 +4,9 @@
     .venv-tts/bin/python tools/tts/synth.py tools/tts/samples.json            # default voices
     .venv-tts/bin/python tools/tts/synth.py items.json --voices af_heart --force
 
-Input: JSON list of {id, text, tts_text?, voice?, speed?, slow_speed?}
-Per item x voice, a normal render and a ".slow" render (speed 0.8):
+Input: JSON list of {id, text, tts_text?, voice?, speed?, slow_speed?, slower_speed?}
+Per item x voice, three renditions: normal (1.0), ".slow" (0.8) and ".slower" (0.65);
+[.slow] below stands for "", ".slow" or ".slower":
     public/audio/<voice>/<id>[.slow].mp3     mono 24 kHz ~48 kbps, edge silence trimmed to 80 ms,
                                              -18 LUFS (BS.1770) with a -1 dBTP true-peak ceiling
     .work/tts/<voice>/<id>[.slow].wav        24 kHz master of the mp3 (same trimmed timeline)
@@ -35,6 +36,7 @@ SR = 24000
 SR_ANALYSIS = 16000
 DEFAULT_VOICES = ('af_heart', 'am_michael')
 DEFAULT_SLOW_SPEED = 0.8
+DEFAULT_SLOWER_SPEED = 0.65
 DEFAULT_LUFS = -18.0
 DEFAULT_CEILING_DBTP = -1.0
 MIN_WORD_S = 0.03  # edge snapping never makes a word shorter than this
@@ -383,7 +385,7 @@ def build_one(syn: Synth, item: dict, voice: str, speed: float, suffix: str, arg
 
     peak = float(np.abs(audio).max())
     meta = {
-        'id': item['id'], 'variant': 'slow' if suffix else 'normal',
+        'id': item['id'], 'variant': suffix.lstrip('.') or 'normal',  # normal | slow | slower
         'text': item['text'], 'tts_text': tts_text, 'tts_input': tts_input,
         'voice': voice, 'speed': speed, 'sample_rate': SR, 'duration': round(dur, 3),
         'phonemes': phonemes,
@@ -420,6 +422,8 @@ def main(argv=None):
     ap.add_argument('--force', action='store_true', help='re-render even if outputs are up to date')
     ap.add_argument('--no-slow', action='store_true', help='skip the .slow variant')
     ap.add_argument('--slow-speed', type=float, default=DEFAULT_SLOW_SPEED)
+    ap.add_argument('--no-slower', action='store_true', help='skip the .slower variant')
+    ap.add_argument('--slower-speed', type=float, default=DEFAULT_SLOWER_SPEED)
     ap.add_argument('--out', type=Path, default=ROOT / 'public' / 'audio')
     ap.add_argument('--work', type=Path, default=ROOT / '.work' / 'tts')
     ap.add_argument('--model-dir', type=Path, default=ROOT / '.work' / 'tts' / 'models' / 'Kokoro-82M')
@@ -449,6 +453,8 @@ def main(argv=None):
             variants = [('', float(item.get('speed', 1.0)))]
             if not args.no_slow:
                 variants.append(('.slow', float(item.get('slow_speed', args.slow_speed))))
+            if not args.no_slower:
+                variants.append(('.slower', float(item.get('slower_speed', args.slower_speed))))
             for suffix, speed in variants:
                 try:
                     line = build_one(syn, item, voice, speed, suffix, args)

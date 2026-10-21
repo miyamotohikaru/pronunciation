@@ -26,6 +26,11 @@ export type ScoringClientOptions = {
 export type ScoringClient = {
   /** Starts the worker, downloads (or reads the cached) model, warms it up. Idempotent. */
   load(onProgress?: (p: ScoringProgress) => void): Promise<{ backend: string; loadMs: number }>;
+  /**
+   * load() once the page is idle (requestIdleCallback, else after `fallbackMs`): call it when
+   * the practice screen mounts — listening and the lyric wipe never wait for the model.
+   */
+  loadWhenIdle(onProgress?: (p: ScoringProgress) => void, fallbackMs?: number): Promise<{ backend: string; loadMs: number }>;
   /** pcm16k is copied (the caller keeps its array). Words: TargetWord[] (ItemWord fits). */
   score(pcm16k: Float32Array, words: TargetWord[], options?: ScoreOptions): Promise<ScoreResult>;
   /** "webgpu" | "wasm" once loaded */
@@ -91,6 +96,15 @@ export function createScoringClient(opts: ScoringClientOptions = {}): ScoringCli
         });
       }
       return loading;
+    },
+    loadWhenIdle(onProgress, fallbackMs = 1500) {
+      if (loading) return loading;
+      const g = globalThis as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+      return new Promise((resolve, reject) => {
+        const go = () => this.load(onProgress).then(resolve, reject);
+        if (g.requestIdleCallback) g.requestIdleCallback(go, { timeout: fallbackMs });
+        else setTimeout(go, fallbackMs);
+      });
     },
     async score(pcm16k, words, options) {
       await (loading ?? this.load());

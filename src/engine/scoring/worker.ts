@@ -12,7 +12,7 @@
 import type { ScoreOptions, TargetWord } from "./types.ts";
 import { createScorer, type Scorer } from "./engine.ts";
 import { createOrtBackend, type OrtModuleLike } from "./backend-ort.ts";
-import { loadAssets, loadModelBytes } from "./assets.ts";
+import { fetchCached, loadAssets, loadModelBytes } from "./assets.ts";
 
 export type WorkerInit = {
   type: "init";
@@ -39,15 +39,43 @@ type WorkerScope = {
 const scope = globalThis as unknown as WorkerScope;
 const post = (msg: unknown) => scope.postMessage(msg);
 
+/** progress at most every 150 ms per phase (plus the last one), so the page is not flooded */
+const lastProgress = new Map<string, number>();
+function progress(p: WorkerProgress): void {
+  const t = performance.now();
+  const done = p.loaded !== undefined && p.total !== undefined && p.loaded >= p.total;
+  if (!done && t - (lastProgress.get(p.phase) ?? -Infinity) < 150) return;
+  lastProgress.set(p.phase, t);
+  post(p);
+}
+
 let scorer: Scorer | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 
+/** the .wasm each bundle loads (its glue for the WASM threads is fetched by ORT itself) */
+const WASM_OF: Record<string, string> = {
+  "ort.webgpu.bundle.min.mjs": "ort-wasm-simd-threaded.asyncify.wasm",
+  "ort.wasm.bundle.min.mjs": "ort-wasm-simd-threaded.wasm",
+};
+
+/**
+ * Imports an ORT bundle from our origin and hands it the .wasm from the Cache Storage API
+ * (env.wasm.wasmBinary), so a second visit loads the runtime without the network.
+ */
 async function importOrt(base: string, bundle: string, threads: number | undefined): Promise<OrtModuleLike> {
   const ort = (await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ base + bundle)) as OrtModuleLike;
   if (ort.env?.wasm) {
     ort.env.wasm.wasmPaths = base;
     ort.env.wasm.numThreads = scope.crossOriginIsolated ? Math.max(1, Math.min(threads ?? 4, scope.navigator?.hardwareConcurrency ?? 4)) : 1;
     ort.env.wasm.proxy = false;
+    try {
+      const bin = await fetchCached(base + WASM_OF[bundle], ort.env.versions?.web, (p) =>
+        progress({ type: "progress", phase: "runtime", loaded: p.loaded, total: p.total, cached: p.cached }),
+      );
+      ort.env.wasm.wasmBinary = bin;
+    } catch {
+      // let ORT fetch it itself
+    }
   }
   return ort;
 }
@@ -56,11 +84,16 @@ async function init(msg: WorkerInit): Promise<void> {
   const t0 = performance.now();
   const base = msg.ortUrl.endsWith("/") ? msg.ortUrl : msg.ortUrl + "/";
   const providers = msg.providers ?? (scope.navigator?.gpu ? ["webgpu", "wasm"] : ["wasm"]);
-  post({ type: "progress", phase: "assets" } satisfies WorkerProgress);
+  // the WebGPU bundle also runs the wasm EP; the plain wasm bundle is half the size
+  const gpuFirst = providers.includes("webgpu");
+  progress({ type: "progress", phase: "assets" });
+  // model and runtime download in parallel
+  const ortP = importOrt(base, gpuFirst ? "ort.webgpu.bundle.min.mjs" : "ort.wasm.bundle.min.mjs", msg.threads);
+  ortP.catch(() => undefined);
   const assets = await loadAssets(msg.modelUrl);
   const variant = msg.onnx ?? assets.meta.files.defaultOnnx;
   const bytes = await loadModelBytes(msg.modelUrl, assets.meta, variant, (p) =>
-    post({ type: "progress", phase: "model", loaded: p.loaded, total: p.total, cached: p.cached } satisfies WorkerProgress),
+    progress({ type: "progress", phase: "model", loaded: p.loaded, total: p.total, cached: p.cached }),
   );
   const extra = assets.meta.files.sessionConfig?.[variant];
   const options = {
@@ -70,13 +103,10 @@ async function init(msg: WorkerInit): Promise<void> {
     sessionOptions: extra ? { extra } : undefined,
     onLog: (m: string) => post({ type: "log", message: m }),
   };
-  post({ type: "progress", phase: "runtime" } satisfies WorkerProgress);
-  // the WebGPU bundle also runs the wasm EP; the plain wasm bundle is half the size
-  const gpuFirst = providers.includes("webgpu");
   let backend;
   try {
-    const ort = await importOrt(base, gpuFirst ? "ort.webgpu.bundle.min.mjs" : "ort.wasm.bundle.min.mjs", msg.threads);
-    post({ type: "progress", phase: "session" } satisfies WorkerProgress);
+    const ort = await ortP;
+    progress({ type: "progress", phase: "session" });
     backend = await createOrtBackend(ort, bytes, { ...options, executionProviders: providers });
   } catch (e) {
     if (!gpuFirst) throw e;

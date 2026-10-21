@@ -70,7 +70,7 @@ def main(argv=None):
              'cov_raw': qa_raw.get('coverage', 0.0), 'lufs': ld.get('lufs', np.nan),
              'tp': ld.get('true_peak_dbtp', np.nan), 'gr': ld.get('limiter_gr_db', 0.0),
              'plr': ld.get('true_peak_raw_dbtp', np.nan) - ld.get('lufs_raw', np.nan),
-             'slow': m.get('variant') == 'slow', 'snap': (m['qa'].get('edge_snap_ms') or {})}
+             'variant': m.get('variant', 'normal'), 'snap': (m['qa'].get('edge_snap_ms') or {})}
         per_voice[m['voice']].append(r)
         if r['cov'] < COVERAGE_MIN:
             flags['coverage < 0.9'].append(f'{name}({r["cov"]:.2f})')
@@ -111,9 +111,15 @@ def main(argv=None):
             for t in (-18, -19, -20)))
     allr = [r for rs in per_voice.values() for r in rs if r['snap']]
     if allr:
-        med = lambda k, slow: np.median([r['snap'][k] for r in allr if r['slow'] == slow] or [np.nan])  # noqa: E731
-        print(f'edge snap median ms (+ = later than Kokoro): start normal {med("start", False):+.0f} / '
-              f'slow {med("start", True):+.0f}, end normal {med("end", False):+.0f} / slow {med("end", True):+.0f}')
+        vs = ('normal', 'slow', 'slower')
+        med = lambda k, v: np.median([r['snap'][k] for r in allr if r['variant'] == v] or [np.nan])  # noqa: E731
+        print('edge snap median ms (+ = later than Kokoro), ' + ' / '.join(vs) + ': start '
+              + ' / '.join(f'{med("start", v):+.0f}' for v in vs) + ', end '
+              + ' / '.join(f'{med("end", v):+.0f}' for v in vs))
+        counts = {v: sum(r['variant'] == v for r in allr) for v in vs}
+        print('renders per variant:', counts, '| mp3 files per variant:',
+              {v: len([f for f in args.out.glob('*/*.mp3') if f.name.count('.') == (1 if v == 'normal' else 2)
+                       and (v == 'normal' or f.name.split('.')[1] == v)]) for v in vs})
     any_mp3 = next(iter(sorted(args.out.glob('*/*.mp3'))), None)
     if any_mp3:
         print('mp3 header sample:', any_mp3.name, mp3_header(any_mp3.read_bytes()))

@@ -17,8 +17,9 @@ export type OrtModuleLike = {
   InferenceSession: { create(model: Uint8Array | string, options?: Record<string, unknown>): Promise<OrtSessionLike> };
   Tensor: new (type: "float32", data: Float32Array, dims: readonly number[]) => unknown;
   env?: {
-    wasm?: { numThreads?: number; wasmPaths?: unknown; proxy?: boolean };
+    wasm?: { numThreads?: number; wasmPaths?: unknown; proxy?: boolean; wasmBinary?: ArrayBufferLike | Uint8Array };
     logLevel?: string;
+    versions?: { web?: string; common?: string };
   };
 };
 

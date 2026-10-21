@@ -56,6 +56,23 @@ const prosody = compareProsody(                           // src/engine/prosody:
 ```
 
 `src/app/lab/score/` is a working example (record or score the item's own reference audio).
+
+**Weight and responsiveness.** Call `scoring.loadWhenIdle()` when the practice screen mounts:
+listening and the lyric wipe never wait for the model, and `score()` simply waits if it is
+not ready yet. Everything heavy runs in the worker: the model (24.2 MB) and the ORT runtime
+(.wasm 3.7 MB gzip, 6.7 MB with WebGPU) download in parallel, then live in the Cache Storage
+API (keyed by model hash / ORT version, handed to ORT as `env.wasm.wasmBinary`), so a second
+visit loads in ~0.4 s (WASM) with no network. Progress messages are throttled to one per
+150 ms. Measured in Chrome with 4× CPU throttling (production build, `tools/scoring-tests/perf.mts`):
+no main-thread long task during scoring, none added by loading on the WASM path (the page's
+own hydration task is the only one); worker inference on M4 Pro 75 / 162 ms (3 s / 8 s,
+WASM 4 threads), 24 / 84 ms (WebGPU); the same scorer on one throttled core (in-page, 4×,
+1 thread — CDP cannot throttle workers) 0.94 / 2.3 s, a pessimistic slow-phone estimate.
+
+4-bit weights (`tools/model/export/quantize_int4.py`, MatMulNBits): 15.8 MB (block 32) /
+13.7 MB (block 128), PCC 0.584 / 0.582 (int8w 0.586); rebuilt items keep every reference
+≥ 98; on the `say` checks block 32 adds one native false alarm (Samantha "think") and one
+miss ("beddo"). Not switched.
 `pcm16k` is copied before it is transferred to the worker. Providers default to `["webgpu", "wasm"]` when `navigator.gpu` exists, else `["wasm"]`; a
 provider counts only after a warm-up run succeeds, so a broken WebGPU falls back to WASM.
 The worker imports `ort.wasm.bundle.min.mjs` (or `ort.webgpu.bundle.min.mjs` when WebGPU

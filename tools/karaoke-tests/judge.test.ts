@@ -84,3 +84,29 @@ test("0.4秒遅れて話すと、遅れが出て当たりが減る", () => {
   assert.ok(late.hitRate < ok.hitRate);
   assert.ok(late.timingBiasSec > 0.15);
 });
+
+test("波の目印: 男性の声が目印どおりに話すと波の大半が塗られ、棒読みだと減る", async () => {
+  const { buildGuideWave, waveFill } = await import("../../src/engine/karaoke/judge.ts");
+  let nat = 0, mono = 0, n = 0;
+  for (const it of sentences) {
+    const wave = buildGuideWave(it.refs[0].pitch);
+    const fr = follow(it.refs[0].syllables, it.refs[1]);
+    const v = fr.filter((f) => f.f0 !== null).map((f) => f.f0 as number).sort((a, b) => a - b);
+    const mid = v[v.length >> 1];
+    const share = (x: LiveFrame[]) => {
+      const j = new KaraokeJudge(it.refs[0].syllables);
+      for (const f of x) j.push(f);
+      j.finish();
+      const fill = waveFill(wave, it.refs[0].syllables, j.bars).flat();
+      const pts = wave.segments.flat();
+      const real = pts.map((p, i) => (p.b ? -1 : fill[i])).filter((x) => x >= 0);
+      return real.filter((x) => x >= 3).length / Math.max(1, real.length);
+    };
+    nat += share(fr);
+    mono += share(fr.map((f) => ({ ...f, f0: f.f0 === null ? null : mid })));
+    n++;
+  }
+  console.log("wave great+ share: native", (nat / n).toFixed(2), "monotone", (mono / n).toFixed(2));
+  assert.ok(nat / n >= 0.7, `native ${nat / n}`);
+  assert.ok(mono / n < nat / n - 0.05, `monotone ${mono / n} vs ${nat / n}`);
+});

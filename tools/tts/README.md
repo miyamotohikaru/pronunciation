@@ -35,7 +35,9 @@
   `--force` で作り直す。
   処理を変えたら `synth.py` の `PIPELINE_VERSION` を上げる。
 - 1件ごとに秒数・合成時間・RTF・mp3 サイズ・音量・タイミング検品・OOV を表示する。
-- 主なオプション: `--no-slow` `--slow-speed 0.8` `--kbps 48` `--pad-ms 80`
+- 速さは3種類: ネイティブ（1.0）、`.slow`（0.8）、`.slower`（0.65）。
+  項目ごとに `speed` / `slow_speed` / `slower_speed` で変えられる。
+- 主なオプション: `--no-slow` `--slow-speed 0.8` `--no-slower` `--slower-speed 0.65` `--kbps 48` `--pad-ms 80`
   `--lufs -18` `--ceiling -1` `--out public/audio` `--work .work/tts` `--device cpu` `--seed 0`。
 - `jobs_from_curriculum.py` は `content/curriculum.json` の
   `units[].lessons[].items[]` と `placement[]` をそのままの id で並べる。
@@ -88,14 +90,14 @@ JSON の配列。
 - `speed` の既定は 1.0。
   `.slow` 版は `slow_speed`（既定 0.8、普通版の倍率ではなく絶対値）。
 
-## 出力（1項目 × 声 × 普通/ゆっくり）
+## 出力（1項目 × 声 × 普通/ゆっくり/もっとゆっくり）
 
 | ファイル | 中身 |
 | --- | --- |
-| `public/audio/<voice>/<id>[.slow].mp3` | モノラル 24 kHz、48 kbps CBR。前後の無音は 80 ms。-18 LUFS |
-| `.work/tts/<voice>/<id>[.slow].wav` | 24 kHz・16bit。mp3 の元 |
-| `.work/tts/<voice>/<id>[.slow].16k.wav` | 16 kHz・16bit・モノラル（解析用） |
-| `.work/tts/<voice>/<id>[.slow].json` | 下記 |
+| `public/audio/<voice>/<id>[.slow|.slower].mp3` | モノラル 24 kHz、48 kbps CBR。前後の無音は 80 ms。-18 LUFS |
+| `.work/tts/<voice>/<id>[.slow|.slower].wav` | 24 kHz・16bit。mp3 の元 |
+| `.work/tts/<voice>/<id>[.slow|.slower].16k.wav` | 16 kHz・16bit・モノラル（解析用） |
+| `.work/tts/<voice>/<id>[.slow|.slower].json` | 下記 |
 
 wav・16k.wav・json は**同じ時間軸**（無音を詰めた後）。
 mp3 も macOS の afconvert（CoreAudio）で復号すると 0 サンプルのずれで一致した。

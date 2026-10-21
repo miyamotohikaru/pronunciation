@@ -54,6 +54,7 @@ export type RefSyllable = {
 /** お手本の1テイク分の時間情報（ゆっくり版に使う。普通の速さは RefVoice 自体が持つ） */
 export type RefTiming = {
   duration: number;
+  /** RefVoice.words と同じ作り（アラインメント由来） */
   words: { start: number; end: number }[];
   phones: { phone: Arpabet; word: number; start: number; end: number }[];
   speech: [number, number];
@@ -67,13 +68,19 @@ export type RefVoice = {
   /** /audio/<voice>/<id>.mp3 */
   audio: string;
   slowAudio: string;
+  /** /audio/<voice>/<id>.slower.mp3（0.65 倍） */
+  slowerAudio: string;
   duration: number;
   slowDuration: number;
-  /** 単語ごとの区間（秒） */
+  slowerDuration: number;
+  /**
+   * 単語ごとの区間（秒。歌詞のワイプ用）。強制アラインメントの音素区間（prosody の toRegions）の
+   * 最初の音素の始まり〜最後の音素の終わり。Kokoro のタイムスタンプは使わない（0.65 倍で大きくずれる）
+   */
   words: { start: number; end: number }[];
   /** 目標音素ごとの強制アラインメント（秒）。prosody の Take.phones にそのまま渡せる形 */
   phones: { phone: Arpabet; word: number; start: number; end: number }[];
-  /** 声の出ていた区間 */
+  /** 声の出ていた区間（音声の大きさから: 最大から 30 dB 以内の 10ms フレーム） */
   speech: [number, number];
   /** 音程。[t(秒, 小数2桁), f0(Hz の整数, 無声は 0), rms(×1000 の整数)] を 10ms ごと */
   pitch: [number, number, number][];
@@ -85,6 +92,8 @@ export type RefVoice = {
   selfScore: { sounds: number; minWord: number; rhythm: number; intonation: number };
   /** ゆっくり版（slowAudio）の時間情報 */
   slow: RefTiming;
+  /** もっとゆっくり版（slowerAudio, 0.65 倍）の時間情報 */
+  slower: RefTiming;
 };
 
 export type ItemType = "word" | "pair" | "phrase" | "sentence";

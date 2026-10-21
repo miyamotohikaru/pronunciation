@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import catalogJson from "@/data/catalog.json";
 import type { Catalog, ItemData, ItemWord, RefVoice } from "@/data/schema";
 import { createScoringClient, type ScoringClient, type ScoringProgress } from "@/engine/scoring/client.ts";
+import { createScorer } from "@/engine/scoring/engine.ts";
+import { createOrtBackend, type OrtModuleLike } from "@/engine/scoring/backend-ort.ts";
+import { loadAssets, loadModelBytes } from "@/engine/scoring/assets.ts";
 import type { ScoreResult } from "@/engine/scoring/types.ts";
 import { MicRecorder, analyzePitch, type PitchFrame } from "@/engine/audio";
 import { compareProsody, type ProsodyResult, type Take as ProsodyTake } from "@/engine/prosody";
@@ -30,6 +33,8 @@ type Summary = {
   wallMs: number;
 };
 
+type Bench = { seconds: number; words: number; runs: number; wallMs: number[]; modelMs: number[]; alignMs: number[] };
+
 declare global {
   interface Window {
     __scoreLab?: {
@@ -37,8 +42,53 @@ declare global {
       backend: string | null;
       loadMs: number | null;
       scoreReference: (id: string, voice: string, target?: Target) => Promise<Summary>;
+      /** glue reference takes into ~N-second takes and score each `runs` times */
+      benchTakes: (seconds: number[], runs: number) => Promise<Bench[]>;
+      /**
+       * The same, with the scorer on THIS page's main thread and 1 WASM thread: CDP CPU
+       * throttling only reaches pages, so this is how a slow phone core is measured.
+       */
+      benchInPage: (seconds: number[], runs: number) => Promise<Bench[]>;
     };
+    /** main-thread long tasks since the page loaded (PerformanceObserver "longtask") */
+    __longTasks?: { start: number; duration: number }[];
   }
+}
+
+if (typeof window !== "undefined" && !window.__longTasks && "PerformanceObserver" in window) {
+  window.__longTasks = [];
+  try {
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries()) window.__longTasks!.push({ start: Math.round(e.startTime), duration: Math.round(e.duration) });
+    }).observe({ type: "longtask", buffered: true });
+  } catch {
+    // no longtask support
+  }
+}
+
+/** ~seconds of af_heart reference takes glued together, with their words */
+async function gluedTake(seconds: number): Promise<{ pcm: Float32Array; words: ItemWord[] }> {
+  const ids = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"];
+  const parts: Float32Array[] = [];
+  const words: ItemWord[] = [];
+  let total = 0;
+  for (const id of ids) {
+    if (total >= seconds * 16000) break;
+    const it = await fetchItem(id);
+    const pcm = await decode16k(it.refs[0].audio);
+    const room = seconds * 16000 - total;
+    if (pcm.length > room * 1.4 && parts.length) break;
+    parts.push(pcm);
+    words.push(...it.words);
+    total += pcm.length;
+  }
+  const pcm = new Float32Array(total);
+  let off = 0;
+  for (const x of parts) {
+    pcm.set(x, off);
+    off += x.length;
+  }
+  return { pcm, words };
 }
 
 const unpackPitch = (p: RefVoice["pitch"]): PitchFrame[] => p.map(([t, f0, rms]) => ({ t, f0: f0 > 0 ? f0 : null, rms: rms / 1000 }));
@@ -88,8 +138,10 @@ export default function ScoreLab() {
 
   // load the scorer once
   useEffect(() => {
-    // ?providers=wasm (or webgpu,wasm) to force a backend
-    const forced = new URLSearchParams(window.location.search).get("providers");
+    // ?providers=wasm (or webgpu,wasm) to force a backend; ?noscorer to measure the page alone
+    const search = new URLSearchParams(window.location.search);
+    if (search.has("noscorer")) return;
+    const forced = search.get("providers");
     const client = createScoringClient(forced ? { providers: forced.split(",") } : {});
     clientRef.current = client;
     const hook = {
@@ -99,6 +151,58 @@ export default function ScoreLab() {
       scoreReference: async (id: string, v: string, t: Target = "main") => {
         const it = await fetchItem(id);
         return summarize(await scoreWith(client, it, v, t, "reference"), client.backend);
+      },
+      benchInPage: async (seconds: number[], runs: number) => {
+        const ort = (await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ "/models/ort/ort.wasm.bundle.min.mjs" as string)) as OrtModuleLike;
+        if (ort.env?.wasm) {
+          ort.env.wasm.wasmPaths = "/models/ort/";
+          ort.env.wasm.numThreads = 1;
+          ort.env.wasm.proxy = false;
+        }
+        const assets = await loadAssets("/models/whisper-phoneme/");
+        const key = assets.meta.files.defaultOnnx;
+        const bytes = await loadModelBytes("/models/whisper-phoneme/", assets.meta, key);
+        const extra = assets.meta.files.sessionConfig?.[key];
+        const backend = await createOrtBackend(ort, bytes, {
+          inputName: assets.meta.onnx.input,
+          outputName: assets.meta.onnx.output,
+          nMels: assets.meta.frontEnd.nMels,
+          executionProviders: ["wasm"],
+          sessionOptions: extra ? { extra } : undefined,
+        });
+        const scorer = createScorer(assets, backend);
+        const out: Bench[] = [];
+        for (const sec of seconds) {
+          const { pcm, words } = await gluedTake(sec);
+          const b: Bench = { seconds: pcm.length / 16000, words: words.length, runs, wallMs: [], modelMs: [], alignMs: [] };
+          for (let i = 0; i < runs; i++) {
+            const t0 = performance.now();
+            const r = await scorer.score({ audio: pcm.slice(), words });
+            b.wallMs.push(Math.round(performance.now() - t0));
+            b.modelMs.push(r.timing.model);
+            b.alignMs.push(r.timing.align);
+          }
+          out.push(b);
+        }
+        await scorer.dispose();
+        return out;
+      },
+      benchTakes: async (seconds: number[], runs: number) => {
+        const out: Bench[] = [];
+        for (const sec of seconds) {
+          const { pcm, words } = await gluedTake(sec);
+          const b: Bench = { seconds: pcm.length / 16000, words: words.length, runs, wallMs: [], modelMs: [], alignMs: [] };
+          await client.score(pcm, words); // shapes / shaders warm
+          for (let i = 0; i < runs; i++) {
+            const t0 = performance.now();
+            const r = await client.score(pcm, words);
+            b.wallMs.push(Math.round(performance.now() - t0));
+            b.modelMs.push(r.timing.model);
+            b.alignMs.push(r.timing.align);
+          }
+          out.push(b);
+        }
+        return out;
       },
     };
     window.__scoreLab = hook;

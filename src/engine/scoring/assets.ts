@@ -72,20 +72,19 @@ async function readBody(r: ResponseLike, onProgress?: (p: ModelProgress) => void
   return out;
 }
 
-/** ONNX bytes of meta.files.onnx[variant] (default: meta.files.defaultOnnx). */
-export async function loadModelBytes(
-  modelBaseUrl: string,
-  meta: ModelMeta,
-  variant: string = meta.files.defaultOnnx,
+/**
+ * Bytes of `url`, kept in the Cache Storage API under `url?v=<version>`: the first visit
+ * downloads (with progress), later visits read the cache; older versions of the same file
+ * are dropped. Falls back to a plain download where storage is blocked.
+ */
+export async function fetchCached(
+  url: string,
+  version: string | undefined,
   onProgress?: (p: ModelProgress) => void,
   fetchImpl: FetchLike = fetch as unknown as FetchLike,
   cacheName = "pronunciation-models-v1",
 ): Promise<Uint8Array> {
-  const file = meta.files.onnx[variant];
-  if (!file) throw new Error(`model has no ONNX variant "${variant}"`);
-  const url = join(modelBaseUrl, file);
-  const hash = meta.files.hash?.[variant];
-  const key = hash ? `${url}?v=${hash}` : url;
+  const key = version ? `${url}?v=${version}` : url;
   const caches = (globalThis as unknown as { caches?: CachesLike }).caches;
   const R = (globalThis as unknown as { Response?: new (b: Uint8Array) => unknown }).Response;
   let cache: CacheLike | null = null;
@@ -108,6 +107,7 @@ export async function loadModelBytes(
   if (cache && R) {
     try {
       await cache.put(key, new R(bytes.slice()));
+      const file = url.split("?")[0].split("/").pop() ?? "";
       for (const k of await cache.keys()) {
         const path = k.url.split("?")[0];
         if (path.endsWith("/" + file) && k.url !== new URL(key, k.url).href) await cache.delete(k.url);
@@ -117,4 +117,17 @@ export async function loadModelBytes(
     }
   }
   return bytes;
+}
+
+/** ONNX bytes of meta.files.onnx[variant] (default: meta.files.defaultOnnx), cached by hash. */
+export async function loadModelBytes(
+  modelBaseUrl: string,
+  meta: ModelMeta,
+  variant: string = meta.files.defaultOnnx,
+  onProgress?: (p: ModelProgress) => void,
+  fetchImpl: FetchLike = fetch as unknown as FetchLike,
+): Promise<Uint8Array> {
+  const file = meta.files.onnx[variant];
+  if (!file) throw new Error(`model has no ONNX variant "${variant}"`);
+  return fetchCached(join(modelBaseUrl, file), meta.files.hash?.[variant], onProgress, fetchImpl);
 }

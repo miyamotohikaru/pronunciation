@@ -26,7 +26,7 @@ import { makeNodeScorer, ROOT } from "../lib/scorer-node.ts";
 
 const VOICES = ["af_heart", "am_michael"];
 const TTS = join(ROOT, ".work/tts");
-const OUT_ITEMS = join(ROOT, "public/content/items");
+const OUT_ITEMS_DEFAULT = join(ROOT, "public/content/items");
 const OUT_CATALOG = join(ROOT, "src/data/catalog.json");
 const LOG = join(ROOT, ".work/build-content.json");
 
@@ -41,6 +41,9 @@ type Curriculum = { version: number; placement: CPlacement[]; units: CUnit[] };
 const args = process.argv.slice(2);
 const only = args.includes("--only") ? args[args.indexOf("--only") + 1] : "";
 const runtime = (args.includes("--runtime") ? args[args.indexOf("--runtime") + 1] : "auto") as "auto" | "node" | "web";
+/** --model-dir / --out: build with another model into another folder (catalog untouched) */
+const modelDir = args.includes("--model-dir") ? args[args.indexOf("--model-dir") + 1] : undefined;
+const outDir = args.includes("--out") ? args[args.indexOf("--out") + 1] : undefined;
 
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 const r2 = (x: number) => Math.round(x * 100) / 100;
@@ -49,18 +52,37 @@ const r2 = (x: number) => Math.round(x * 100) / 100;
 const stripMarkup = (s: string) => s.replace(/\[([^\]]+)\]\(\/[^)]*\/\)/g, "$1");
 const norm = (s: string) => tokenize(s).join(" ");
 
-type Take = { audio: Float32Array; clip: KokoroClip; pitch: PitchFrame[] };
+/** "" = normal, ".slow" (0.8), ".slower" (0.65) — the TTS file suffixes */
+type Speed = "" | ".slow" | ".slower";
+const SPEEDS: Speed[] = ["", ".slow", ".slower"];
 
-function loadTake(voice: string, id: string, slow: boolean): Take {
-  const base = join(TTS, voice, id + (slow ? ".slow" : ""));
+type Take = { audio: Float32Array; clip: KokoroClip; pitch: PitchFrame[]; speed: Speed };
+
+function loadTake(voice: string, id: string, speed: Speed): Take {
+  const base = join(TTS, voice, id + speed);
   const { sampleRate, samples } = readWav(`${base}.16k.wav`);
   if (sampleRate !== 16000) throw new Error(`${base}.16k.wav is ${sampleRate} Hz`);
   const clip = JSON.parse(readFileSync(`${base}.json`, "utf8")) as KokoroClip;
-  return { audio: samples, clip, pitch: analyzePitch(samples) };
+  return { audio: samples, clip, pitch: analyzePitch(samples), speed };
 }
 
-const speechOf = (t: Take): [number, number] => [t.clip.words[0].start, t.clip.words[t.clip.words.length - 1].end];
+/**
+ * Voiced span of a take from its own audio (10 ms frames within 30 dB of the loudest one),
+ * not from Kokoro's word timestamps (they drift, badly at 0.65).
+ */
+function speechOf(t: Take): [number, number] {
+  let peak = 0;
+  for (const f of t.pitch) if (f.rms > peak) peak = f.rms;
+  const thr = Math.max(peak * 0.0316, 1e-4);
+  const on = t.pitch.filter((f) => f.rms >= thr);
+  if (!on.length) return [t.clip.words[0].start, t.clip.words[t.clip.words.length - 1].end];
+  const dur = t.audio.length / 16000;
+  return [r3(Math.max(0, on[0].t - 0.01)), r3(Math.min(dur, on[on.length - 1].t + 0.01))];
+}
 const wordTexts = (t: Take) => t.clip.words.map((w) => w.text.toLowerCase());
+
+/** |Kokoro's word boundary - the alignment's|, seconds, per speed (starts and ends pooled) */
+const drift: Record<Speed, number[]> = { "": [], ".slow": [], ".slower": [] };
 
 /** One take of a reference voice: alignment, self-score, pitch, syllables. */
 async function analyze(scorer: Scorer, take: Take, words: TargetWord[], scoring: ItemScoring): Promise<{ r: ScoreResult; timing: RefTiming }> {
@@ -69,6 +91,20 @@ async function analyze(scorer: Scorer, take: Take, words: TargetWord[], scoring:
   const speech = speechOf(take);
   const syl = syllabify(phones as PhoneSpan[], wordTexts(take));
   const regions = toRegions(phones as PhoneSpan[], speech[0], speech[1]);
+  // word spans for the lyric wipe: first phone region start -> last phone region end; the
+  // first word starts with the voice and the last one ends with it
+  const last = take.clip.words.length - 1;
+  const wordSpans = take.clip.words.map((kw, wi) => {
+    const idx = phones.map((p, i) => (p.word === wi ? i : -1)).filter((i) => i >= 0);
+    if (!idx.length) return { start: r3(kw.start), end: r3(kw.end) };
+    let start = regions[idx[0]].start;
+    let end = regions[idx[idx.length - 1]].end;
+    if (wi === 0) start = Math.min(start, speech[0]);
+    if (wi === last) end = Math.max(end, speech[1]);
+    const span = { start: r3(start), end: r3(end) };
+    drift[take.speed].push(Math.abs(kw.start - span.start), Math.abs(kw.end - span.end));
+    return span;
+  });
   const refHz = speakerMedianHz(take.pitch, speech[0], speech[1]);
   const stats = syllableStats(syl, regions, take.pitch, refHz);
   const syllables: RefSyllable[] = stats.map((st, i) => ({
@@ -83,7 +119,7 @@ async function analyze(scorer: Scorer, take: Take, words: TargetWord[], scoring:
   }));
   const timing: RefTiming = {
     duration: take.clip.duration,
-    words: take.clip.words.map((w) => ({ start: r3(w.start), end: r3(w.end) })),
+    words: wordSpans,
     phones,
     speech,
     pitch: take.pitch.map((f) => [r2(f.t), f.f0 === null ? 0 : Math.round(f.f0), Math.round(f.rms * 1000)] as [number, number, number]),
@@ -93,32 +129,34 @@ async function analyze(scorer: Scorer, take: Take, words: TargetWord[], scoring:
   return { r, timing };
 }
 
-type WordLog = { item: string; voice: string; slow: boolean; word: string; score: number; variant: string };
+type WordLog = { item: string; voice: string; speed: Speed; word: string; score: number; variant: string };
 
-/** Targets + both voices (normal and slow) of one recorded id. */
+/** Targets + both voices (normal, slow, slower) of one recorded id. */
 async function buildRefs(scorer: Scorer, id: string, protect: string[], log: WordLog[], learnedLog: { id: string; learned: LearnedVariant[] }[]) {
-  const takes = VOICES.map((v) => ({ voice: v, normal: loadTake(v, id, false), slow: loadTake(v, id, true) }));
-  const clips = takes.flatMap((t) => [t.normal.clip, t.slow.clip]).filter((c) => c.words.map((w) => w.text).join(" ") === takes[0].normal.clip.words.map((w) => w.text).join(" "));
-  const base = targetsFromKokoro(clips, cmu);
+  const takes = VOICES.map((v) => ({ voice: v, normal: loadTake(v, id, ""), slow: loadTake(v, id, ".slow"), slower: loadTake(v, id, ".slower") }));
+  const all = takes.flatMap((t) => [t.normal, t.slow, t.slower]);
+  const wordList = takes[0].normal.clip.words.map((w) => w.text).join(" ");
+  const base = targetsFromKokoro(
+    all.map((t) => t.clip).filter((c) => c.words.map((w) => w.text).join(" ") === wordList),
+    cmu,
+  );
   const derived = await deriveVariants(
     scorer,
     addConnectedSpeech(base),
-    takes.flatMap((t) => [
-      { name: `${t.voice}/${id}`, audio: t.normal.audio },
-      { name: `${t.voice}/${id}.slow`, audio: t.slow.audio },
-    ]),
+    takes.flatMap((t) => [t.normal, t.slow, t.slower].map((x) => ({ name: `${t.voice}/${id}${x.speed}`, audio: x.audio }))),
     { protect },
   );
   const words = derived.words;
   if (derived.learned.length) learnedLog.push({ id, learned: derived.learned });
-  const scoring = await calibrateScoring(scorer, words, takes.flatMap((t) => [t.normal, t.slow]));
+  const scoring = await calibrateScoring(scorer, words, all);
   const analyzed = [];
   for (const t of takes) {
     const normal = await analyze(scorer, t.normal, words, scoring);
     const slow = await analyze(scorer, t.slow, words, scoring);
-    for (const [r, isSlow] of [[normal.r, false], [slow.r, true]] as const)
-      for (const w of r.words) log.push({ item: id, voice: t.voice, slow: isSlow, word: w.text, score: w.score, variant: String(words[r.words.indexOf(w)].variants[w.variant]) });
-    analyzed.push({ t, normal, slow });
+    const slower = await analyze(scorer, t.slower, words, scoring);
+    for (const [r, speed] of [[normal.r, ""], [slow.r, ".slow"], [slower.r, ".slower"]] as const)
+      for (const w of r.words) log.push({ item: id, voice: t.voice, speed, word: w.text, score: w.score, variant: String(words[r.words.indexOf(w)].variants[w.variant]) });
+    analyzed.push({ t, normal, slow, slower });
   }
   const refs: RefVoice[] = [];
   for (const [i, a] of analyzed.entries()) {
@@ -141,8 +179,10 @@ async function buildRefs(scorer: Scorer, id: string, protect: string[], log: Wor
       voice: a.t.voice,
       audio: `/audio/${a.t.voice}/${id}.mp3`,
       slowAudio: `/audio/${a.t.voice}/${id}.slow.mp3`,
+      slowerAudio: `/audio/${a.t.voice}/${id}.slower.mp3`,
       duration: n.duration,
       slowDuration: a.slow.timing.duration,
+      slowerDuration: a.slower.timing.duration,
       words: n.words,
       phones: n.phones,
       speech: n.speech,
@@ -150,8 +190,9 @@ async function buildRefs(scorer: Scorer, id: string, protect: string[], log: Wor
       syllables: n.syllables,
       selfScore: { sounds: n.selfScore.sounds, minWord: n.selfScore.minWord, rhythm, intonation },
       slow: a.slow.timing,
+      slower: a.slower.timing,
     });
-    for (const p of [refs[refs.length - 1].audio, refs[refs.length - 1].slowAudio])
+    for (const p of [refs[refs.length - 1].audio, refs[refs.length - 1].slowAudio, refs[refs.length - 1].slowerAudio])
       if (!existsSync(join(ROOT, "public", p))) console.warn(`  missing audio ${p}`);
   }
   // phones: the first voice's misaki spelling (what it was asked to say; the recognizer's
@@ -276,7 +317,8 @@ function focusPoints(focus: CFocus[], words: ItemWord[], pairWords: ItemWord[] |
 // ------------------------------------------------------------------ main
 const cur = JSON.parse(readFileSync(join(ROOT, "content/curriculum.json"), "utf8")) as Curriculum;
 const cmu = loadCmudict(join(ROOT, ".work/cmudict.dict"));
-const { scorer, runtime: rt } = await makeNodeScorer({ runtime });
+const OUT_ITEMS = outDir ?? OUT_ITEMS_DEFAULT;
+const { scorer, runtime: rt } = await makeNodeScorer({ runtime, dir: modelDir });
 console.log(`scorer: ${rt}`);
 mkdirSync(OUT_ITEMS, { recursive: true });
 
@@ -366,17 +408,23 @@ const catalog: Catalog = {
     lessons: u.lessons.map((l) => ({ id: l.id, titleJa: l.title_ja, goalJa: l.goal_ja, feature: l.feature, items: l.items.map(catalogItem) })),
   })),
 };
-if (!only) writeFileSync(OUT_CATALOG, JSON.stringify(catalog, null, 1) + "\n");
+if (!only && !outDir) writeFileSync(OUT_CATALOG, JSON.stringify(catalog, null, 1) + "\n");
 
 // ------------------------------------------------------------------ report
 const secs = (performance.now() - t0) / 1000;
 const below = wordLog.filter((w) => w.score < 90);
-const sounds = wordLog.length ? [...new Set(wordLog.map((w) => `${w.item}|${w.voice}|${w.slow}`))].length : 0;
+const sounds = wordLog.length ? [...new Set(wordLog.map((w) => `${w.item}|${w.voice}|${w.speed}`))].length : 0;
 const scores = wordLog.map((w) => w.score).sort((a, b) => a - b);
 const pct = (q: number) => scores[Math.min(scores.length - 1, Math.floor(q * scores.length))];
 console.log(`\n${n} items in ${secs.toFixed(0)} s, ${(bytes / 1e6).toFixed(2)} MB of item JSON (${(bytes / Math.max(1, n) / 1e3).toFixed(1)} KB/item)`);
 console.log(`reference words: ${wordLog.length} over ${sounds} takes; min ${scores[0]}, p1 ${pct(0.01)}, p5 ${pct(0.05)}, median ${pct(0.5)}; below 90: ${below.length}`);
-for (const w of below) console.log(`  ${w.item} ${w.voice}${w.slow ? " slow" : ""} "${w.word}" ${w.score} [${w.variant}]`);
+for (const w of below) console.log(`  ${w.item} ${w.voice}${w.speed} "${w.word}" ${w.score} [${w.variant}]`);
+for (const sp of SPEEDS) {
+  const ws = wordLog.filter((w) => w.speed === sp).map((w) => w.score);
+  const d = drift[sp].slice().sort((a, b) => a - b);
+  const q = (x: number) => (d.length ? Math.round(d[Math.min(d.length - 1, Math.floor(x * d.length))] * 1000) : 0);
+  console.log(`speed ${sp || "normal"}: min word ${Math.min(...ws)}; Kokoro word boundary vs alignment |d| median ${q(0.5)} ms, p90 ${q(0.9)} ms, max ${q(1)} ms (${d.length} boundaries)`);
+}
 console.log(`learned variants: ${learnedLog.reduce((a, x) => a + x.learned.length, 0)} on ${learnedLog.length} recordings`);
-writeFileSync(LOG, JSON.stringify({ runtime: rt, items: n, seconds: secs, bytes, below, learned: learnedLog }, null, 1));
+writeFileSync(outDir ? join(outDir, "..", "build-content.json") : LOG, JSON.stringify({ runtime: rt, items: n, seconds: secs, bytes, below, learned: learnedLog, drift }, null, 1));
 await scorer.dispose();
