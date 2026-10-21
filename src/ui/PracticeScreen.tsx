@@ -23,7 +23,7 @@ import Breakdown from "./result/Breakdown";
 import DirectionSlider from "./result/DirectionSlider";
 import WordJudgements from "./result/WordJudgements";
 import SoundCard, { type Voice } from "./SoundCard";
-import { IconNext, IconPlay, IconRetry, IconSpeaker, IconTurtle } from "./icons";
+import { IconNext, IconPlay, IconRetry, IconSpeaker, IconSwap, IconTurtle } from "./icons";
 import { JUDGEMENT_LABEL, JUDGEMENT_VAR, RETRY_FIRST_BELOW, judge, rangePosition, step7, tempoPosition, total, verdict } from "./score";
 import { STATUS, noteLine, soundLabel } from "./copy";
 import { buzz, setMuted, sfx } from "./sfx";
@@ -84,7 +84,7 @@ export default function PracticeScreen({ item, takes, progress, backHref, nextHr
   const [liveCombo, setLiveCombo] = useState(0);
 
   const playhead = useRef<number | null>(firstState === "listen" && freezeT !== null ? freezeT : null);
-  const live = useRef<LiveTake>({ points: [], t: null, onset: null });
+  const live = useRef<LiveTake>({ points: [], t: null });
   const level = useRef(0);
   const reveal = useRef(firstState === "result" ? 0 : 1);
   const raf = useRef(0);
@@ -173,7 +173,9 @@ export default function PracticeScreen({ item, takes, progress, backHref, nextHr
     setPops([]);
     setLiveCombo(0);
     const tk = takes[Math.min(nextAttempt, takes.length) - 1];
-    live.current = { points: [], t: 0, onset: null };
+    // the mock lines the take up with the model by its voice onset (the real flow uses the guide clock)
+    const off = item.syllables[0].start - tk.user.speech[0];
+    live.current = { points: [], t: null };
     let k = 0;
     let syl = 0;
     let run = 0;
@@ -181,9 +183,11 @@ export default function PracticeScreen({ item, takes, progress, backHref, nextHr
     const loop = (now: number) => {
       const t = freezeT !== null && keepPinned ? freezeT : (now - t0) / 1000;
       const pts = tk.user.contour;
-      while (k < pts.length && pts[k].t <= t) live.current.points.push(pts[k++]);
-      if (live.current.onset === null && t >= tk.user.speech[0]) live.current.onset = tk.user.speech[0];
-      live.current.t = t;
+      while (k < pts.length && pts[k].t <= t) {
+        live.current.points.push({ t: pts[k].t + off, st: pts[k].st });
+        k++;
+      }
+      live.current.t = t + off;
       level.current = tk.user.level[Math.min(tk.user.level.length - 1, Math.floor(t * 100))] ?? 0;
       while (syl < tk.user.syllables.length && t >= tk.user.syllables[syl].end) {
         const j = tk.live?.[syl] ?? "good";
@@ -293,7 +297,8 @@ export default function PracticeScreen({ item, takes, progress, backHref, nextHr
   useEffect(() => {
     if (firstState === "recording") startRecording(firstAttempt, true);
     if (firstState === "thinking") {
-      live.current = { points: [...take.user.contour], t: take.user.duration, onset: take.user.speech[0] };
+      const off = item.syllables[0].start - take.user.speech[0];
+      live.current = { points: take.user.contour.map((p) => ({ t: p.t + off, st: p.st })), t: null };
     }
     return () => {
       cancelAnimationFrame(raf.current);
@@ -494,9 +499,21 @@ export default function PracticeScreen({ item, takes, progress, backHref, nextHr
               <DirectionSlider label="抑揚" left="平坦" right="大げさ" step={rangeStep} />
             </div>
 
-            <p className="jp mt-8 rounded-[20px] bg-(--paper) px-5 py-4 text-[16px] font-black leading-relaxed text-(--ink) md:text-[18px]">
-              <BreakText text={comment} />
-            </p>
+            <div className="mt-8 rounded-[20px] bg-(--paper) px-5 py-4 text-(--ink)">
+              <p className="jp text-[16px] font-black leading-relaxed md:text-[18px]">
+                <BreakText text={comment} />
+              </p>
+              {take.words[worst].score < 75 ? (
+                <button
+                  type="button"
+                  onClick={() => openWord(worst)}
+                  className="press press-guide mt-4 h-[52px] w-full text-[16px]"
+                >
+                  <IconSwap size={20} />
+                  {take.words[worst].text} を音ごとに聞きくらべる
+                </button>
+              ) : null}
+            </div>
 
             <div className="mt-8">
               <WordJudgements words={take.words} notes={take.notes} onOpen={openWord} />

@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: crossOriginIsolation }];
   },
+  // トップはホーム（ユニットの一覧）へ。ホームの本体は (game)/home にある
+  async redirects() {
+    return [{ source: "/", destination: "/home", permanent: false }];
+  },
 };
 
 export default nextConfig;

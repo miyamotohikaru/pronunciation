@@ -19,6 +19,8 @@ export type Voice = "model" | "you";
 
 export type SoundCardProps = {
   word: WordScore;
+  /** the item's own tip for a sound of this word (focus.tipJa, ◇/◆ breaks); falls back to a generic tip */
+  tipFor?: (phone: string) => string | null;
   onClose: () => void;
   /** play one voice's slice of this sound (the engine picks the slice: sound + its vowel) */
   onPlay: (who: Voice, phone: number) => void;
@@ -28,7 +30,7 @@ export type SoundCardProps = {
   alternating: boolean;
 };
 
-export default function SoundCard({ word, onClose, onPlay, onAlternate, playing, alternating }: SoundCardProps) {
+export default function SoundCard({ word, tipFor, onClose, onPlay, onAlternate, playing, alternating }: SoundCardProps) {
   const flagged = word.phones.map((p, i) => ({ p, i })).filter(({ p }) => mark(p) !== "hit");
   const worst = [...word.phones.map((p, i) => ({ p, i }))].sort((a, b) => a.p.score - b.p.score)[0];
   const [sel, setSel] = useState(flagged[0]?.i ?? worst.i);
@@ -38,7 +40,9 @@ export default function SoundCard({ word, onClose, onPlay, onAlternate, playing,
   const phone = word.phones[sel];
   const heard = heardLine(phone);
   const other = heardWord(word, phone);
-  const tip = mouthTip(phone.phone);
+  const own = tipFor?.(phone.phone) ?? null;
+  const generic = mouthTip(phone.phone);
+  const tip: [string, string] | null = own ? [own, ""] : generic;
   const mouth = mouthSound(phone.phone);
   const ghost = phone.heardAs ? mouthSound(phone.heardAs) : null;
   const label = (ph: string) => (ipa ? soundIpa(ph) : soundLabel(ph));
@@ -143,9 +147,11 @@ export default function SoundCard({ word, onClose, onPlay, onAlternate, playing,
             <li>
               <BreakText text={tip[0]} />
             </li>
-            <li>
-              <BreakText text={tip[1]} />
-            </li>
+            {tip[1] ? (
+              <li>
+                <BreakText text={tip[1]} />
+              </li>
+            ) : null}
           </ul>
         </div>
       ) : null}

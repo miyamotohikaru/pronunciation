@@ -59,7 +59,7 @@ export const JUDGEMENT_VAR: Record<Judgement, string> = {
 /** Mark under each sound of the line: shape carries the meaning, colour only repeats it. */
 export type Mark = "hit" | "near" | "miss";
 export function mark(p: PhoneScore): Mark {
-  if (p.heardAs || p.issue === "deletion" || p.score < 60) return "miss";
+  if (p.heardAs || p.inserted || p.issue === "deletion" || p.score < 60) return "miss";
   if (p.score < 80) return "near";
   return "hit";
 }

@@ -78,6 +78,30 @@
   --wipe: #ff4fa3;
   --focus-ring: #0c0f33;
 }
+.field-teal {
+  --field: #19c3b5;
+  --field-deep: #0c8a80;
+  --field-ink: #0c0f33;
+  --field-ink-soft: #0c2a28;
+  --wipe: #ff4fa3;
+  --focus-ring: #0c0f33;
+}
+.field-berry {
+  --field: #c92d70;
+  --field-deep: #8f1a4c;
+  --field-ink: #ffffff;
+  --field-ink-soft: #ffe3ef;
+  --wipe: #62cbff;
+  --focus-ring: #ffffff;
+}
+.field-amber {
+  --field: #ffb300;
+  --field-deep: #c98a00;
+  --field-ink: #0c0f33;
+  --field-ink-soft: #3a2a00;
+  --wipe: #2d5bff;
+  --focus-ring: #0c0f33;
+}
 .field-shell {
   --field: #ffd338;
   --field-deep: #d9a800;
@@ -99,6 +123,15 @@ html:has(.field-rhythm) {
 }
 html:has(.field-th) {
   background: #16b06a;
+}
+html:has(.field-teal) {
+  background: #19c3b5;
+}
+html:has(.field-berry) {
+  background: #c92d70;
+}
+html:has(.field-amber) {
+  background: #ffb300;
 }
 html:has(.field-shell) {
   background: #ffd338;
@@ -287,11 +320,14 @@ button.telop-word::before {
 }
 @keyframes kara-spark {
   0% {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, 0) scale(0.3);
+    opacity: 1;
+  }
+  65% {
     opacity: 1;
   }
   100% {
-    transform: translate(var(--dx), var(--dy)) scale(0.2);
+    transform: translate(var(--dx), var(--dy)) scale(1);
     opacity: 0;
   }
 }
@@ -308,7 +344,7 @@ button.telop-word::before {
   animation: kara-spin 900ms linear infinite;
 }
 .kara .anim-spark {
-  animation: kara-spark 700ms ease-out both;
+  animation: kara-spark 1000ms cubic-bezier(0.1, 0.8, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

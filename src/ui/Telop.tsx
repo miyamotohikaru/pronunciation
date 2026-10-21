@@ -9,7 +9,7 @@
  * and every sound gets a mark under its own letters: ● hit / ▲ near / ▬ miss (an underline bar)
  * — shape first, colour second, so it reads in greyscale. Words become buttons.
  */
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { Clock } from "./lane/PitchLane";
 import type { PhoneScore, WordScore, WordSpan } from "./types";
 import { JUDGEMENT_LABEL, JUDGEMENT_VAR, judge, mark, type Mark } from "./score";
@@ -32,7 +32,7 @@ export type TelopProps = {
 
 const useIso = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-export default function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, className }: TelopProps) {
+function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, className }: TelopProps) {
   const display = text.split(/\s+/).filter(Boolean);
   const tokens = words.map((w, i) => display[i] ?? w.text);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -281,3 +281,6 @@ function MarkGlyph({ m }: { m: Mark }) {
     </svg>
   );
 }
+
+/** memoised: the practice screen re-renders on every phase change, the Telop only when its props change */
+export default memo(Telop);

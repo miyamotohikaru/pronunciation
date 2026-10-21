@@ -109,8 +109,9 @@ function Intro({ lesson, onNext }: { lesson: LessonData; onNext: () => void }) {
               onClick={() => setSound(s)}
               className="h-12 rounded-[14px] text-[20px] font-black leading-none transition-colors"
               style={{
-                background: sound === s ? "var(--ink)" : "transparent",
-                color: sound === s ? "var(--paper)" : "var(--ink)",
+                background: sound === s ? "var(--field)" : "transparent",
+                color: sound === s ? "var(--field-ink)" : "var(--ink)",
+                boxShadow: sound === s ? "inset 0 0 0 3px var(--ink)" : undefined,
               }}
             >
               {s === "r" ? "r の舌" : "l の舌"}

@@ -6,9 +6,12 @@
  * come in through refs so React never re-renders at 60 fps.
  *
  *   guide   : the model's bars; a cursor lights them while the model plays
- *   live    : your line draws over the bars while you speak; bars light where you hit
- *   warp    : your line slides from your timing onto the model's (the "aha" after you stop)
+ *   live    : the guide cursor runs; your line draws over the bars; bars fill where you match
+ *             (fills come from KaraokeJudge when given, otherwise from the line itself)
+ *   warp    : right after the take (your line slides onto the model's timing when morph data is given)
  *   overlay : both melodies on the model's timeline; `progressive` redraws yours with the replay
+ *
+ * Every time is on the guide (model) timeline of the chosen speed.
  */
 import { useEffect, useRef } from "react";
 import type { ContourPoint, LaneSyllable, WordSpan } from "../types";
@@ -27,16 +30,17 @@ import {
 
 export type LaneMode = "guide" | "live" | "warp" | "overlay";
 export type Clock = { current: number | null };
-/** What the recorder appends to while you speak. `t` and `points[].t` are seconds since the mic opened. */
-export type LiveTake = { points: ContourPoint[]; t: number | null; onset: number | null };
+/** Your live line and the guide cursor, both on the guide timeline (seconds). */
+export type LiveTake = { points: ContourPoint[]; t: number | null };
+/** How full each bar is (0..1) and its grade once decided — KaraokeJudge.bars fits as is. */
+export type BarFill = { fill: number; grade: "perfect" | "great" | "good" | "miss" | null };
 export type FinishedTake = {
-  /** your contour on your own timeline */
-  contour: ContourPoint[];
-  syllables: LaneSyllable[];
   /** your contour on the model's timeline */
   onRef: ContourPoint[];
-  /** voice onset inside the recording (aligns your start with the model's) */
-  onset: number;
+  /** optional morph data (mock): your contour on your own timeline, its syllables, voice onset */
+  contour?: ContourPoint[];
+  syllables?: LaneSyllable[];
+  onset?: number;
 };
 
 export const LANE_PAD = { l: 14, r: 14, t: 18, b: 30 };
@@ -50,6 +54,8 @@ export type PitchLaneProps = {
   playhead?: Clock;
   playheadTone?: "guide" | "voice";
   live?: { current: LiveTake };
+  /** live bar fills (read every frame); kept after the take as the record of what matched */
+  fills?: { current: readonly BarFill[] | null } | null;
   take?: FinishedTake | null;
   /** your previous best, on the model's timeline, drawn faintly */
   ghost?: ContourPoint[] | null;
@@ -177,13 +183,10 @@ export default function PitchLane(props: PitchLaneProps) {
         ctx.stroke();
       }
 
-      const refStart = p.syllables[0].start;
       const ph = p.playhead?.current ?? null;
       const live = p.live?.current;
-      const laneNow =
-        p.mode === "live" && live && live.t !== null && live.onset !== null
-          ? live.t - live.onset + refStart
-          : null;
+      const laneNow = p.mode === "live" && live && live.t !== null ? live.t : null;
+      const fills = p.fills?.current ?? null;
 
       const strokeBar = (i: number, width: number, color: string) => {
         const L = lines[i];
@@ -215,7 +218,7 @@ export default function PitchLane(props: PitchLaneProps) {
       });
 
       // 2) lit parts: under the model's cursor, or where your voice hit the bar
-      const lit = (i: number, from: number, to: number) => {
+      const lit = (i: number, from: number, to: number, tone: [number, number, number] = pal.guide, alpha = 1) => {
         const x0 = X(from);
         const x1 = X(to);
         if (x1 <= x0) return;
@@ -224,10 +227,10 @@ export default function PitchLane(props: PitchLaneProps) {
         ctx.rect(x0, 0, x1 - x0, H);
         ctx.clip();
         const w = barWidth(i);
-        strokeBar(i, w + 10 * scale, rgba(pal.guide, 0.22));
-        strokeBar(i, w, rgba(pal.guide, 1));
+        strokeBar(i, w + 10 * scale, rgba(tone, 0.22 * alpha));
+        strokeBar(i, w, rgba(tone, alpha));
         ctx.translate(0, -w * 0.16);
-        strokeBar(i, Math.max(2, w * 0.3), "rgba(255,255,255,0.75)");
+        strokeBar(i, Math.max(2, w * 0.3), `rgba(255,255,255,${0.75 * alpha})`);
         ctx.restore();
       };
       if (p.mode === "guide" && ph !== null) {
@@ -235,14 +238,22 @@ export default function PitchLane(props: PitchLaneProps) {
           if (ph > s.start) lit(i, s.start - 0.05, Math.min(ph, s.end + 0.05));
         });
       }
-      if (p.mode === "live" && live && live.onset !== null) {
+      if (fills && p.mode !== "guide") {
+        // the judge's verdict: the matched share of each bar fills left → right in your colour
+        p.syllables.forEach((s, i) => {
+          const b = fills[i];
+          if (!b || b.fill <= 0.02 || b.grade === "miss") return;
+          const alpha = b.grade === "good" ? 0.6 : 1;
+          lit(i, s.start - 0.05, s.start + (s.end - s.start) * Math.min(1, b.fill) + 0.05, pal.voice, alpha);
+        });
+      } else if (p.mode === "live" && live) {
         // runs of 10 ms frames whose pitch sat on the bar
         p.syllables.forEach((s, i) => {
           let runStart: number | null = null;
           let prevT = -1;
           const L = lines[i];
           for (const pt of live.points) {
-            const t = pt.t - live.onset! + refStart;
+            const t = pt.t;
             if (t < s.start || t > s.end) continue;
             const ok = pt.st !== null && Math.abs(pt.st - lineAt(L, t)) < 1.7;
             if (ok && runStart === null) runStart = t;
@@ -297,26 +308,31 @@ export default function PitchLane(props: PitchLaneProps) {
         strokeLine(pts, xs, upTo);
       };
       let head: { x: number; y: number } | null = null;
-      if (p.mode === "live" && live && live.onset !== null) {
-        const off = refStart - live.onset;
-        voiceLine(live.points, (pt) => X(pt.t + off), null);
+      if (p.mode === "live" && live) {
+        voiceLine(live.points, (pt) => X(pt.t), null);
         for (let k = live.points.length - 1; k >= 0; k--) {
           const pt = live.points[k];
           if (pt.st !== null) {
-            if (live.t !== null && live.t - pt.t < 0.12) head = { x: X(pt.t + off), y: Y(pt.st) };
+            if (live.t !== null && live.t - pt.t < 0.12) head = { x: X(pt.t), y: Y(pt.st) };
             break;
           }
         }
       }
       let morphing = false;
-      if (p.mode === "warp" && p.take) {
-        if (warpStartRef.current === null) warpStartRef.current = now;
-        const k = reduce.matches ? 1 : Math.min(1, (now - warpStartRef.current) / 650);
-        morphing = k < 1;
-        const e = ease(k);
-        const map = timeMap(p.take.syllables, p.syllables);
-        const off = refStart - p.take.onset;
-        voiceLine(p.take.contour, (pt) => X(pt.t + off) * (1 - e) + X(map(pt.t)) * e, null);
+      if (p.mode === "warp") {
+        const tk = p.take;
+        if (tk?.contour && tk.syllables && tk.onset !== undefined) {
+          if (warpStartRef.current === null) warpStartRef.current = now;
+          const k = reduce.matches ? 1 : Math.min(1, (now - warpStartRef.current) / 650);
+          morphing = k < 1;
+          const e = ease(k);
+          const map = timeMap(tk.syllables, p.syllables);
+          const off = p.syllables[0].start - tk.onset;
+          voiceLine(tk.contour, (pt) => X(pt.t + off) * (1 - e) + X(map(pt.t)) * e, null);
+        } else if (live) {
+          // real takes: keep the line as sung while the result is computed
+          voiceLine(live.points, (pt) => X(pt.t), null);
+        }
       }
       if (p.mode === "overlay" && p.take) {
         voiceLine(p.take.onRef, (pt) => X(pt.t), p.progressive ? ph ?? -1 : null);
@@ -378,7 +394,10 @@ export default function PitchLane(props: PitchLaneProps) {
     const loop = (now: number) => {
       const p = propsRef.current;
       const live = p.live?.current;
-      const sig = `${versionRef.current}|${p.playhead?.current ?? "-"}|${live?.points.length ?? 0}|${live?.t ?? "-"}|${box.w}x${box.h}`;
+      let fillSig = 0;
+      const fl = p.fills?.current;
+      if (fl) for (let i = 0; i < fl.length; i++) fillSig += fl[i].fill * (i + 1) + (fl[i].grade ? 7 * (i + 1) : 0);
+      const sig = `${versionRef.current}|${p.playhead?.current ?? "-"}|${live?.points.length ?? 0}|${live?.t ?? "-"}|${fillSig.toFixed(3)}|${box.w}x${box.h}`;
       if (sized && (sig !== lastSig || morphing || dirty)) {
         dirty = false;
         morphing = draw(now);

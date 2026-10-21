@@ -1,8 +1,10 @@
 /**
  * Short, soft game sounds made on the fly (no files). Optional: the top bar mutes them.
- * Created lazily inside a user gesture so iOS lets it play; haptics where supported.
+ * They borrow the audio engine's one shared AudioContext (never a second one: creating a context
+ * is expensive and iOS allows only a few); haptics where supported.
  */
-let ctx: AudioContext | null = null;
+import { audioCore } from "@/engine/audio/context.ts";
+
 let muted = false;
 
 export function setMuted(v: boolean) {
@@ -15,13 +17,8 @@ const activated = () =>
 
 function ac(): AudioContext | null {
   if (typeof window === "undefined" || !activated()) return null;
-  if (!ctx) {
-    const C = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!C) return null;
-    ctx = new C();
-  }
-  if (ctx.state === "suspended") void ctx.resume();
-  return ctx;
+  const ctx = audioCore.current;
+  return ctx && ctx.state === "running" ? ctx : null;
 }
 
 function tone(freq: number, at: number, dur: number, gain: number, type: OscillatorType = "sine") {

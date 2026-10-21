@@ -3,8 +3,10 @@ import { M_PLUS_Rounded_1c } from "next/font/google";
 import "@/ui/tokens.css";
 
 // Japanese font: no subsets (the CSS is split by unicode-range), not preloaded.
+// Two weights only: each weight adds ~126 @font-face rules (≈33 KB gzip of render-blocking CSS);
+// 800 renders with 900 and 400/500 with 700 (CSS font matching).
 const rounded = M_PLUS_Rounded_1c({
-  weight: ["400", "500", "700", "800", "900"],
+  weight: ["700", "900"],
   display: "swap",
   preload: false,
   variable: "--font-rounded",

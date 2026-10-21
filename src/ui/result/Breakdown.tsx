@@ -32,11 +32,13 @@ export default function Breakdown({ scores, run }: BreakdownProps) {
             <span className="text-[15px] font-black leading-none">{p.label}</span>
             <span className="relative h-[14px]" style={{ width: `${(p.max / maxShare) * 100}%` }} aria-hidden>
               <span className="absolute inset-0 rounded-full bg-(--field-deep)" />
+              {/* the fill grows with a transform (compositor only, no layout per frame) */}
               <span
-                className="absolute inset-y-0 left-0 rounded-full border-2 border-(--ink) bg-(--paper)"
+                className="absolute inset-y-0 left-0 origin-left rounded-full border-2 border-(--ink) bg-(--paper) will-change-transform"
                 style={{
-                  width: filled ? `${(p.points / p.max) * 100}%` : "0%",
-                  transition: `width 760ms cubic-bezier(.2,.8,.2,1) ${180 + i * 130}ms`,
+                  width: `${(p.points / p.max) * 100}%`,
+                  transform: filled ? "scaleX(1)" : "scaleX(0)",
+                  transition: `transform 760ms cubic-bezier(.2,.8,.2,1) ${180 + i * 130}ms`,
                 }}
               />
             </span>

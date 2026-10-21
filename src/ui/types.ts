@@ -36,6 +36,8 @@ export type PhoneScore = {
   issue?: PhoneIssue;
   /** UI only: [start, end) character range of the word's text spelling this phone */
   letters?: [number, number];
+  /** a vowel the scorer heard inserted right after this sound (ARPAbet, e.g. "UW") */
+  inserted?: string;
 };
 
 export type WordScore = { text: string; score: number; phones: PhoneScore[] };

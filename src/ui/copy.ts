@@ -29,8 +29,11 @@ export function soundIpa(phone: string): string {
 }
 
 /** "r が l に聞こえました" */
+const KANA: Record<string, string> = { UW: "ウ", UH: "ウ", AH: "ア", AA: "ア", AE: "ア", IH: "イ", IY: "イ", OW: "オ", AO: "オ", EH: "エ", EY: "エ", ER: "ア" };
+
 export function heardLine(p: PhoneScore, label: (phone: string) => string = soundLabel): string | null {
   if (p.heardAs) return `${label(p.phone)} が ${label(p.heardAs)} に聞こえました`;
+  if (p.inserted) return `${label(p.phone)} のあとに「${KANA[base(p.inserted)] ?? "母音"}」が入りました`;
   if (p.issue === "deletion") return `${label(p.phone)} が聞こえませんでした`;
   if (p.score < 60) return `${label(p.phone)} が少しあいまいでした`;
   return null;

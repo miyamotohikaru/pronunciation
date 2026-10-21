@@ -50,7 +50,8 @@ export default function MicButton({ state, level, onPress, label, hint }: MicBut
   const face = state === "recording" ? "press-voice" : "";
 
   return (
-    <div className="flex flex-col items-center">
+    // fixed width: the label can be wider than the button without pushing the side buttons around
+    <div className="flex w-[112px] flex-col items-center md:w-[128px]">
       <div className="relative grid size-[96px] place-items-center md:size-[112px]">
         {state === "recording" ? (
           <>
@@ -78,7 +79,10 @@ export default function MicButton({ state, level, onPress, label, hint }: MicBut
       <p className="mt-4 whitespace-nowrap text-[15px] font-extrabold leading-none" aria-live="polite">
         {label}
       </p>
-      {hint ? <p className="mt-2 whitespace-nowrap text-[12px] font-bold leading-none">{hint}</p> : null}
+      {/* always takes its line, so starting a take never changes the page's layout */}
+      <p className="mt-2 h-3 whitespace-nowrap text-[12px] font-bold leading-none" style={{ visibility: hint ? "visible" : "hidden" }}>
+        {hint ?? "　"}
+      </p>
     </div>
   );
 }
