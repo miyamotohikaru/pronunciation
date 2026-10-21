@@ -1,0 +1,27 @@
+{
+  "name": "pronunciation",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack -p 3016",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tools/e2e/*.test.mjs",
+    "test:e2e": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/e2e/lab.e2e.mjs"
+  },
+  "dependencies": {
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.0",
+    "postcss": "^8.5.8",
+    "puppeteer-core": "^25.11.0",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.2"
+  }
+}
