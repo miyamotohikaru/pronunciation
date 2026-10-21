@@ -44,7 +44,7 @@ function python(req: object, tag: string): RefItem[] {
 }
 
 async function take(scorer: Scorer, file: string, words: TargetWord[], id: string, tag: string) {
-  const assets = loadAssetsFs();
+  const assets = { meta: scorer.meta, melFilters: loadAssetsFs(modelDirOf(scorer)).melFilters };
   const fe = assets.meta.frontEnd;
   const { audio } = readWav(file);
   const r = await scorer.score({ audio, words });
@@ -61,11 +61,18 @@ async function take(scorer: Scorer, file: string, words: TargetWord[], id: strin
   return { r, item: { wav: file, nPad: nMax, phones, tsMel: melPath, tsLogProbs: lpPath } };
 }
 
-export async function runParity() {
+const modelDirs = new Map<string, string>();
+const modelDirOf = (s: Scorer) => modelDirs.get(s.meta.id)!;
+
+/** model: "vb223" (public/models/whisper-phoneme) or "student" (public/models/student-ipa) */
+export async function runParity(model: "vb223" | "student" = "vb223") {
   mkdirSync(join(WORK, "eval", "parity"), { recursive: true });
-  const int8 = await makeScorer();
-  const fp32 = await makeScorer({ onnx: FP32 });
-  const assets = loadAssetsFs();
+  const dir = join(ROOT, model === "vb223" ? "public/models/whisper-phoneme" : "public/models/student-ipa");
+  const fp32Path = model === "vb223" ? FP32 : join(WORK, "distill/export/student.fp32.onnx");
+  const int8 = await makeScorer({ dir });
+  const fp32 = await makeScorer({ dir, onnx: fp32Path });
+  modelDirs.set(int8.meta.id, dir);
+  const assets = loadAssetsFs(dir);
   const picked = cases().filter((c) => c.file.includes("/audio/") || /\/(af_heart|am_michael)\/t0[1-8]_[a-z]+\.16k\.wav$/.test(c.file));
   const runs: { id: string; i8: Awaited<ReturnType<typeof take>>; f32: Awaited<ReturnType<typeof take>> }[] = [];
   for (const c of picked) {
@@ -73,11 +80,13 @@ export async function runParity() {
     const id = `${basename(dirname(c.file))}_${basename(c.file, ".wav")}`;
     runs.push({ id, i8: await take(int8, c.file, words, id, "int8"), f32: await take(fp32, c.file, words, id, "fp32") });
   }
-  const modelDir = "public/models/whisper-phoneme";
-  const int8Path = join(ROOT, modelDir, assets.meta.files.onnx[assets.meta.files.defaultOnnx]);
-  const logic = python({ modelDir, onnxPath: int8Path, useTsLogProbs: true, items: runs.map((x) => x.i8.item) }, "logic");
-  const e2e32 = python({ modelDir, onnxPath: FP32, useTsLogProbs: false, items: runs.map((x) => x.f32.item) }, "e2e32");
-  const e2e8 = python({ modelDir, onnxPath: int8Path, useTsLogProbs: false, items: runs.map((x) => x.i8.item) }, "e2e8");
+  const modelDir = dir.replace(ROOT, "").replace(/^\//, "");
+  const int8Path = join(dir, assets.meta.files.onnx[assets.meta.files.defaultOnnx]);
+  const regressorJson = model === "vb223" ? undefined : join(dir, assets.meta.files.regressor);
+  const common = { modelDir, regressorJson, sessionConfig: assets.meta.files.sessionConfig?.[assets.meta.files.defaultOnnx] };
+  const logic = python({ ...common, onnxPath: int8Path, useTsLogProbs: true, items: runs.map((x) => x.i8.item) }, `logic-${model}`);
+  const e2e32 = python({ ...common, onnxPath: fp32Path, useTsLogProbs: false, items: runs.map((x) => x.f32.item) }, `e2e32-${model}`);
+  const e2e8 = python({ ...common, onnxPath: int8Path, useTsLogProbs: false, items: runs.map((x) => x.i8.item) }, `e2e8-${model}`);
   const rows = runs.map((x, i) => ({
     id: x.id,
     phones: x.i8.r.words.reduce((a, w) => a + w.phones.length, 0),
@@ -97,7 +106,7 @@ export async function runParity() {
 const fmt = (x: number) => x.toExponential(1).padStart(8);
 
 if (process.argv[1]?.endsWith("parity.mts")) {
-  const rows = await runParity();
+  const rows = await runParity(process.argv.includes("--student") ? "student" : "vb223");
   console.log(`${"clip".padEnd(30)} ph  mel|d|   | logic: align |dRaw|  | e2e fp32: align |dRaw|  |dLogP| | e2e shipped: align |dRaw|  |dLogP|`);
   for (const r of rows)
     console.log(

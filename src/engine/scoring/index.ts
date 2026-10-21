@@ -9,3 +9,5 @@ export { whisperLogMel, padForModel } from "./mel.ts";
 export { forcedAlign, mergeTokens, greedyDecode } from "./ctc.ts";
 export { parseVariant, baseOf, isVowel } from "./phones.ts";
 export { createScoringClient, type ScoringClient, type ScoringClientOptions, type ScoringProgress } from "./client.ts";
+export { HEARD_LABELS, heardLabel, heardAsJa, insertedVowelJa } from "./heard-labels.ts";
+export { DEFAULT_MODEL_URL } from "./client.ts";

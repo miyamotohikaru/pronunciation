@@ -188,6 +188,22 @@ and dynamic-int8 (29.1 MB) exports stay in `.work/onnx/`.
 browsers without WebGPU, `ort.webgpu.bundle.min.mjs` + `ort-wasm-simd-threaded.asyncify.{mjs,wasm}`
 (26.8 MB, 6.7 MB gzip) otherwise. Serve `.wasm` as `application/wasm`.
 
+## Models
+
+| folder | model | units | status |
+|---|---|---|---|
+| `student-ipa/` | distilled student (`tools/model/distill`, 79 reduced-IPA tokens) | ARPAbet → IPA tokens; r-coloured vowels (ɑːɹ …) belong to both the vowel and R; L1 sounds (ɾ ɯ ɕ ts ɸ a e o …) are extra competitor units, so `heardAs` / inserted vowels can be IPA ("ɾ", "ɯ") — `heard-labels.ts` names them in Japanese | **default** (`DEFAULT_MODEL_URL`, `tools/lib/scorer-node.ts`) |
+| `whisper-phoneme/` | vb223 (ARPAbet CTC, 87 tokens) | stress variants merged | kept, not loaded |
+
+The student's regressor was trained on speechocean762 train with features from this engine
+(`tools/scoring-tests/so762-features.mts` → `tools/model/export/train_student_regressor.py`),
+its calibration is quantile-matched to vb223's on speechocean762 test, its diagnosis
+penalties come from `tune.mts --model-dir public/models/student-ipa`
+(`tools/model/export/student_tuning.json`, written by `export_student_assets.py`). To use it:
+`createScoringClient({ modelUrl })` picks another model; build the content with
+`build.ts --model-dir <dir>` for it (variants and item scoring are per model). Only one
+model is ever loaded. `heardAsJa("R", "ɾ")` → 「R が日本語のラ行の音に聞こえました」.
+
 ## Swapping the model
 
 Everything model-specific is in `meta.json`; nothing in the code knows the vocabulary.

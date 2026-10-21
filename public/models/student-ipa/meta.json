@@ -1,0 +1,587 @@
+{
+ "schema": 1,
+ "id": "pronunciation-student-ipa-v1",
+ "source": "distilled student (whisper base.en encoder + MLP CTC head, 79 reduced-IPA classes; teacher facebook/wav2vec2-lv-60-espeak-cv-ft, init vb223/whisper-base-en-phoneme-ctc) - tools/model/distill",
+ "license": "MIT (vb223 / Whisper) + Apache-2.0 teacher targets; training data CC BY 4.0 / CC0 / Apache-2.0",
+ "files": {
+  "onnx": {
+   "int8w": "model.int8w.onnx"
+  },
+  "defaultOnnx": "int8w",
+  "hash": {
+   "int8w": "08d79ad23a7a823b"
+  },
+  "sessionConfig": {
+   "int8w": {
+    "session.disable_quant_qdq": "1"
+   }
+  },
+  "regressor": "regressor.json",
+  "melFilters": "mel_filters_80.json"
+ },
+ "frontEnd": {
+  "type": "whisper-log-mel",
+  "sampleRate": 16000,
+  "nFft": 400,
+  "hop": 160,
+  "nMels": 80,
+  "tailPadSeconds": 0.0,
+  "minSeconds": 0.0
+ },
+ "onnx": {
+  "input": "mel",
+  "output": "log_probs",
+  "logSoftmax": true,
+  "frameRate": 50,
+  "samplesPerFrame": 320,
+  "maxFrames": 1500
+ },
+ "vocab": [
+  "<blk>",
+  "p",
+  "b",
+  "t",
+  "d",
+  "k",
+  "ɡ",
+  "f",
+  "v",
+  "θ",
+  "ð",
+  "s",
+  "z",
+  "ʃ",
+  "ʒ",
+  "h",
+  "tʃ",
+  "dʒ",
+  "m",
+  "n",
+  "ŋ",
+  "l",
+  "ɹ",
+  "w",
+  "j",
+  "ɾ",
+  "r",
+  "ʔ",
+  "ɕ",
+  "tɕ",
+  "dʑ",
+  "ts",
+  "ɸ",
+  "β",
+  "ç",
+  "x",
+  "ɲ",
+  "iː",
+  "i",
+  "ɪ",
+  "ᵻ",
+  "eɪ",
+  "ɛ",
+  "æ",
+  "ɐ",
+  "ə",
+  "ʌ",
+  "ɑː",
+  "ɑ",
+  "ɔː",
+  "ɔ",
+  "ɒ",
+  "oʊ",
+  "ʊ",
+  "uː",
+  "u",
+  "ɚ",
+  "ɜː",
+  "aɪ",
+  "aʊ",
+  "ɔɪ",
+  "əl",
+  "ɑːɹ",
+  "ɔːɹ",
+  "ɛɹ",
+  "ɪɹ",
+  "ʊɹ",
+  "oːɹ",
+  "iə",
+  "aɪɚ",
+  "aɪə",
+  "a",
+  "e",
+  "o",
+  "ɯ",
+  "aː",
+  "eː",
+  "oː",
+  "y"
+ ],
+ "vocabSize": 79,
+ "blank": 0,
+ "units": {
+  "B": [
+   2
+  ],
+  "CH": [
+   16
+  ],
+  "D": [
+   4
+  ],
+  "DH": [
+   10
+  ],
+  "F": [
+   7
+  ],
+  "G": [
+   6
+  ],
+  "HH": [
+   15
+  ],
+  "JH": [
+   17
+  ],
+  "K": [
+   5
+  ],
+  "L": [
+   21,
+   61
+  ],
+  "M": [
+   18
+  ],
+  "N": [
+   19
+  ],
+  "NG": [
+   20
+  ],
+  "P": [
+   1
+  ],
+  "R": [
+   22,
+   62,
+   63,
+   64,
+   65,
+   66,
+   67,
+   69
+  ],
+  "S": [
+   11
+  ],
+  "SH": [
+   13
+  ],
+  "T": [
+   3
+  ],
+  "TH": [
+   9
+  ],
+  "V": [
+   8
+  ],
+  "W": [
+   23
+  ],
+  "Y": [
+   24
+  ],
+  "Z": [
+   12
+  ],
+  "ZH": [
+   14
+  ],
+  "AA": [
+   47,
+   48,
+   51,
+   62
+  ],
+  "AE": [
+   43,
+   64
+  ],
+  "AH": [
+   46,
+   45,
+   44,
+   61,
+   68,
+   70
+  ],
+  "AO": [
+   49,
+   50,
+   63,
+   67
+  ],
+  "AW": [
+   59
+  ],
+  "AY": [
+   58,
+   69,
+   70
+  ],
+  "EH": [
+   42,
+   64
+  ],
+  "ER": [
+   57,
+   56,
+   69
+  ],
+  "EY": [
+   41,
+   64
+  ],
+  "IH": [
+   39,
+   40,
+   65
+  ],
+  "IY": [
+   37,
+   38,
+   65,
+   68
+  ],
+  "OW": [
+   52,
+   67
+  ],
+  "OY": [
+   60
+  ],
+  "UH": [
+   53,
+   66
+  ],
+  "UW": [
+   54,
+   55,
+   66
+  ],
+  "ɾ": [
+   25
+  ],
+  "r": [
+   26
+  ],
+  "ʔ": [
+   27
+  ],
+  "ɕ": [
+   28
+  ],
+  "tɕ": [
+   29
+  ],
+  "dʑ": [
+   30
+  ],
+  "ts": [
+   31
+  ],
+  "ɸ": [
+   32
+  ],
+  "β": [
+   33
+  ],
+  "ç": [
+   34
+  ],
+  "x": [
+   35
+  ],
+  "ɲ": [
+   36
+  ],
+  "a": [
+   71
+  ],
+  "e": [
+   72
+  ],
+  "o": [
+   73
+  ],
+  "ɯ": [
+   74
+  ],
+  "aː": [
+   75
+  ],
+  "eː": [
+   76
+  ],
+  "oː": [
+   77
+  ],
+  "y": [
+   78
+  ]
+ },
+ "aliases": {
+  "DX": [
+   "T",
+   "D",
+   "ɾ"
+  ],
+  "Q": [
+   "T",
+   "D",
+   "ʔ"
+  ]
+ },
+ "regressor": {
+  "features": [
+   "gop",
+   "logp_target",
+   "logp_competitor",
+   "logp_target_min",
+   "n_frames"
+  ],
+  "oneHotSize": 39,
+  "classOf": {
+   "B": 0,
+   "CH": 1,
+   "D": 2,
+   "DH": 3,
+   "F": 4,
+   "G": 5,
+   "HH": 6,
+   "JH": 7,
+   "K": 8,
+   "L": 9,
+   "M": 10,
+   "N": 11,
+   "NG": 12,
+   "P": 13,
+   "R": 14,
+   "S": 15,
+   "SH": 16,
+   "T": 17,
+   "TH": 18,
+   "V": 19,
+   "W": 20,
+   "Y": 21,
+   "Z": 22,
+   "ZH": 23,
+   "AA": 24,
+   "AE": 25,
+   "AH": 26,
+   "AO": 27,
+   "AW": 28,
+   "AY": 29,
+   "EH": 30,
+   "ER": 31,
+   "EY": 32,
+   "IH": 33,
+   "IY": 34,
+   "OW": 35,
+   "OY": 36,
+   "UH": 37,
+   "UW": 38
+  },
+  "range": [
+   0,
+   2
+  ]
+ },
+ "calibration": {
+  "knots": [
+   [
+    0.064,
+    0.0
+   ],
+   [
+    1.13,
+    20.0
+   ],
+   [
+    1.407,
+    40.0
+   ],
+   [
+    1.651,
+    70.0
+   ],
+   [
+    1.773,
+    90.0
+   ],
+   [
+    1.876,
+    97.0
+   ],
+   [
+    1.942,
+    100.0
+   ]
+  ]
+ },
+ "diagnosis": {
+  "confusions": {
+   "R": [
+    "L",
+    "D",
+    "W",
+    "ɾ"
+   ],
+   "L": [
+    "R",
+    "ɾ"
+   ],
+   "TH": [
+    "S",
+    "T",
+    "F"
+   ],
+   "DH": [
+    "Z",
+    "D"
+   ],
+   "V": [
+    "B",
+    "F",
+    "W",
+    "β"
+   ],
+   "F": [
+    "HH",
+    "P",
+    "ɸ"
+   ],
+   "S": [
+    "SH",
+    "TH",
+    "ɕ"
+   ],
+   "SH": [
+    "S",
+    "ɕ"
+   ],
+   "Z": [
+    "JH",
+    "S",
+    "dʑ"
+   ],
+   "ZH": [
+    "JH",
+    "SH"
+   ],
+   "W": [
+    "UW"
+   ],
+   "HH": [
+    "F",
+    "ɸ",
+    "ç"
+   ],
+   "N": [
+    "NG"
+   ],
+   "NG": [
+    "N"
+   ],
+   "AE": [
+    "AH",
+    "EH",
+    "AA",
+    "a"
+   ],
+   "AH": [
+    "AA",
+    "AE",
+    "a"
+   ],
+   "AA": [
+    "AH",
+    "AO",
+    "OW",
+    "a"
+   ],
+   "AO": [
+    "OW",
+    "o"
+   ],
+   "IH": [
+    "IY"
+   ],
+   "IY": [
+    "IH"
+   ],
+   "UH": [
+    "UW",
+    "ɯ"
+   ],
+   "UW": [
+    "UH",
+    "ɯ"
+   ],
+   "ER": [
+    "AA",
+    "AH",
+    "a"
+   ],
+   "EY": [
+    "EH",
+    "e"
+   ],
+   "OW": [
+    "AO",
+    "o"
+   ],
+   "JH": [
+    "dʑ"
+   ],
+   "CH": [
+    "tɕ"
+   ],
+   "EH": [
+    "e"
+   ],
+   "T": [
+    "ts"
+   ]
+  },
+  "epentheticVowels": [
+   "UW",
+   "UH",
+   "OW",
+   "AO",
+   "IH",
+   "IY",
+   "AH",
+   "ɯ",
+   "o",
+   "a",
+   "e"
+  ],
+  "substitutionPenalty": 2.2,
+  "pairPenalty": {
+   "N>NG": 4.5,
+   "NG>N": 4.5
+  },
+  "insertionPenalty": 2.5,
+  "deletionPenalty": 6.0,
+  "minInsertionFrames": 1,
+  "distortionBelow": 60,
+  "substitutionCap": 35,
+  "deletionCap": 30,
+  "insertionScore": 35,
+  "worstPhoneMargin": 20
+ }
+}

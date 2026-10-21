@@ -55,6 +55,8 @@ export type UnitSpace = {
   baseColumn: Map<string, number>;
   /** columns that compete in GOP (every meta unit), blank excluded */
   phoneColumns: number[];
+  /** target symbols that accept several units (meta.aliases, else DX/Q = T|D) */
+  aliases: Record<string, string[]>;
 };
 
 export function makeUnitSpace(meta: ModelMeta): UnitSpace {
@@ -68,7 +70,7 @@ export function makeUnitSpace(meta: ModelMeta): UnitSpace {
     tokens.push(ids.slice());
     names.push(sym);
   }
-  return { tokens, names, baseColumn, phoneColumns };
+  return { tokens, names, baseColumn, phoneColumns, aliases: { ...ALIASES, ...meta.aliases } };
 }
 
 /** Column for a target phone symbol (adds alias columns such as T|D on demand). */
@@ -78,7 +80,7 @@ export function columnFor(space: UnitSpace, symbol: string): number {
   const base = baseOf(symbol);
   const b = space.baseColumn.get(base);
   if (b !== undefined) return b;
-  const alias = ALIASES[base];
+  const alias = space.aliases[base];
   if (!alias) throw new Error(`phone ${symbol} is not in the model's units`);
   const name = alias.join("|");
   const existing = space.names.indexOf(name);

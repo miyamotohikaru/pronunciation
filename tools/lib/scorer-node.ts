@@ -10,7 +10,8 @@ import { createScorer, type Scorer } from "../../src/engine/scoring/engine.ts";
 import type { MelFilterBank, ModelMeta, RegressorJson, ScorerAssets } from "../../src/engine/scoring/types.ts";
 
 export const ROOT = new URL("../../", import.meta.url).pathname;
-export const MODEL_DIR = join(ROOT, "public/models/whisper-phoneme");
+/** the default model (same as the app: src/engine/scoring/client.ts DEFAULT_MODEL_URL) */
+export const MODEL_DIR = join(ROOT, "public/models/student-ipa");
 
 const json = <T>(p: string): T => JSON.parse(readFileSync(p, "utf8")) as T;
 

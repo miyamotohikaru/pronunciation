@@ -128,7 +128,8 @@ export function referenceTakes(sentence: string): { name: string; audio: Float32
  * variants learned from the reference takes (deriveVariants). Cached in .work/eval.
  */
 export async function shippedTargets(scorer: Scorer, sentence: string, jsons: string[]): Promise<{ words: TargetWord[]; learned: LearnedVariant[] }> {
-  const cacheDir = join(WORK, "eval", "targets");
+  // learned variants depend on the model: one cache per model id (vb223 keeps the old place)
+  const cacheDir = scorer.meta.id === "whisper-base-en-phoneme-ctc" ? join(WORK, "eval", "targets") : join(WORK, "eval", "targets", scorer.meta.id);
   const key = join(cacheDir, `${sentence}.json`);
   const base = targetsFromKokoro(jsons);
   if (existsSync(key)) {

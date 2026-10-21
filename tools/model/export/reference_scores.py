@@ -32,8 +32,30 @@ sys.path.insert(0, str(Path(__file__).parent))
 from wp_common import load_regressor  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
-ALIASES = {"DX": ["T", "D"], "Q": ["T", "D"]}
+DEFAULT_ALIASES = {"DX": ["T", "D"], "Q": ["T", "D"]}
 ALIAS_CLASS = {"DX": "T", "Q": "T"}
+
+
+class JsonRegressor:
+    """regressor.json (export_assets.export_regressor) predicted the way sklearn does."""
+
+    def __init__(self, path):
+        self.d = json.loads(Path(path).read_text())
+
+    def predict(self, X):
+        out = []
+        for x in X:
+            raw = self.d["baseline"]
+            for t in self.d["trees"]:
+                n = 0
+                while not t["leaf"][n]:
+                    v = float(x[t["feature"][n]])
+                    thr = t["threshold"][n]
+                    thr = float("inf") if thr is None else thr
+                    n = (t["left"][n] if t["missingLeft"][n] else t["right"][n]) if np.isnan(v) else (t["left"][n] if v <= thr else t["right"][n])
+                raw += t["value"][n]
+            out.append(raw)
+        return np.asarray(out)
 
 
 def base(p):
@@ -44,8 +66,12 @@ def main():
     req = json.loads(Path(sys.argv[1]).read_text())
     mdir = ROOT / req["modelDir"]
     meta = json.loads((mdir / "meta.json").read_text())
-    reg = load_regressor(ROOT / ".work/models/whisper-phoneme")
-    sess = ort.InferenceSession(str(req["onnxPath"]), providers=["CPUExecutionProvider"])
+    reg = JsonRegressor(req["regressorJson"]) if req.get("regressorJson") else load_regressor(ROOT / ".work/models/whisper-phoneme")
+    ALIASES = {**DEFAULT_ALIASES, **meta.get("aliases", {})}
+    so = ort.SessionOptions()
+    for k, v in (req.get("sessionConfig") or {}).items():
+        so.add_session_config_entry(k, v)
+    sess = ort.InferenceSession(str(req["onnxPath"]), so, providers=["CPUExecutionProvider"])
     fe = meta["frontEnd"]
     out = []
     for it in req["items"]:

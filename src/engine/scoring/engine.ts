@@ -335,6 +335,7 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
       let score = feats[i].score;
       const d = dg.phones[i];
       const pr: PhoneResult = { phone: r.tok.symbol, index: r.at, score, raw: Math.round(raw * 1e4) / 1e4, start: sec(spans[i].start), end: sec(spans[i].end) };
+      if (opts.features) pr.features = meta.regressor.features.map((name) => f[name]);
       const conf = cfg.confusions[r.tok.base] ?? [];
       if (d.deleted) {
         pr.issue = "deletion";

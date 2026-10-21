@@ -10,7 +10,8 @@ import type { ScoreResult } from "../../src/engine/scoring/types.ts";
 
 const args = process.argv.slice(2);
 const jsonOut = args.includes("--json") ? args[args.indexOf("--json") + 1] : null;
-const filter = args.find((a) => !a.startsWith("--") && a !== jsonOut) ?? "";
+const modelDirArg = args.includes("--model-dir") ? args[args.indexOf("--model-dir") + 1] : null;
+const filter = args.find((a) => !a.startsWith("--") && a !== jsonOut && a !== modelDirArg) ?? "";
 /** --raw: misaki + CMUdict variants only (no variants learned from the references) */
 const raw = args.includes("--raw");
 
@@ -60,7 +61,8 @@ export function describe(r: ScoreResult): string {
 }
 
 async function main() {
-  const scorer = await makeScorer();
+  const dirArg = args.includes("--model-dir") ? args[args.indexOf("--model-dir") + 1] : undefined;
+  const scorer = await makeScorer({ dir: dirArg });
   const all: Record<string, unknown>[] = [];
   let pass = 0;
   let n = 0;

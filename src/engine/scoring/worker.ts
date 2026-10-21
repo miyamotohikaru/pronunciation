@@ -16,7 +16,7 @@ import { fetchCached, loadAssets, loadModelBytes } from "./assets.ts";
 
 export type WorkerInit = {
   type: "init";
-  /** folder with meta.json, e.g. "/models/whisper-phoneme/" */
+  /** folder with meta.json, e.g. "/models/student-ipa/" */
   modelUrl: string;
   /** folder with the onnxruntime-web bundles + .wasm, e.g. "/models/ort/" */
   ortUrl: string;

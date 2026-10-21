@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import catalogJson from "@/data/catalog.json";
 import type { Catalog, ItemData, ItemWord, RefVoice } from "@/data/schema";
-import { createScoringClient, type ScoringClient, type ScoringProgress } from "@/engine/scoring/client.ts";
+import { createScoringClient, DEFAULT_MODEL_URL, type ScoringClient, type ScoringProgress } from "@/engine/scoring/client.ts";
 import { createScorer } from "@/engine/scoring/engine.ts";
 import { createOrtBackend, type OrtModuleLike } from "@/engine/scoring/backend-ort.ts";
 import { loadAssets, loadModelBytes } from "@/engine/scoring/assets.ts";
@@ -159,9 +159,9 @@ export default function ScoreLab() {
           ort.env.wasm.numThreads = 1;
           ort.env.wasm.proxy = false;
         }
-        const assets = await loadAssets("/models/whisper-phoneme/");
+        const assets = await loadAssets(DEFAULT_MODEL_URL);
         const key = assets.meta.files.defaultOnnx;
-        const bytes = await loadModelBytes("/models/whisper-phoneme/", assets.meta, key);
+        const bytes = await loadModelBytes(DEFAULT_MODEL_URL, assets.meta, key);
         const extra = assets.meta.files.sessionConfig?.[key];
         const backend = await createOrtBackend(ort, bytes, {
           inputName: assets.meta.onnx.input,

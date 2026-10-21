@@ -78,6 +78,13 @@ export type ModelMeta = {
    * model wants stress-specific units; lookup tries the exact symbol, then the base.
    */
   units: Record<string, number[]>;
+  /**
+   * Target symbols that accept any of several units (keys of `units`), e.g. a model with a
+   * flap token: { DX: ["T", "D", "ɾ"], Q: ["T", "D", "ʔ"] }. Default DX = Q = ["T", "D"].
+   * Units that are not ARPAbet (IPA names such as "ɾ", "ɯ") are never targets; they compete
+   * in GOP, may appear in `confusions` / `epentheticVowels`, and then show up in heardAs.
+   */
+  aliases?: Record<string, string[]>;
   /** Metadata for GOP features and the phone-score regressor. */
   regressor: {
     /** Order of the numeric features (then a one-hot of the phone class). */
@@ -160,6 +167,8 @@ export type ScoreOptions = {
   alignTo?: { phone: string; word: number }[];
   /** Also return `margins` (build time: per-item penalties from the native references). */
   measureMargins?: boolean;
+  /** Also return each phone's GOP features (PhoneResult.features; regressor training). */
+  features?: boolean;
   /**
    * Native baseline per phone ("<word>:<base>:<n>" -> raw 0..2 the reference got): a take
    * gets the same handicap where the recognizer rates even the native low. From the item data.
@@ -190,6 +199,8 @@ export type PhoneResult = {
   score: number;
   /** Raw regressor output on the model's own scale (0..2 for speechocean762). */
   raw: number;
+  /** Only with options.features: the numeric GOP features in meta.regressor.features order. */
+  features?: number[];
   /** Set when a likely confusion was found (ARPAbet base symbol, e.g. "L"). */
   heardAs?: string;
   issue?: PhoneIssue;

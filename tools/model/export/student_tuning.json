@@ -1,0 +1,38 @@
+{
+ "calibration": [
+  [
+   0.064,
+   0.0
+  ],
+  [
+   1.13,
+   20.0
+  ],
+  [
+   1.407,
+   40.0
+  ],
+  [
+   1.651,
+   70.0
+  ],
+  [
+   1.773,
+   90.0
+  ],
+  [
+   1.876,
+   97.0
+  ],
+  [
+   1.942,
+   100.0
+  ]
+ ],
+ "diagnosis": {
+  "substitutionPenalty": 2.2,
+  "insertionPenalty": 2.5,
+  "deletionPenalty": 6.0
+ },
+ "_note": "calibration: quantile-matched to vb223 on speechocean762 test (TS features); diagnosis: margins from tools/scoring-tests/tune.mts --model-dir public/models/student-ipa"
+}

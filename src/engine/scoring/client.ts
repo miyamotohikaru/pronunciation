@@ -13,8 +13,11 @@ import type { WorkerProgress } from "./worker.ts";
 
 export type ScoringProgress = Omit<WorkerProgress, "type">;
 
+/** The model the app loads. */
+export const DEFAULT_MODEL_URL = "/models/student-ipa/";
+
 export type ScoringClientOptions = {
-  /** default "/models/whisper-phoneme/" */
+  /** default "/models/student-ipa/" (the distilled student; vb223 stays in /models/whisper-phoneme/) */
   modelUrl?: string;
   /** default "/models/ort/" */
   ortUrl?: string;
@@ -76,7 +79,7 @@ export function createScoringClient(opts: ScoringClientOptions = {}): ScoringCli
       worker.onerror = (e) => reject(new Error(e.message || "scoring worker failed to start"));
       worker.postMessage({
         type: "init",
-        modelUrl: opts.modelUrl ?? "/models/whisper-phoneme/",
+        modelUrl: opts.modelUrl ?? DEFAULT_MODEL_URL,
         ortUrl: opts.ortUrl ?? "/models/ort/",
         providers: opts.providers,
         threads: opts.threads,

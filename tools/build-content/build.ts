@@ -83,6 +83,8 @@ const wordTexts = (t: Take) => t.clip.words.map((w) => w.text.toLowerCase());
 
 /** |Kokoro's word boundary - the alignment's|, seconds, per speed (starts and ends pooled) */
 const drift: Record<Speed, number[]> = { "": [], ".slow": [], ".slower": [] };
+/** reference word scores with the model defaults (shipped variants, no item calibration) */
+const uncalibrated: Record<Speed, number[]> = { "": [], ".slow": [], ".slower": [] };
 
 /** One take of a reference voice: alignment, self-score, pitch, syllables. */
 async function analyze(scorer: Scorer, take: Take, words: TargetWord[], scoring: ItemScoring): Promise<{ r: ScoreResult; timing: RefTiming }> {
@@ -148,6 +150,11 @@ async function buildRefs(scorer: Scorer, id: string, protect: string[], log: Wor
   );
   const words = derived.words;
   if (derived.learned.length) learnedLog.push({ id, learned: derived.learned });
+  // before the per-item calibration: what the model defaults make of the references
+  for (const t of all) {
+    const r0 = await scorer.score({ audio: t.audio, words });
+    for (const w of r0.words) uncalibrated[t.speed].push(w.score);
+  }
   const scoring = await calibrateScoring(scorer, words, all);
   const analyzed = [];
   for (const t of takes) {
@@ -423,7 +430,9 @@ for (const sp of SPEEDS) {
   const ws = wordLog.filter((w) => w.speed === sp).map((w) => w.score);
   const d = drift[sp].slice().sort((a, b) => a - b);
   const q = (x: number) => (d.length ? Math.round(d[Math.min(d.length - 1, Math.floor(x * d.length))] * 1000) : 0);
-  console.log(`speed ${sp || "normal"}: min word ${Math.min(...ws)}; Kokoro word boundary vs alignment |d| median ${q(0.5)} ms, p90 ${q(0.9)} ms, max ${q(1)} ms (${d.length} boundaries)`);
+  const u = uncalibrated[sp];
+  const uBelow = u.filter((x) => x < 90).length;
+  console.log(`speed ${sp || "normal"}: min word ${Math.min(...ws)}; before item calibration ${uBelow}/${u.length} words < 90 (${((100 * uBelow) / Math.max(1, u.length)).toFixed(1)} %); Kokoro word boundary vs alignment |d| median ${q(0.5)} ms, p90 ${q(0.9)} ms, max ${q(1)} ms (${d.length} boundaries)`);
 }
 console.log(`learned variants: ${learnedLog.reduce((a, x) => a + x.learned.length, 0)} on ${learnedLog.length} recordings`);
 writeFileSync(outDir ? join(outDir, "..", "build-content.json") : LOG, JSON.stringify({ runtime: rt, items: n, seconds: secs, bytes, below, learned: learnedLog, drift }, null, 1));

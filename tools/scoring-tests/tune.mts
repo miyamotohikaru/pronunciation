@@ -11,8 +11,10 @@ import { buildEmissions, columnFor, isVowel, makeUnitSpace, baseOf, parseVariant
 import { slotGraph, viterbiGraph, type Slot } from "../../src/engine/scoring/graph.ts";
 import { basename, dirname } from "node:path";
 
-const filter = process.argv[2] ?? "";
-const scorer = await makeScorer();
+const argv = process.argv.slice(2);
+const dirArg = argv.includes("--model-dir") ? argv[argv.indexOf("--model-dir") + 1] : undefined;
+const filter = argv.find((a) => !a.startsWith("--") && a !== dirArg) ?? "";
+const scorer = await makeScorer({ dir: dirArg });
 const meta = scorer.meta;
 const cfg = meta.diagnosis;
 
