@@ -58,6 +58,11 @@ export class Biquad {
     this.a2 = a2 / a0;
   }
 
+  /** normalised coefficients (a0 = 1) */
+  static fromCoefficients(b0: number, b1: number, b2: number, a1: number, a2: number): Biquad {
+    return new Biquad(b0, b1, b2, 1, a1, a2);
+  }
+
   static highpass(sampleRate: number, freq: number, q = Math.SQRT1_2): Biquad {
     const w = (2 * Math.PI * freq) / sampleRate;
     const cos = Math.cos(w);

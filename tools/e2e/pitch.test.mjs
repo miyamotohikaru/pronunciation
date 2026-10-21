@@ -88,6 +88,24 @@ test("noisy sweep (SNR 10 dB): median error < 0.25 st", (t) => {
   assert.ok(e.voicedRatio > 0.9 && e.median < 0.25, JSON.stringify(e));
 });
 
+test("iPhone-quiet input (−30 dB, −75 dBFS mic noise) voices like the original", (t) => {
+  const r = rnd(5);
+  for (const [id, x] of Object.entries(speech)) {
+    const base = analyzePitch(x).filter((f) => f.f0 !== null).length;
+    const q = x.map((v) => v * 0.0316 + (r() * 2 - 1) * 0.00031);
+    const quiet = analyzePitch(q).filter((f) => f.f0 !== null).length;
+    t.diagnostic(`${id}: voiced frames ${base} → ${quiet} at −30 dB`);
+    assert.ok(quiet >= base * 0.9, `${id}: ${quiet} vs ${base}`);
+  }
+});
+
+test("a 4 s sustained tone stays voiced (the noise floor learns from unvoiced frames only)", () => {
+  const x = new Float32Array(SR * 4);
+  for (let i = 0; i < x.length; i++) x[i] = 0.05 * Math.sin((2 * Math.PI * 180 * i) / SR) + 0.02 * Math.sin((2 * Math.PI * 360 * i) / SR);
+  const fr = analyzePitch(x).slice(3, -3);
+  assert.ok(fr.every((f) => f.f0 !== null), `${fr.filter((f) => f.f0 === null).length} unvoiced frames`);
+});
+
 test("silence and white noise are unvoiced", () => {
   assert.equal(analyzePitch(new Float32Array(SR)).filter((f) => f.f0 !== null).length, 0);
   const r = rnd(1);

@@ -58,13 +58,21 @@ export type TakeStats = {
   pitchLatencyMs: { median: number; p95: number; max: number; n: number } | null;
   /** ms between the end of a worklet chunk and its processing on the main thread */
   transportLatencyMs: { median: number; p95: number; max: number; n: number } | null;
+  /** Take.playback normalisation (null when no utterance was found → played as recorded) */
+  loudness: { inputLufs: number; outputLufs: number; gainDb: number; limiterDb: number; truePeakDb: number } | null;
 };
 
 export type Take = {
   /** sample rate of `pcm` (the capture rate: 48000, 44100, …) */
   sampleRate: number;
-  /** mono Float32 at the capture rate, trimmed to speech ± pre/post-roll — use for playback */
+  /** mono Float32 at the capture rate, trimmed to speech ± pre/post-roll, as recorded */
   pcm: Float32Array;
+  /**
+   * `pcm` loudness-normalised for listening: −18 LUFS, true peak ≤ −1 dBTP (the reference
+   * audio's target; iOS takes arrive 20–30 dB quiet without AGC). Player uses it automatically
+   * when you pass the Take itself: `player.play(take)`.
+   */
+  playback: Float32Array;
   /** the same span resampled to 16 kHz mono — feed this to the speech model and analyzePitch */
   pcm16k: Float32Array;
   /** seconds (= pcm16k.length / 16000) */

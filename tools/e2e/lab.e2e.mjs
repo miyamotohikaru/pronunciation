@@ -141,6 +141,9 @@ function analyse(take, u, source, offline, label) {
   const same = offCaptured.length === take.raw.pitch.length && offCaptured.every((f, i) => f.f0 === take.raw.pitch[i].f0 && f.rms === take.raw.pitch[i].rms);
   check(same, "analyzePitch(captured 16 kHz) ≠ live frames");
 
+  // playback copy at the reference loudness
+  const L = take.stats.loudness;
+  check(!!L && Math.abs(L.outputLufs - -18) < 1 && L.truePeakDb <= -0.95, `playback loudness ${JSON.stringify(L)}`);
   const d = take.diagnostics;
   check(d.captureMode === (label.includes("SP") ? "script-processor" : "audio-worklet"), `captureMode ${d.captureMode}`);
   if (!label.includes("SP")) check(d.workletSource === "url", `worklet source ${d.workletSource} (${d.workletError})`);
@@ -166,6 +169,7 @@ function analyse(take, u, source, offline, label) {
       voiced: `${pc.voicedBoth}/${fmt(pc.voicingAgreement, 2)}`,
       "lat ms": lat ? `${fmt(lat.median, 1)}/${fmt(lat.max, 1)}` : "–",
       startup: `${fmt(d.startupMs, 0)}ms/${d.startupGapFrames}`,
+      LUFS: L ? `${fmt(L.inputLufs, 1)}→${fmt(L.outputLufs, 1)}` : "–",
       load: `${fmt(take.stats.dspLoad * 100, 2)}%`,
     },
   };
@@ -213,6 +217,12 @@ async function main() {
             results.push({ label: "ref mp3", fail, row: { take: `ref ${url}`, offset: `${fmt(r.duration, 2)} s @ ${r.sampleRate}`, "vadΔstart": `decode ${fmt(r.decodeMs, 0)} ms`, voiced: `${r.voiced}/${r.frames}` } });
             playChecks.push("ab");
           }
+          // "スピーカー確認": loads + plays the loud native clip (no error, audible length)
+          await page.click("#speaker-check");
+          await page.waitForFunction(() => window.__lab.events.some((e) => e.type === "speaker-check" || e.type === "error"), { timeout: 10000 });
+          const sc = await page.evaluate(() => window.__lab.events.find((e) => e.type === "speaker-check" || e.type === "error"));
+          results.push({ label: "speaker check", fail: sc.type === "error" ? [sc.detail] : [], row: { take: "speaker check", offset: `${fmt(sc.t, 2)} s`, "vadΔstart": sc.detail } });
+          await new Promise((r) => setTimeout(r, 1600));
           for (const kind of ["take", "segment", ...playChecks]) {
             const r = await page.evaluate((k) => window.__lab.playTest(k), kind);
             const fail = [];

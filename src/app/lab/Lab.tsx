@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BreakText from "@/components/BreakText";
 import {
   MicRecorder,
@@ -24,6 +24,8 @@ import {
 
 const WORKLET_URL = "/worklets/mic-capture.js";
 const DEFAULT_REF = "/audio/am_michael/t01_rice.mp3";
+/** short, loud native clip for the "is it the speaker or the earpiece?" check */
+const SPEAKER_CLIP = "/audio/af_heart/p1.mp3";
 const F_LO = 60;
 const F_HI = 520;
 const LIVE_WINDOW = 4; // seconds of live pitch on screen
@@ -116,23 +118,26 @@ function peaks(pcm: Float32Array, cols: number): Float32Array {
   return out;
 }
 
+/**
+ * Voiced frames as one line: unvoiced gaps up to 40 ms are bridged when the pitch stays within
+ * 3 semitones, and a lone frame still shows as a round dot (round caps).
+ */
 function drawPitchLine(g: CanvasRenderingContext2D, frames: PitchFrame[], x: (t: number) => number, h: number) {
+  g.lineCap = "round";
+  g.lineJoin = "round";
   g.beginPath();
-  let pen = false;
-  let prev: PitchFrame | null = null;
+  let last: PitchFrame | null = null;
   for (const f of frames) {
-    if (f.f0 === null) {
-      pen = false;
-      prev = f;
-      continue;
-    }
+    if (f.f0 === null) continue;
     const X = x(f.t);
     const Y = yOfHz(f.f0, h);
-    const jump = prev && prev.f0 !== null && Math.abs(Math.log2(f.f0 / prev.f0)) > 0.25;
-    if (!pen || jump) g.moveTo(X, Y);
-    else g.lineTo(X, Y);
-    pen = true;
-    prev = f;
+    const bridge = last !== null && last.f0 !== null && f.t - last.t <= 0.05 + 1e-6 && Math.abs(Math.log2(f.f0 / last.f0)) <= 0.25;
+    if (bridge) g.lineTo(X, Y);
+    else {
+      g.moveTo(X, Y);
+      g.lineTo(X + 0.01, Y);
+    }
+    last = f;
   }
   g.stroke();
 }
@@ -162,12 +167,19 @@ function drawWave(
   }
   const cols = Math.max(1, Math.floor(w));
   const pk = peaks(pcm, cols);
+  // scale to the clip's own peak: a quiet iPhone take (no AGC) must not look like a flat line
+  let top = 0;
+  for (let k = 0; k < pk.length; k++) top = Math.max(top, Math.abs(pk[k]));
+  const scale = top > 1e-5 ? 0.95 / top : 1;
   g.fillStyle = "#3d3b48";
   for (let k = 0; k < cols; k++) {
-    const y0 = h / 2 - pk[2 * k + 1] * (h / 2);
-    const y1 = h / 2 - pk[2 * k] * (h / 2);
+    const y0 = h / 2 - pk[2 * k + 1] * scale * (h / 2);
+    const y1 = h / 2 - pk[2 * k] * scale * (h / 2);
     g.fillRect(k, y0, 1, Math.max(1, y1 - y0));
   }
+  g.fillStyle = "#868e96";
+  g.font = "10px system-ui";
+  g.fillText(`×${scale.toFixed(1)} (peak ${top > 0 ? (20 * Math.log10(top)).toFixed(1) : "–"} dBFS)`, 4, 12);
   if (o.pitch) {
     g.strokeStyle = "#d6336c";
     g.lineWidth = 2;
@@ -210,6 +222,8 @@ export default function Lab() {
   const [forceSP, setForceSP] = useState(false);
   const [env, setEnv] = useState<Record<string, unknown>>({});
   const [downloads, setDownloads] = useState<{ orig: string; m16: string } | null>(null);
+  const [route, setRoute] = useState<{ session: string; context: string }>({ session: "–", context: "–" });
+  const checkClip = useRef<AudioBuffer | null>(null);
 
   const recRef = useRef<MicRecorder | null>(null);
   const playerRef = useRef<Player | null>(null);
@@ -273,6 +287,15 @@ export default function Lab() {
     const id = setInterval(() => recRef.current && setDiag({ ...recRef.current.diagnostics }), 500);
     return () => clearInterval(id);
   }, [recState]);
+
+  // what the output is doing right now (audioSession type in effect, context state)
+  useEffect(() => {
+    const id = setInterval(() => {
+      const ctx = audioCore.current;
+      setRoute({ session: audioCore.sessionType() ?? "unsupported", context: ctx ? `${ctx.state} @ ${ctx.sampleRate} Hz` : "none" });
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
 
   // WAV downloads for the current take
   useEffect(() => {
@@ -344,7 +367,7 @@ export default function Lab() {
       // take + reference waveforms with playhead / selection
       const tk = takeRef.current;
       if (tk && takeCanvas.current) {
-        drawWave(takeCanvas.current, tk.pcm, tk.sampleRate, {
+        drawWave(takeCanvas.current, tk.playback, tk.sampleRate, {
           pitch: tk.pitch,
           speech: tk.speech,
           sel: dragSel.current ?? selRef.current,
@@ -478,7 +501,7 @@ export default function Lab() {
         const tk = takeRef.current;
         const rf = refRef.current;
         if (!tk || (kind === "ab" && !rf)) throw new Error("record a take (and load a reference for ab) first");
-        const mine = { pcm: tk.pcm, sampleRate: tk.sampleRate };
+        const mine = tk; // normalised playback
         const heads: PlayheadEvent[] = [];
         const p = new Player({ onPlayhead: (e) => heads.push(e) });
         const gap = 0.2;
@@ -516,13 +539,55 @@ export default function Lab() {
     };
   }, [loadRef]);
 
-  const takePlayable = take ? { pcm: take.pcm, sampleRate: take.sampleRate } : null;
+  // a Take is Playable as is: Player picks its loudness-normalised `playback` buffer
+  const takePlayable = take;
 
   const tAt = (e: React.PointerEvent<HTMLCanvasElement>): number => {
     const r = e.currentTarget.getBoundingClientRect();
     const dur = take ? take.duration : 0;
     return Math.min(dur, Math.max(0, ((e.clientX - r.left) / r.width) * dur));
   };
+
+  /** play a loud native clip: quiet here too ⇒ earpiece routing, not input level */
+  const onSpeakerCheck = () => {
+    audioCore.unlock(); // inside the tap, before the (first-time) fetch
+    const play = (b: AudioBuffer) => player().play(b, { label: "check" });
+    if (checkClip.current) {
+      play(checkClip.current);
+      return;
+    }
+    player()
+      .load(SPEAKER_CLIP)
+      .then((b) => {
+        checkClip.current = b;
+        log("speaker-check", b.duration, `${SPEAKER_CLIP}, session ${audioCore.sessionType() ?? "unsupported"}`);
+        return play(b);
+      })
+      .catch((e: unknown) => setError(String((e as Error)?.message ?? e)));
+  };
+
+  // one-screenshot summary of the last take
+  const summary = useMemo(() => {
+    if (!take) return null;
+    const sr = take.sampleRate;
+    let peak = 0;
+    for (let i = 0; i < take.pcm.length; i++) peak = Math.max(peak, Math.abs(take.pcm[i]));
+    const sp = take.speech;
+    const a = sp ? Math.round(sp.start * sr) : 0;
+    const b = sp ? Math.round(sp.end * sr) : take.pcm.length;
+    let e = 0;
+    for (let i = a; i < b; i++) e += take.pcm[i] * take.pcm[i];
+    const frames = sp ? take.pitch.filter((f) => f.t >= sp.start && f.t < sp.end) : take.pitch;
+    const voiced = frames.filter((f) => f.f0 !== null).length;
+    const dB = (x: number) => (x > 1e-6 ? (20 * Math.log10(x)).toFixed(1) : "–");
+    return {
+      peakDb: dB(peak),
+      speechRmsDb: dB(Math.sqrt(e / Math.max(1, b - a))),
+      floorDb: take.stats.floorDb.toFixed(1),
+      voicedPct: frames.length ? Math.round((100 * voiced) / frames.length) : 0,
+      frames: frames.length,
+    };
+  }, [take]);
 
   const busy = recState === "starting" || recState === "stopping";
   const recLabel = recState === "recording" ? "■ 停止" : recState === "idle" ? "● 録音" : "…";
@@ -600,6 +665,10 @@ export default function Lab() {
           <button type="button" className="rounded border px-3 py-1" onClick={() => player().stop()}>
             ■
           </button>
+          <button id="speaker-check" type="button" className="rounded border px-3 py-1" onClick={onSpeakerCheck}>
+            🔊 スピーカー確認
+          </button>
+          <span className="font-mono text-[12px] text-soft">audioSession: {route.session}</span>
           {downloads && (
             <>
               <a className="underline" href={downloads.orig} download="take.wav">
@@ -667,6 +736,40 @@ export default function Lab() {
       </section>
 
       <section className="mt-6 font-mono text-[12px]">
+        <div id="summary" className="mb-3 rounded border border-ink p-2 leading-5">
+          <div className="font-bold">要約</div>
+          {diag?.track ? (
+            <div>
+              mic (applied): EC {String(diag.track.settings.echoCancellation ?? "–")} · NS {String(diag.track.settings.noiseSuppression ?? "–")} · AGC{" "}
+              {String(diag.track.settings.autoGainControl ?? "–")} · {diag.track.settings.sampleRate ?? "–"} Hz · {diag.track.settings.channelCount ?? "–"} ch
+              {(() => {
+                const lat = (diag.track.settings as MediaTrackSettings & { latency?: number }).latency;
+                return typeof lat === "number" ? ` · latency ${(lat * 1000).toFixed(0)} ms` : "";
+              })()}
+            </div>
+          ) : (
+            <div>mic: まだ録音していない</div>
+          )}
+          {take && summary && (
+            <>
+              <div>
+                input: peak {summary.peakDb} dBFS · speech RMS {summary.speechRmsDb} dBFS · floor {summary.floorDb} dBFS
+              </div>
+              <div>
+                voiced {summary.voicedPct}% of {summary.frames} speech frames · {take.duration.toFixed(2)} s · stop {take.stopReason} · {diag?.captureMode ?? "–"}
+              </div>
+              <div>
+                playback:{" "}
+                {take.stats.loudness
+                  ? `${take.stats.loudness.inputLufs.toFixed(1)} → ${take.stats.loudness.outputLufs.toFixed(1)} LUFS (gain ${take.stats.loudness.gainDb >= 0 ? "+" : ""}${take.stats.loudness.gainDb.toFixed(1)} dB, limiter ${take.stats.loudness.limiterDb.toFixed(1)} dB, TP ${take.stats.loudness.truePeakDb.toFixed(1)} dBTP)`
+                  : "as recorded (no utterance)"}
+              </div>
+            </>
+          )}
+          <div>
+            output: audioSession {route.session} · context {route.context}
+          </div>
+        </div>
         <div className="font-bold">環境</div>
         {Object.entries(env).map(([k, v]) => (
           <Row key={k} k={k} v={v} />

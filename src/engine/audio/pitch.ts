@@ -3,6 +3,18 @@
  * difference function → cumulative-mean-normalised difference (CMND) → absolute threshold
  * → parabolic interpolation, plus voicing by aperiodicity + energy and a light median.
  *
+ * Voicing is tuned on real voices (LibriSpeech, speechocean762 phone-mic learners, GLOBE /
+ * Common Voice; tools/e2e/real-voices.mjs, against Praat), not TTS:
+ * - the energy gate is relative to a running noise floor (floor + floorMarginDb, never below
+ *   minRmsDb), so a quiet input — iOS without AGC is 20–30 dB down — still voices. The floor
+ *   is the 10th percentile of the *unvoiced* frames only, so a long sustained vowel (or a
+ *   test tone) can never become "noise";
+ * - hysteresis: a frame that continues the previous voiced frame (within holdSemitones) only
+ *   has to meet the looser holdAperiodicity (breathy / decaying vowels, phone mics).
+ * Both are causal state inside the tracker, so live == offline still holds bit for bit.
+ * (A continuity rule that pulled octave jumps back to the previous period was tried and
+ * dropped: it doubled octave errors by carrying the first wrong frame along.)
+ *
  * No browser or Node dependencies, no imports: the page streams microphone audio through
  * `PitchTracker` and the build runs `analyzePitch()` on the native reference audio in Node.
  * `analyzePitch(x)` is literally "push x into a fresh PitchTracker, then flush", so live and
@@ -33,15 +45,25 @@ export type PitchOptions = {
   window?: number;
   /** YIN absolute threshold on the CMND for picking the first dip. Default 0.12 */
   threshold?: number;
-  /** voiced only if the CMND minimum (aperiodicity, 0 = perfectly periodic) is at most this. Default 0.3 */
+  /** a voicing onset needs CMND minimum (aperiodicity, 0 = perfectly periodic) ≤ this. Default 0.4 */
   maxAperiodicity?: number;
-  /** voiced only if the frame RMS is at least this (dBFS). Default -50 */
+  /** a frame continuing a voiced one (|Δf0| ≤ holdSemitones) needs only ≤ this. Default 0.5 */
+  holdAperiodicity?: number;
+  /** max f0 change from the previous voiced frame for the looser limit (semitones). Default 2 */
+  holdSemitones?: number;
+  /** energy gate: frame RMS ≥ running noise floor + this (dB). Default 6 */
+  floorMarginDb?: number;
+  /** …and never below this absolute level (dBFS). Default -70 */
   minRmsDb?: number;
+  /** noise-floor window (ms; 10th percentile, rises ≤ 10 dB/s). Default 1500 */
+  floorWindowMs?: number;
   /** median smoothing length in frames (odd, 1 = off). Default 3 */
   median?: number;
 };
 
 type Raw = { f0: number | null; rms: number };
+
+const FLOOR_RISE_DB_PER_S = 10;
 
 export class PitchTracker {
   readonly sampleRate: number;
@@ -58,10 +80,22 @@ export class PitchTracker {
   private readonly left: number;
   private readonly threshold: number;
   private readonly maxAp: number;
-  private readonly minRms: number;
+  private readonly holdAp: number;
+  private readonly holdSt: number;
+  private readonly marginDb: number;
+  private readonly minRmsDb: number;
   private readonly fMin: number;
   private readonly fMax: number;
   private readonly medHalf: number;
+  // causal voicing state
+  private prevF0: number | null = null;
+  /** running noise floor of the frame RMS (dBFS); -Infinity until known */
+  floorDb = -Infinity;
+  private readonly floorRing: Float64Array;
+  private readonly floorScratch: Float64Array;
+  private floorHead = 0;
+  private floorLen = 0;
+  private readonly floorRise: number;
 
   private buf: Float32Array;
   private bufStart: number; // absolute sample index of buf[0]
@@ -87,8 +121,15 @@ export class PitchTracker {
     this.left = Math.floor(this.N / 2);
     this.lookahead = this.N - 1 - this.left;
     this.threshold = opts.threshold ?? 0.12;
-    this.maxAp = opts.maxAperiodicity ?? 0.3;
-    this.minRms = Math.pow(10, (opts.minRmsDb ?? -50) / 20);
+    this.maxAp = opts.maxAperiodicity ?? 0.4;
+    this.holdAp = Math.max(this.maxAp, opts.holdAperiodicity ?? 0.5);
+    this.holdSt = opts.holdSemitones ?? 2;
+    this.marginDb = opts.floorMarginDb ?? 6;
+    this.minRmsDb = opts.minRmsDb ?? -70;
+    const winFrames = Math.max(10, Math.round((opts.floorWindowMs ?? 1500) / 1000 / (this.hop / sr)));
+    this.floorRing = new Float64Array(winFrames);
+    this.floorScratch = new Float64Array(winFrames);
+    this.floorRise = FLOOR_RISE_DB_PER_S * (this.hop / sr);
     const m = Math.max(1, Math.floor(opts.median ?? 3));
     this.medHalf = (m % 2 === 1 ? m - 1 : m) / 2;
     this.latency = (this.lookahead + this.medHalf * this.hop) / sr;
@@ -109,6 +150,10 @@ export class PitchTracker {
     this.raw = [];
     this.rawBase = 0;
     this.done = false;
+    this.prevF0 = null;
+    this.floorDb = -Infinity;
+    this.floorHead = 0;
+    this.floorLen = 0;
   }
 
   /** feed 16 kHz samples; returns the frames that became final */
@@ -194,18 +239,39 @@ export class PitchTracker {
     return { t, f0: v[v.length >> 1], rms: me.rms };
   }
 
+  /** running 10th percentile of the unvoiced frame levels (digital silence excluded) */
+  private updateFloor(db: number): void {
+    if (db === -Infinity) return;
+    const cap = this.floorRing.length;
+    this.floorRing[(this.floorHead + this.floorLen) % cap] = db;
+    if (this.floorLen < cap) this.floorLen++;
+    else this.floorHead = (this.floorHead + 1) % cap;
+    if (this.floorLen < 10) return;
+    const n = this.floorLen;
+    const a = this.floorScratch.subarray(0, n);
+    for (let i = 0; i < n; i++) a[i] = this.floorRing[(this.floorHead + i) % cap];
+    a.sort();
+    const target = a[Math.floor(0.1 * (n - 1))] + 1;
+    this.floorDb = this.floorDb === -Infinity || target < this.floorDb ? target : Math.min(target, this.floorDb + this.floorRise);
+  }
+
   /** YIN on buf[s, s + N) */
   private analyze(s: number): Raw {
     const x = this.buf;
     const { W, tauMin, tauMax, d, cmnd } = this;
 
-    // energy of the W samples centred on the frame
+    // energy of the W samples centred on the frame, gated against the running noise floor
     const c = s + this.left;
     const r0 = c - (W >> 1);
     let e = 0;
     for (let j = 0; j < W; j++) e += x[r0 + j] * x[r0 + j];
     const rms = Math.sqrt(e / W);
-    if (rms < this.minRms) return { f0: null, rms };
+    const db = rms > 0 ? 20 * Math.log10(rms) : -Infinity;
+    if (db < Math.max(this.minRmsDb, this.floorDb + this.marginDb)) {
+      this.updateFloor(db);
+      this.prevF0 = null;
+      return { f0: null, rms };
+    }
 
     // 1–2. difference function
     d[0] = 0;
@@ -260,8 +326,13 @@ export class PitchTracker {
     }
     if (ap < 0) ap = 0;
     const f0 = this.sampleRate / (tau + delta);
-    if (ap > this.maxAp || f0 < this.fMin * 0.97 || f0 > this.fMax * 1.03) return { f0: null, rms };
-    return { f0, rms };
+    const inRange = f0 >= this.fMin * 0.97 && f0 <= this.fMax * 1.03;
+    const prev = this.prevF0;
+    const holds = prev !== null && ap <= this.holdAp && Math.abs(12 * Math.log2(f0 / prev)) <= this.holdSt;
+    const voiced = inRange && (ap <= this.maxAp || holds);
+    this.prevF0 = voiced ? f0 : null;
+    if (!voiced) this.updateFloor(db);
+    return { f0: voiced ? f0 : null, rms };
   }
 }
 

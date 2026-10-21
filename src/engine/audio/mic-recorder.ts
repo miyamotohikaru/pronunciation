@@ -19,6 +19,7 @@
 import { audioCore, type ContextState } from "./context.ts";
 import { CAPTURE_PROCESSOR_NAME, CAPTURE_WORKLET_SOURCE } from "./capture-worklet.ts";
 import { summarize } from "./dsp.ts";
+import type { NormalizeOptions } from "./loudness.ts";
 import type { PitchOptions } from "./pitch.ts";
 import { CapturePipeline, type CaptureHandlers } from "./pipeline.ts";
 import type { StopReason, Take } from "./types.ts";
@@ -46,6 +47,8 @@ export type MicRecorderOptions = {
   keepRaw?: boolean;
   /** frames per worklet message (latency vs message rate). Default 256 (5.3 ms at 48 kHz) */
   chunkFrames?: number;
+  /** Take.playback loudness target (default −18 LUFS / −1 dBTP); false = play as recorded */
+  playback?: NormalizeOptions | false;
   levelFps?: number;
 };
 
@@ -295,7 +298,7 @@ export class MicRecorder {
     const rate = ctx.sampleRate;
     const self = this;
     this.pipeline = new CapturePipeline(
-      { sampleRate: rate, vad: this.opts.vad, pitch: this.opts.pitch, keepRaw: this.opts.keepRaw, levelFps: this.opts.levelFps },
+      { sampleRate: rate, vad: this.opts.vad, pitch: this.opts.pitch, keepRaw: this.opts.keepRaw, levelFps: this.opts.levelFps, playback: this.opts.playback },
       {
         onLevel: this.ev.onLevel,
         onSpeechStart: this.ev.onSpeechStart,

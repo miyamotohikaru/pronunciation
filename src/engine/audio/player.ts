@@ -11,8 +11,11 @@
 
 import { audioCore } from "./context.ts";
 
-/** an AudioBuffer, or mono PCM with its rate (a Take fits: { pcm, sampleRate }) */
-export type Playable = AudioBuffer | { pcm: Float32Array; sampleRate: number };
+/**
+ * An AudioBuffer, or mono PCM with its rate. A Take fits as is — its loudness-normalised
+ * `playback` buffer is used when present (so `player.play(take)` is already at −18 LUFS).
+ */
+export type Playable = AudioBuffer | { pcm: Float32Array; sampleRate: number; playback?: Float32Array };
 
 export type PlayItem = {
   source: Playable;
@@ -78,7 +81,9 @@ export class Player {
   /** a Playable as an AudioBuffer (PCM is copied once and cached per array) */
   toBuffer(source: Playable): AudioBuffer {
     if (typeof AudioBuffer !== "undefined" && source instanceof AudioBuffer) return source;
-    const { pcm, sampleRate } = source as { pcm: Float32Array; sampleRate: number };
+    const src = source as { pcm: Float32Array; sampleRate: number; playback?: Float32Array };
+    const pcm = src.playback ?? src.pcm;
+    const sampleRate = src.sampleRate;
     let b = pcmBuffers.get(pcm);
     if (!b || b.sampleRate !== sampleRate) {
       b = audioCore.ensure().createBuffer(1, Math.max(1, pcm.length), sampleRate);

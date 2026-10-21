@@ -11,6 +11,7 @@
  */
 
 import { Biquad, DB_FLOOR, Float32Growable, toDb } from "./dsp.ts";
+import { normalizeLoudness, type NormalizeOptions } from "./loudness.ts";
 import { PitchTracker, type PitchOptions } from "./pitch.ts";
 import { StreamResampler } from "./resample.ts";
 import type { LevelEvent, PitchFrame, SpeechEndEvent, SpeechRegion, SpeechStartEvent, StopReason, Take, TakeStats, VadEventLog } from "./types.ts";
@@ -30,6 +31,8 @@ export type CapturePipelineOptions = {
   highpassHz?: number;
   /** keep untrimmed buffers in Take.raw. Default false */
   keepRaw?: boolean;
+  /** Take.playback loudness target (default −18 LUFS / −1 dBTP); false = play as recorded */
+  playback?: NormalizeOptions | false;
 };
 
 export type CaptureHandlers = {
@@ -239,6 +242,8 @@ export class CapturePipeline {
       const k = Math.round((f.t * MODEL_RATE) / hop);
       if (k * hop >= a16 && k * hop < b16) pitch.push({ t: ((k - k0) * hop) / MODEL_RATE, f0: f.f0, rms: f.rms });
     }
+    const pcm = this.raw.slice(aRaw, bRaw);
+    const norm = rawSpeech && this.opts.playback !== false && pcm.length > 0 ? normalizeLoudness(pcm, sr, this.opts.playback || {}) : null;
     this.dspMs += now() - t0;
 
     const stats: TakeStats = {
@@ -252,11 +257,13 @@ export class CapturePipeline {
       dspLoad: this.time > 0 ? this.dspMs / 1000 / this.time : 0,
       pitchLatencyMs: null,
       transportLatencyMs: null,
+      loudness: norm && { inputLufs: norm.inputLufs, outputLufs: norm.outputLufs, gainDb: norm.gainDb, limiterDb: norm.limiterDb, truePeakDb: norm.truePeakDb },
       ...extraStats,
     };
     const take: Take = {
       sampleRate: sr,
-      pcm: this.raw.slice(aRaw, bRaw),
+      pcm,
+      playback: norm ? norm.pcm : pcm,
       pcm16k: this.pcm16.slice(a16, b16),
       duration: (b16 - a16) / MODEL_RATE,
       offset: a16 / MODEL_RATE,
