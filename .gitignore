@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+.vercel
+.env*.local
+tsconfig.tsbuildinfo
+.DS_Store
+# 手元だけの作業場（Python環境・モデル原本・検証用の音声・比較用スクショ）
+.venv/
+.venv-tts/
+.work/
+.benchmarks/
+test-results/
+__pycache__/
