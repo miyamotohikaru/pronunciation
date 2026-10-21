@@ -28,6 +28,8 @@ const browser = await puppeteer.launch({
     `--use-file-for-fake-audio-capture=${WAV}`,
     "--disable-features=AudioServiceSandbox",
     "--autoplay-policy=no-user-gesture-required",
+      // 実際のスピーカーに出すと、Mac の音声まわりの状態しだいで音声の時計が止まり、偽マイクも無音になる（2026-10-21 に発生）
+      "--disable-audio-output",
   ],
 });
 const page = await browser.newPage();

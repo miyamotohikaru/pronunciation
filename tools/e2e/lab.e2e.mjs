@@ -63,6 +63,8 @@ async function launch(wav) {
       `--use-file-for-fake-audio-capture=${wav}`,
       // the sandboxed audio service can't open the file → the fake mic would be silent
       "--disable-features=AudioServiceSandbox",
+      // 実際のスピーカーに出すと、Mac の音声まわりの状態しだいで音声の時計が止まり、偽マイクも無音になる（2026-10-21 に発生）
+      "--disable-audio-output",
     ],
   });
 }
