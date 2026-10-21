@@ -3,14 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node tools/lib/copy-ort-web.mjs",
     "dev": "next dev --turbopack -p 3016",
+    "prebuild": "node tools/lib/copy-ort-web.mjs",
     "build": "next build",
     "start": "next start",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tools/e2e/*.test.mjs",
-    "test:e2e": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/e2e/lab.e2e.mjs"
+    "test:e2e": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/e2e/lab.e2e.mjs",
+    "test:voices": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/e2e/real-voices.mjs"
   },
   "dependencies": {
     "next": "^16.2.1",
+    "onnxruntime-web": "1.30.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

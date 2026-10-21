@@ -12,3 +12,5 @@ tsconfig.tsbuildinfo
 .benchmarks/
 test-results/
 __pycache__/
+# onnxruntime-web runtime, copied from node_modules by tools/lib/copy-ort-web.mjs (predev / prebuild)
+public/models/ort/

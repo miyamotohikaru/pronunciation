@@ -6,6 +6,7 @@ OUT_DIR defaults to public/models/whisper-phoneme. Calibration knots and diagnos
 thresholds live in CALIBRATION / DIAGNOSIS below (tuned with tune_diagnosis.py / the
 Node tests) - edit them here and re-run, never by hand in meta.json.
 """
+import hashlib
 import json
 import shutil
 import sys
@@ -22,7 +23,11 @@ ROOT = Path(__file__).resolve().parents[3]
 MODEL_DIR = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / ".work/models/whisper-phoneme"
 ONNX_DIR = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / ".work/onnx"
 OUT_DIR = Path(sys.argv[3]) if len(sys.argv) > 3 else ROOT / "public/models/whisper-phoneme"
-SHIP = ["int8"]  # ONNX variants copied next to meta.json (fp32 stays in ONNX_DIR)
+# ONNX variants copied next to meta.json; the first is the default. int8w = weight-only int8
+# (quantize_weights.py): smallest file, fp32 compute (same numbers on every runtime, fast on
+# WebGPU). fp32 and the dynamic int8 stay in ONNX_DIR.
+SHIP = ["int8w"]
+SESSION_CONFIG = {"int8w": {"session.disable_quant_qdq": "1"}}  # fold DequantizeLinear at load
 
 # Padding policy chosen with eval_padding.py (see README).
 TAIL_PAD_SECONDS = 0.5
@@ -107,15 +112,19 @@ def main():
     export_filters(OUT_DIR / "mel_filters_80.json")
     export_regressor(load_regressor(MODEL_DIR), OUT_DIR / "regressor.json")
     files = {k: f"model.{k}.onnx" for k in SHIP}
+    hashes = {}
     for k in SHIP:
         shutil.copyfile(ONNX_DIR / f"model.{k}.onnx", OUT_DIR / f"model.{k}.onnx")
+        hashes[k] = hashlib.sha256((OUT_DIR / f"model.{k}.onnx").read_bytes()).hexdigest()[:16]
     meta = {
         "schema": 1,
         "id": "whisper-base-en-phoneme-ctc",
         "source": "vb223/whisper-base-en-phoneme-ctc (Whisper base.en encoder by OpenAI + CTC head + GOP regressor), "
                   "trained on speechocean762 (Zhang et al., CC BY 4.0)",
         "license": "MIT",
-        "files": {"onnx": files, "defaultOnnx": SHIP[0], "regressor": "regressor.json", "melFilters": "mel_filters_80.json"},
+        "files": {"onnx": files, "defaultOnnx": SHIP[0], "hash": hashes,
+                  "sessionConfig": {k: v for k, v in SESSION_CONFIG.items() if k in SHIP},
+                  "regressor": "regressor.json", "melFilters": "mel_filters_80.json"},
         "frontEnd": {"type": "whisper-log-mel", "sampleRate": 16000, "nFft": 400, "hop": 160, "nMels": 80,
                      "tailPadSeconds": TAIL_PAD_SECONDS, "minSeconds": MIN_SECONDS},
         "onnx": {"input": "mel", "output": "log_probs", "logSoftmax": True, "frameRate": 50, "samplesPerFrame": 320,

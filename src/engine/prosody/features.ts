@@ -93,3 +93,23 @@ export function warpToRef(points: ContourPoint[], userRegions: Region[], refRegi
   }
   return out;
 }
+
+/**
+ * 自分の音程を、対応点（自分の時刻 → お手本の時刻）の区分線形でお手本の時間軸へ写す。
+ * 対応点は時刻順でなくてもよい（並べ直し、逆行する点は捨てる）。
+ */
+export function warpByKnots(points: ContourPoint[], knots: [number, number][]): ContourPoint[] {
+  const k = [...knots].sort((a, b) => a[0] - b[0]).filter((p, i, a) => i === 0 || (p[0] > a[i - 1][0] && p[1] >= a[i - 1][1]));
+  if (k.length < 2) return [];
+  const out: ContourPoint[] = [];
+  let j = 0;
+  for (const p of points) {
+    if (p.t < k[0][0] || p.t > k[k.length - 1][0]) continue;
+    while (j + 1 < k.length - 1 && p.t > k[j + 1][0]) j++;
+    const [u0, r0] = k[j];
+    const [u1, r1] = k[j + 1];
+    const a = u1 > u0 ? (p.t - u0) / (u1 - u0) : 0;
+    out.push({ t: r0 + a * (r1 - r0), st: p.st });
+  }
+  return out;
+}

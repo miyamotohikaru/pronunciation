@@ -6,15 +6,15 @@
  *          sklearn -> same spans, raw scores within 1e-3 (int8 model, as shipped)
  *   e2e    fp32 model end to end (TS mel + onnxruntime-node vs torch mel + onnxruntime
  *          python) -> same spans, raw within 1e-3
- * plus the int8 end-to-end difference for information (int8 dynamic quantization is not
- * bit-stable across ONNX Runtime builds; see README).
+ * plus the shipped model end to end (weight-only int8: fp32 compute, so it matches too;
+ * the dynamic-int8 export does not - see README).
  *   node parity.mts            (writes .work/eval/parity.json; scoring.test.ts asserts it)
  */
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join, basename, dirname } from "node:path";
-import { loadAssetsFs, makeScorer, readWav, ROOT, WORK, shippedTargets } from "./lib.mts";
-import { cases, kokoroJsons } from "./cases.mts";
+import { loadAssetsFs, makeScorer, readWav, ROOT, WORK, targetsFor } from "./lib.mts";
+import { cases } from "./cases.mts";
 import { padForModel, whisperLogMel } from "../../src/engine/scoring/mel.ts";
 import { parseVariant } from "../../src/engine/scoring/phones.ts";
 import type { Scorer } from "../../src/engine/scoring/engine.ts";
@@ -69,7 +69,7 @@ export async function runParity() {
   const picked = cases().filter((c) => c.file.includes("/audio/") || /\/(af_heart|am_michael)\/t0[1-8]_[a-z]+\.16k\.wav$/.test(c.file));
   const runs: { id: string; i8: Awaited<ReturnType<typeof take>>; f32: Awaited<ReturnType<typeof take>> }[] = [];
   for (const c of picked) {
-    const { words } = await shippedTargets(int8, c.sentence, kokoroJsons(c.sentence));
+    const words = await targetsFor(int8, c);
     const id = `${basename(dirname(c.file))}_${basename(c.file, ".wav")}`;
     runs.push({ id, i8: await take(int8, c.file, words, id, "int8"), f32: await take(fp32, c.file, words, id, "fp32") });
   }
@@ -98,7 +98,7 @@ const fmt = (x: number) => x.toExponential(1).padStart(8);
 
 if (process.argv[1]?.endsWith("parity.mts")) {
   const rows = await runParity();
-  console.log(`${"clip".padEnd(30)} ph  mel|d|   | logic: align |dRaw|  | e2e fp32: align |dRaw|  |dLogP| | e2e int8: align |dRaw|  |dLogP|`);
+  console.log(`${"clip".padEnd(30)} ph  mel|d|   | logic: align |dRaw|  | e2e fp32: align |dRaw|  |dLogP| | e2e shipped: align |dRaw|  |dLogP|`);
   for (const r of rows)
     console.log(
       `${r.id.padEnd(30)} ${String(r.phones).padStart(2)} ${fmt(r.dMel)}  |  ${r.logic.sameAlign ? "same" : "DIFF"} ${fmt(r.logic.dRaw)}  |  ${r.e2eFp32.sameAlign ? "same" : "DIFF"} ${fmt(r.e2eFp32.dRaw)} ${fmt(r.dLogPfp32)}  |  ${r.e2eInt8.sameAlign ? "same" : "DIFF"} ${fmt(r.e2eInt8.dRaw)} ${fmt(r.dLogPint8)}`,
@@ -106,5 +106,5 @@ if (process.argv[1]?.endsWith("parity.mts")) {
   const bad = rows.filter((r) => !r.logic.sameAlign || r.logic.dRaw > TOL || !r.e2eFp32.sameAlign || r.e2eFp32.dRaw > TOL);
   const i8 = rows.filter((r) => r.e2eInt8.sameAlign).length;
   console.log(bad.length ? `\n${bad.length} clip(s) out of tolerance` : `\nall ${rows.length} clips: logic + fp32 end-to-end identical alignment, raw within ${TOL}`);
-  console.log(`int8 end-to-end (onnxruntime-node 1.30 vs python 1.23): same alignment ${i8}/${rows.length}, max |dRaw| ${Math.max(...rows.map((r) => r.e2eInt8.dRaw)).toFixed(3)}`);
+  console.log(`shipped model end to end (onnxruntime-node 1.30 vs python 1.23): same alignment ${i8}/${rows.length}, max |dRaw| ${Math.max(...rows.map((r) => r.e2eInt8.dRaw)).toExponential(1)}`);
 }

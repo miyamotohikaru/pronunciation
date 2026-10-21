@@ -9,7 +9,7 @@
  * sounds like the reference is never marked down for it. Insertions are never learned.
  * Run it once per item when the content is built, and ship the variants with the item.
  */
-import type { DiagnosisConfig, ScoreResult, TargetWord } from "./types.ts";
+import type { DiagnosisConfig, PhoneResult, ScoreResult, TargetWord } from "./types.ts";
 import type { Scorer } from "./engine.ts";
 import { baseOf, isVowel, parseVariant, VOWELS } from "./phones.ts";
 
@@ -20,6 +20,13 @@ export type DeriveOptions = {
   substitutionPenalty?: number;
   deletionPenalty?: number;
   rounds?: number;
+  /** An unstressed vowel scoring below this in a reference take becomes optional. */
+  weakBelow?: number;
+  /**
+   * Base phones that must stay as they are (never replaced, never made optional, never
+   * introduced): the contrast an item trains, e.g. ["N", "NG"] for win / wing.
+   */
+  protect?: string[];
 };
 
 /**
@@ -27,8 +34,20 @@ export type DeriveOptions = {
  * Anything else a learner might do (R/L, TH/S, V/B ...) is never learned.
  */
 const NATIVE_CONSONANT_CHANGES: Record<string, string[]> = {
-  T: ["D"], D: ["T"], S: ["Z"], Z: ["S"], DH: ["D"], JH: ["Y"], Y: ["JH"], N: ["NG", "T", "D"], NG: ["N"],
+  T: ["D"], D: ["T"], S: ["Z"], Z: ["S"], DH: ["D"], JH: ["Y"], Y: ["JH"], N: ["T", "D"],
 };
+/**
+ * Vowel qualities a native's stressed vowel may take (cot-caught, lax/tense, the first
+ * element of a diphthong ...). Unstressed vowels may also reduce to AH / IH / UH / ER.
+ * "rice" heard as R IH S is not learned: that would accept a learner's "riss".
+ */
+const NATIVE_VOWEL_CHANGES: Record<string, string[]> = {
+  AA: ["AO", "AH"], AO: ["AA", "AH", "OW"], AH: ["AA", "AO", "OW", "ER"], AE: ["EH"], EH: ["AE", "IH", "EY"],
+  IH: ["IY", "EH", "AH"], IY: ["IH"], UH: ["UW", "AH"], UW: ["UH"], ER: ["AH"], EY: ["EH"],
+  OW: ["AO", "AH", "UH"], AY: ["AA", "AH"], AW: ["AA", "AE"], OY: ["AO"],
+};
+const REDUCED = ["AH", "IH", "UH", "UW", "ER", "IY"];
+
 /** Consonants a native may leave silent (unreleased or reduced). Vowels may always be. */
 const NATIVE_DROPPABLE = new Set(["T", "D", "K", "P", "G", "HH", "DH", "M", "N"]);
 
@@ -40,7 +59,7 @@ function sensitive(units: Record<string, number[]>, opts: DeriveOptions): Partia
   return {
     confusions,
     substitutionPenalty: opts.substitutionPenalty ?? 1.0,
-    deletionPenalty: opts.deletionPenalty ?? 2.0,
+    deletionPenalty: opts.deletionPenalty ?? 1.2,
     insertionPenalty: Infinity,
   };
 }
@@ -62,13 +81,26 @@ export async function deriveVariants(
   const out: TargetWord[] = words.map((w) => ({ text: w.text, variants: w.variants.map(variantString) }));
   const learned: LearnedVariant[] = [];
   const diag = sensitive(scorer.meta.units, opts);
+  const weakBelow = opts.weakBelow ?? 75;
+  const protect = new Set((opts.protect ?? []).map(baseOf));
   for (let round = 0; round < (opts.rounds ?? 2); round++) {
     let added = 0;
     for (const ref of refs) {
       const r: ScoreResult = await scorer.score({ audio: ref.audio, words: out }, { diagnosis: diag });
       r.words.forEach((w, wi) => {
+        // a weak unstressed vowel with nothing specific found is a reduced vowel: optional
+        const weak = (p: PhoneResult) => !p.issue || p.issue === "distortion" ? isVowel(p.phone) && p.phone.endsWith("0") && p.score < weakBelow : false;
+        const guarded = (p: PhoneResult) => protect.has(baseOf(p.phone)) || (p.heardAs !== undefined && protect.has(p.heardAs));
+        const plausible = (p: PhoneResult) => {
+          if (p.issue !== "substitution" || !p.heardAs || !isVowel(p.phone)) return true;
+          const stressed = /[12]$/.test(p.phone);
+          return (NATIVE_VOWEL_CHANGES[baseOf(p.phone)] ?? []).includes(p.heardAs) || (!stressed && REDUCED.includes(p.heardAs));
+        };
         const flagged = w.phones.filter(
-          (p) => p.issue === "substitution" || (p.issue === "deletion" && (isVowel(p.phone) || NATIVE_DROPPABLE.has(baseOf(p.phone)))),
+          (p) =>
+            !guarded(p) &&
+            plausible(p) &&
+            (p.issue === "substitution" || (p.issue === "deletion" && (isVowel(p.phone) || NATIVE_DROPPABLE.has(baseOf(p.phone)))) || weak(p)),
         );
         if (!flagged.length) return;
         // a native realizes most of the word as spelled: at most 2 changes and at most half
@@ -81,7 +113,7 @@ export async function deriveVariants(
         const reasons: string[] = [];
         for (const p of flagged) {
           const t = toks[p.index];
-          if (p.issue === "deletion") {
+          if (p.issue === "deletion" || weak(p)) {
             t.optional = true;
             reasons.push(`${p.phone} may be silent`);
           } else if (p.heardAs) {

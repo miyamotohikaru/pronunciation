@@ -2,7 +2,9 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import * as ort from "onnxruntime-node";
-import { createOrtBackend, createScorer, misakiToArpabet, type Scorer } from "../../src/engine/scoring/index.ts";
+import { createOrtBackend, createScorer, type Scorer } from "../../src/engine/scoring/index.ts";
+import { loadCmudict } from "../build-content/cmudict.ts";
+import { cmuVariants as cmuV, targetsFromKokoro as fromKokoro, targetsFromText as fromText, tokenize, type KokoroClip } from "../lib/targets.ts";
 import type { MelFilterBank, ModelMeta, RegressorJson, TargetWord } from "../../src/engine/scoring/types.ts";
 
 export const ROOT = new URL("../../", import.meta.url).pathname;
@@ -60,13 +62,19 @@ export function loadAssetsFs(dir = MODEL_DIR) {
 
 export async function makeScorer(opts: { onnx?: string; threads?: number; dir?: string } = {}): Promise<Scorer> {
   const assets = loadAssetsFs(opts.dir);
-  const file = opts.onnx ?? join(opts.dir ?? MODEL_DIR, assets.meta.files.onnx[assets.meta.files.defaultOnnx]);
+  const key = assets.meta.files.defaultOnnx;
+  const file = opts.onnx ?? join(opts.dir ?? MODEL_DIR, assets.meta.files.onnx[key]);
+  const extra = opts.onnx ? (file.includes("int8w") ? { "session.disable_quant_qdq": "1" } : undefined) : assets.meta.files.sessionConfig?.[key];
   const backend = await createOrtBackend(ort as never, file, {
     inputName: assets.meta.onnx.input,
     outputName: assets.meta.onnx.output,
     nMels: assets.meta.frontEnd.nMels,
     executionProviders: ["cpu"],
-    sessionOptions: opts.threads ? { intraOpNumThreads: opts.threads } : {},
+    sessionOptions: {
+      ...(opts.threads ? { intraOpNumThreads: opts.threads } : {}),
+      // weight-only int8: fold DequantizeLinear into fp32 weights once at load
+      ...(extra ? { extra } : {}),
+    },
   });
   return createScorer(assets, backend);
 }
@@ -75,62 +83,25 @@ export async function makeScorer(opts: { onnx?: string; threads?: number; dir?: 
 
 let cmu: Map<string, string[][]> | null = null;
 export function cmudict(): Map<string, string[][]> {
-  if (cmu) return cmu;
-  cmu = new Map();
-  for (const line of readFileSync(join(WORK, "cmudict.dict"), "utf8").split("\n")) {
-    const parts = line.split("#")[0].trim().split(/\s+/);
-    if (parts.length < 2) continue;
-    const w = parts[0].replace(/\(\d+\)$/, "");
-    const list = cmu.get(w) ?? [];
-    list.push(parts.slice(1));
-    cmu.set(w, list);
-  }
-  return cmu;
+  return (cmu ??= loadCmudict(join(WORK, "cmudict.dict")));
 }
 
-/** Words of a text for lookup: lower case, keeps apostrophes. */
-export function tokenize(text: string): string[] {
-  return text.toLowerCase().match(/[a-z']+/g) ?? [];
-}
+export { tokenize };
+export type { KokoroClip };
 
 /** CMUdict variants of a chunk ("check it out" -> every combination, capped). */
 export function cmuVariants(chunk: string, cap = 8): string[][] {
-  let acc: string[][] = [[]];
-  for (const w of tokenize(chunk)) {
-    const vs = cmudict().get(w);
-    if (!vs) throw new Error(`not in cmudict: ${w}`);
-    const next: string[][] = [];
-    for (const a of acc) for (const v of vs) if (next.length < cap) next.push(a.concat(v));
-    acc = next;
-  }
-  return acc;
+  return cmuV(chunk, cmudict(), cap);
 }
-
-export type KokoroClip = { id: string; text: string; words: { text: string; phonemes: string; start: number; end: number }[] };
 
 /** Targets from the Kokoro reference JSONs: misaki variants first, then CMUdict ones. */
 export function targetsFromKokoro(jsonPaths: string[]): TargetWord[] {
-  const clips = jsonPaths.filter(existsSync).map((p) => readJson<KokoroClip>(p));
-  if (!clips.length) throw new Error("no Kokoro json");
-  return clips[0].words.map((w, i) => {
-    const seen = new Set<string>();
-    const variants: string[] = [];
-    const add = (v: string[]) => {
-      const k = v.join(" ");
-      if (v.length && !seen.has(k)) {
-        seen.add(k);
-        variants.push(k);
-      }
-    };
-    for (const c of clips) if (c.words[i]?.text === w.text) add(misakiToArpabet(c.words[i].phonemes));
-    for (const v of cmuVariants(w.text)) add(v);
-    return { text: w.text, variants };
-  });
+  return fromKokoro(jsonPaths.filter(existsSync).map((p) => readJson<KokoroClip>(p)), cmudict());
 }
 
 /** Targets from CMUdict only. */
 export function targetsFromText(text: string): TargetWord[] {
-  return tokenize(text).map((w) => ({ text: w, variants: cmuVariants(w).map((v) => v.join(" ")) }));
+  return fromText(text, cmudict());
 }
 
 // ------------------------------------------------------------------ build-time variants
@@ -168,4 +139,11 @@ export async function shippedTargets(scorer: Scorer, sentence: string, jsons: st
   mkdirSync(cacheDir, { recursive: true });
   writeFileSync(key, JSON.stringify({ base, ...r }, null, 1));
   return r;
+}
+
+/** Targets of a test case: CMUdict + connected speech for plain sentences, else the shipped ones. */
+export async function targetsFor(scorer: Scorer, c: { sentence: string; text?: string }): Promise<TargetWord[]> {
+  if (c.text) return addConnectedSpeech(targetsFromText(c.text));
+  const jsons = ["af_heart", "am_michael"].map((v) => join(WORK, "tts", v, `${c.sentence}.json`));
+  return (await shippedTargets(scorer, c.sentence, jsons)).words;
 }

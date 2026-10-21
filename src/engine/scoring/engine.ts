@@ -14,6 +14,7 @@
  */
 import type {
   AcousticBackend,
+  AlignedPhoneSpan,
   DiagnosisConfig,
   Insertion,
   LogProbs,
@@ -31,7 +32,7 @@ import { buildEmissions, columnFor, isVowel, makeUnitSpace, parseVariant, regres
 import { gopFeatures, type GopFeatures } from "./gop.ts";
 import { loadRegressor, type Regressor } from "./hgbr.ts";
 import { chooseVariants, type VariantChoice, type VariantPhone } from "./variants.ts";
-import { diagnose, type DiagPhone } from "./diagnose.ts";
+import { diagnose, measureMargins, type DiagPhone } from "./diagnose.ts";
 import { calibrate, round1, takeScore, wordScore } from "./calibrate.ts";
 
 export type Scorer = {
@@ -49,7 +50,7 @@ type Realized = { word: number; variant: number; index: number; at: number; tok:
 type Evaluation = {
   realized: Realized[];
   spans: TokenSpan[];
-  feats: { f: GopFeatures; raw: number; score: number }[];
+  feats: { f: GopFeatures; raw: number; key: string; score: number }[];
 };
 
 const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
@@ -75,21 +76,59 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
   const nFeat = meta.regressor.features.length;
   if (regressor.nFeatures !== nFeat + meta.regressor.oneHotSize) throw new Error("regressor does not match meta");
 
+  // the same take scored again (other targets, the content build's repeated passes) reuses
+  // the model output; keyed by the audio array itself, so it dies with it
+  const lpCache = new WeakMap<Float32Array, { padded: number; lp: LogProbs }>();
+
   async function logProbs(audio: Float32Array, nPhones: number) {
     const t0 = now();
     const maxSamples = meta.onnx.maxFrames * spf;
     const clip = audio.length > maxSamples ? audio.subarray(0, maxSamples) : audio;
     let padded = padForModel(clip, fe.sampleRate, spf, nPhones, fe.tailPadSeconds, fe.minSeconds);
     if (padded.length > maxSamples) padded = padded.subarray(0, maxSamples);
+    const hit = lpCache.get(audio);
+    if (hit && hit.padded === padded.length) return { lp: hit.lp, samples: clip.length, melMs: 0, modelMs: 0 };
     const mel = whisperLogMel(padded, melFilters, fe.hop);
     const t1 = now();
     const lp = await backend.run(mel.data, mel.nMels, mel.nFrames);
     if (!meta.onnx.logSoftmax) logSoftmaxInPlace(lp);
+    lpCache.set(audio, { padded: padded.length, lp });
     return { lp, samples: clip.length, melMs: t1 - t0, modelMs: now() - t1 };
   }
 
+  /**
+   * Native baseline: if the item's reference itself only got `base` (raw, 0..2) on this
+   * phone, a take is credited the same handicap (raw + BASELINE_TARGET - base).
+   */
+  const BASELINE_TARGET = 1.9;
+  const adjuster = (baseline: Record<string, number> | undefined) => {
+    if (!baseline) return (_key: string, raw: number) => raw;
+    return (key: string, raw: number) => {
+      const b = baseline[key];
+      return b !== undefined && b < BASELINE_TARGET ? Math.min(2, raw + BASELINE_TARGET - b) : raw;
+    };
+  };
+  /** baseline keys: "<word>:<base phone>:<n-th of that phone in the word>" */
+  const keyer = () => {
+    const seen = new Map<string, number>();
+    return (word: number, base: string) => {
+      const k = `${word}:${base}`;
+      const n = seen.get(k) ?? 0;
+      seen.set(k, n + 1);
+      return `${k}:${n}`;
+    };
+  };
+
   /** Forced alignment + GOP + regressor for one realized phone sequence. */
-  function evaluate(em: Float32Array, C: number, space: UnitSpace, realFrames: number, lpFrames: number, realized: Realized[]): Evaluation {
+  function evaluate(
+    em: Float32Array,
+    C: number,
+    space: UnitSpace,
+    realFrames: number,
+    lpFrames: number,
+    realized: Realized[],
+    adjust: (key: string, raw: number) => number,
+  ): Evaluation {
     const frames = Math.min(Math.max(realFrames, realized.length + 5), meta.onnx.maxFrames, lpFrames);
     if (realized.length >= frames) throw new Error("the clip is too short for the target");
     const emB = em.subarray(0, frames * C);
@@ -97,20 +136,30 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
     const spans = mergeTokens(path, 0);
     if (spans.length !== realized.length) throw new Error(`alignment gave ${spans.length} spans for ${realized.length} phones`);
     const x = new Float64Array(nFeat + meta.regressor.oneHotSize);
+    const key = keyer();
     const feats = spans.map((sp, i) => {
       const f = gopFeatures(emB, C, sp, space);
       x.fill(0);
       meta.regressor.features.forEach((name, j) => (x[j] = f[name]));
       x[nFeat + regressorClass(meta, realized[i].tok.symbol)] = 1;
       const raw = regressor.predict(x);
-      return { f, raw, score: calibrate(raw, meta.calibration.knots) };
+      const k = key(realized[i].word, realized[i].tok.base);
+      return { f, raw, key: k, score: calibrate(adjust(k, raw), meta.calibration.knots) };
     });
     return { realized, spans, feats };
   }
 
   async function score(req: ScoreRequest, opts: ScoreOptions = {}): Promise<ScoreResult> {
     const t0 = now();
-    const cfg: DiagnosisConfig = { ...meta.diagnosis, ...opts.diagnosis };
+    // per-call overrides; the per-phone tables merge with the model's instead of replacing them
+    const cfg: DiagnosisConfig = {
+      ...meta.diagnosis,
+      ...opts.diagnosis,
+      pairPenalty: { ...meta.diagnosis.pairPenalty, ...opts.diagnosis?.pairPenalty },
+      deletionPenaltyFor: { ...meta.diagnosis.deletionPenaltyFor, ...opts.diagnosis?.deletionPenaltyFor },
+      insertionPenaltyAfter: { ...meta.diagnosis.insertionPenaltyAfter, ...opts.diagnosis?.insertionPenaltyAfter },
+    };
+    const adjust = adjuster(opts.baseline);
     if (!req.words.length) throw new Error("no target words");
     const parsed = req.words.map((w) => {
       const vs = w.variants.map(parseVariant).filter((v) => v.length);
@@ -139,7 +188,8 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
     };
 
     // insertion slots: after a consonant before a consonant of its word or at the word end,
-    // unless the variant had an optional vowel there that was skipped
+    // unless the variant had an optional vowel there that was skipped. A skipped optional
+    // consonant counts as present ("street" said S T R IY + vowel with the final T silent)
     const withInsertionFlags = (rs: Realized[]): DiagPhone[] =>
       rs.map((r, i) => {
         const next = rs[i + 1];
@@ -147,8 +197,13 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
         const variant = parsed[r.word][r.variant];
         const stop = sameWord ? next.at : variant.length;
         let skippedVowel = false;
-        for (let k = r.at + 1; k < stop; k++) if (isVowel(variant[k].symbol)) skippedVowel = true;
-        const insertionAfter = !isVowel(r.tok.symbol) && !skippedVowel && (!sameWord || !isVowel(next.tok.symbol));
+        let skippedConsonant = false;
+        for (let k = r.at + 1; k < stop; k++) {
+          if (isVowel(variant[k].symbol)) skippedVowel = true;
+          else skippedConsonant = true;
+        }
+        const consonantHere = !isVowel(r.tok.symbol) || skippedConsonant;
+        const insertionAfter = consonantHere && !skippedVowel && (!sameWord || !isVowel(next.tok.symbol));
         return { symbol: r.tok.symbol, column: r.column, word: r.word, index: r.index, insertionAfter };
       });
     const capped = (score: number, d: { deleted: boolean; heardAs?: string }) =>
@@ -209,12 +264,13 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
       const spans = mergeTokens(path, 0);
       if (spans.length !== rs.length) return null;
       const x = new Float64Array(nFeat + meta.regressor.oneHotSize);
+      const key = keyer();
       let scores = spans.map((sp, i) => {
         const f = gopFeatures(win, C, sp, space);
         x.fill(0);
         meta.regressor.features.forEach((name, j) => (x[j] = f[name]));
         x[nFeat + regressorClass(meta, rs[i].tok.symbol)] = 1;
-        return calibrate(regressor.predict(x), meta.calibration.knots);
+        return calibrate(adjust(key(w, rs[i].tok.base), regressor.predict(x)), meta.calibration.knots);
       });
       let ins = 0;
       if (withDiagnosis) {
@@ -261,19 +317,12 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
     const choice: VariantChoice = needChoice
       ? chooseVariants(em, framesA, C, 0, cols)
       : { variant: parsed.map(() => 0), realized: parsed.map((vs) => vs[0].map((_, i) => i)), score: 0 };
-    let ev = evaluate(em, C, space, realFrames, lp.frames, realize(choice));
+    let ev = evaluate(em, C, space, realFrames, lp.frames, realize(choice), adjust);
     const framesOf = (e: Evaluation) => Math.min(Math.max(realFrames, e.realized.length + 5), meta.onnx.maxFrames, lp.frames);
     const multi = parsed.map((vs, w) => (vs.length > 1 ? w : -1)).filter((w) => w >= 0);
-    const searching = opts.variantChoice !== "likelihood" && multi.length > 0;
-    if (searching && pickVariants(ev, framesOf(ev), multi, false)) ev = evaluate(em, C, space, realFrames, lp.frames, realize(choice));
-    let fin = finalize(ev);
-    if (searching) {
-      const flaggedMulti = multi.filter((w) => fin.flagged[w]);
-      if (flaggedMulti.length && pickVariants(ev, fin.framesB, flaggedMulti, true)) {
-        ev = evaluate(em, C, space, realFrames, lp.frames, realize(choice));
-        fin = finalize(ev);
-      }
-    }
+    if (opts.variantChoice !== "likelihood" && multi.length && pickVariants(ev, framesOf(ev), multi, true))
+      ev = evaluate(em, C, space, realFrames, lp.frames, realize(choice), adjust);
+    const fin = finalize(ev);
     const { realized, spans, feats } = ev;
     const dg = fin.dg;
     const tAlign = now();
@@ -319,12 +368,29 @@ export function createScorer(assets: ScorerAssets, backend: AcousticBackend): Sc
       w.end = wi + 1 < words.length ? (e0 + core[wi + 1][0]) / 2 : Math.min(Math.max(dur, e0), e0 + 0.06);
     });
     const heard = greedyDecode(em, framesA, C, 0, 1 + space.phoneColumns.length).map((s) => space.names[s.token]);
+    const margins = opts.measureMargins ? measureMargins(em.subarray(0, fin.framesB * C), fin.framesB, C, 0, withInsertionFlags(realized), space, cfg) : undefined;
+    // the same take aligned to a fixed phone sequence (the reference's), for prosody
+    let alignedTo: AlignedPhoneSpan[] | undefined;
+    if (opts.alignTo?.length) {
+      const seq = opts.alignTo;
+      const n = seq.length;
+      const frames = Math.min(Math.max(realFrames, n + 5), meta.onnx.maxFrames, lp.frames);
+      const emX = frames <= framesA ? em.subarray(0, frames * C) : buildEmissions(lp, frames, space);
+      try {
+        const sp = mergeTokens(forcedAlign(emX, frames, C, seq.map((x) => columnFor(space, x.phone)), 0), 0);
+        if (sp.length === n) alignedTo = seq.map((x, i) => ({ phone: x.phone, word: x.word, start: sec(sp[i].start), end: sec(sp[i].end) }));
+      } catch {
+        alignedTo = undefined;
+      }
+    }
     return {
       words,
       insertions,
       sounds: round1(sounds),
       spans: realized.map((r, i) => ({ phone: r.tok.symbol, word: r.word, start: sec(spans[i].start), end: sec(spans[i].end) })),
       heard,
+      ...(alignedTo ? { alignedTo } : {}),
+      ...(margins ? { margins } : {}),
       timing: { mel: round1(melMs), model: round1(modelMs), align: round1(tAlign - tModel), total: round1(now() - t0) },
       backend: backend.name,
     };

@@ -5,9 +5,8 @@
  * penalties must sit above the native margins and below the error margins.
  *   node tune.mts [filter]
  */
-import { makeScorer, readWav, shippedTargets, targetsFromText } from "./lib.mts";
-import { addConnectedSpeech } from "../../src/engine/scoring/connected.ts";
-import { cases, kokoroJsons } from "./cases.mts";
+import { makeScorer, readWav, targetsFor } from "./lib.mts";
+import { cases } from "./cases.mts";
 import { buildEmissions, columnFor, isVowel, makeUnitSpace, baseOf, parseVariant } from "../../src/engine/scoring/phones.ts";
 import { slotGraph, viterbiGraph, type Slot } from "../../src/engine/scoring/graph.ts";
 import { basename, dirname } from "node:path";
@@ -22,7 +21,7 @@ type Margin = { kind: "sub" | "del" | "ins"; word: number; phone: string; idx: n
 for (const c of cases()) {
   if (filter && !c.file.includes(filter)) continue;
   const { audio } = readWav(c.file);
-  const words = c.text ? addConnectedSpeech(targetsFromText(c.text)) : (await shippedTargets(scorer, c.sentence, kokoroJsons(c.sentence))).words;
+  const words = await targetsFor(scorer, c);
   const r = await scorer.score({ audio, words });
   // same insertion rule as the engine: no slot where an optional vowel of the variant was skipped
   const realized = r.words.flatMap((w, wi) => {

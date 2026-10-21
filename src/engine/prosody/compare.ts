@@ -1,6 +1,6 @@
-import type { PhoneSpan, PitchFrame, ProsodyIssue, ProsodyResult, SyllableStats } from "./types.ts";
+import type { PhoneSpan, PitchFrame, ProsodyIssue, ProsodyResult, Syllable, SyllableStats } from "./types.ts";
 import { syllabify } from "./syllables.ts";
-import { contour, speakerMedianHz, syllableStats, toRegions, warpToRef, type Region } from "./features.ts";
+import { contour, speakerMedianHz, syllableStats, toRegions, warpByKnots, type Region } from "./features.ts";
 import { clamp, mean, pearson, quantile, slope } from "./stats.ts";
 
 /** 1回ぶんの発話（お手本 or 自分）。phones は同じ目標音素列への強制アラインメント。 */
@@ -47,14 +47,54 @@ function extraPauses(user: SyllableStats[], ref: SyllableStats[], userRegions: R
   return { count, words };
 }
 
+/**
+ * お手本と自分の音節を単語ごとに組にする。
+ * 採点器はテイクごとに読みを選ぶ（弱い母音を省いた読みなど）ので、音素の数は一致しない。
+ * 単語の中の音節の数が同じなら順に、違えば位置の割合で対応させる（重複はしない）。
+ */
+export function pairSyllables(ref: Syllable[], user: Syllable[]): [number, number][] {
+  const byWord = (xs: Syllable[]) => {
+    const m = new Map<number, number[]>();
+    xs.forEach((x, i) => m.set(x.word, [...(m.get(x.word) ?? []), i]));
+    return m;
+  };
+  const rw = byWord(ref);
+  const uw = byWord(user);
+  const out: [number, number][] = [];
+  for (const [w, ri] of rw) {
+    const ui = uw.get(w);
+    if (!ui || ui.length === 0) continue;
+    if (ri.length === ui.length) {
+      ri.forEach((r, k) => out.push([r, ui[k]]));
+      continue;
+    }
+    const used = new Set<number>();
+    ri.forEach((r, k) => {
+      const pos = ri.length === 1 ? 0 : k / (ri.length - 1);
+      const u = ui[Math.round(pos * (ui.length - 1))];
+      if (!used.has(u)) {
+        used.add(u);
+        out.push([r, u]);
+      }
+    });
+  }
+  return out.sort((a, b) => a[0] - b[0]);
+}
+
 export function compareProsody(ref: Take, user: Take, words: string[]): ProsodyResult {
-  const syllables = syllabify(ref.phones, words);
+  const refSyl = syllabify(ref.phones, words);
+  const userSyl = syllabify(user.phones, words);
+  const sylPairs = pairSyllables(refSyl, userSyl);
   const refRegions = toRegions(ref.phones, ref.speech[0], ref.speech[1]);
   const userRegions = toRegions(user.phones, user.speech[0], user.speech[1]);
   const refHz = speakerMedianHz(ref.pitch, ref.speech[0], ref.speech[1]);
   const userHz = speakerMedianHz(user.pitch, user.speech[0], user.speech[1]);
-  const rs = syllableStats(syllables, refRegions, ref.pitch, refHz);
-  const us = syllableStats(syllables, userRegions, user.pitch, userHz);
+  const rsAll = syllableStats(refSyl, refRegions, ref.pitch, refHz);
+  const usAll = syllableStats(userSyl, userRegions, user.pitch, userHz);
+  // ここから先は組になった音節だけを並べて比べる
+  const syllables = sylPairs.map(([r]) => refSyl[r]);
+  const rs = sylPairs.map(([r]) => rsAll[r]);
+  const us = sylPairs.map(([, u]) => usAll[u]);
   const n = syllables.length;
   const detail: Record<string, number> = { syllables: n };
   const issues: ProsodyIssue[] = [];
@@ -173,7 +213,7 @@ export function compareProsody(ref: Take, user: Take, words: string[]): ProsodyR
     ref: rs,
     user: us,
     stress,
-    userOnRefTime: warpToRef(userC, userRegions, refRegions),
+    userOnRefTime: warpByKnots(userC, rs.flatMap((r, i) => [[us[i].start, r.start], [us[i].nucleusStart, r.nucleusStart], [us[i].nucleusEnd, r.nucleusEnd], [us[i].end, r.end]] as [number, number][])),
     refContour: refC,
     issues,
     detail,

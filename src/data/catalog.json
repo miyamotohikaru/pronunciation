@@ -1,0 +1,4191 @@
+{
+ "version": 1,
+ "placement": [
+  {
+   "id": "p1",
+   "text": "Turn right at the light.",
+   "ja": "信号を右に曲がってください。",
+   "diagnoses": [
+    "r-l",
+    "er",
+    "th",
+    "linking-flap-reduction",
+    "rhythm-stress"
+   ],
+   "focus": [
+    {
+     "word": "turn",
+     "phone": "ER",
+     "watchFor": [
+      "AA",
+      "AH"
+     ],
+     "tag": "er"
+    },
+    {
+     "word": "right",
+     "phone": "R",
+     "watchFor": [
+      "L"
+     ],
+     "tag": "r-l"
+    },
+    {
+     "word": "light",
+     "phone": "L",
+     "watchFor": [
+      "R"
+     ],
+     "tag": "r-l"
+    },
+    {
+     "word": "right",
+     "phone": "T",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "linking-flap-reduction"
+    },
+    {
+     "word": "the",
+     "phone": "DH",
+     "watchFor": [
+      "Z",
+      "D"
+     ],
+     "tag": "th"
+    }
+   ]
+  },
+  {
+   "id": "p2",
+   "text": "I think this is very good.",
+   "ja": "これ、\nすごくいいと思う。",
+   "diagnoses": [
+    "th",
+    "v-b",
+    "epenthesis",
+    "linking-flap-reduction"
+   ],
+   "focus": [
+    {
+     "word": "think",
+     "phone": "TH",
+     "watchFor": [
+      "S"
+     ],
+     "tag": "th"
+    },
+    {
+     "word": "this",
+     "phone": "DH",
+     "watchFor": [
+      "Z",
+      "D"
+     ],
+     "tag": "th"
+    },
+    {
+     "word": "very",
+     "phone": "V",
+     "watchFor": [
+      "B"
+     ],
+     "tag": "v-b"
+    },
+    {
+     "word": "good",
+     "phone": "D",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "epenthesis"
+    },
+    {
+     "word": "think",
+     "phone": "K",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "epenthesis"
+    },
+    {
+     "word": "this",
+     "phone": "S",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "linking-flap-reduction"
+    }
+   ]
+  },
+  {
+   "id": "p3",
+   "text": "Please speak slowly.",
+   "ja": "ゆっくり話してください。",
+   "diagnoses": [
+    "epenthesis",
+    "final-consonants",
+    "vowels-tense-lax"
+   ],
+   "focus": [
+    {
+     "word": "please",
+     "phone": "P",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "epenthesis"
+    },
+    {
+     "word": "speak",
+     "phone": "S",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "epenthesis"
+    },
+    {
+     "word": "slowly",
+     "phone": "S",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "epenthesis"
+    },
+    {
+     "word": "please",
+     "phone": "Z",
+     "watchFor": [
+      "EPEN",
+      "S"
+     ],
+     "tag": "final-consonants"
+    },
+    {
+     "word": "speak",
+     "phone": "K",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "final-consonants"
+    },
+    {
+     "word": "speak",
+     "phone": "IY",
+     "watchFor": [
+      "IH"
+     ],
+     "tag": "vowels-tense-lax"
+    },
+    {
+     "word": "slowly",
+     "phone": "OW",
+     "watchFor": [
+      "AO"
+     ],
+     "tag": "vowels-tense-lax"
+    }
+   ]
+  },
+  {
+   "id": "p4",
+   "text": "Can I have a cup of hot coffee?",
+   "ja": "温かいコーヒーを1杯もらえますか？",
+   "diagnoses": [
+    "vowels-ae-ah-aa",
+    "v-b",
+    "f-h",
+    "rhythm-stress",
+    "intonation"
+   ],
+   "focus": [
+    {
+     "word": "have",
+     "phone": "AE",
+     "watchFor": [
+      "AA",
+      "AH"
+     ],
+     "tag": "vowels-ae-ah-aa"
+    },
+    {
+     "word": "cup",
+     "phone": "AH",
+     "watchFor": [
+      "AA",
+      "AE"
+     ],
+     "tag": "vowels-ae-ah-aa"
+    },
+    {
+     "word": "hot",
+     "phone": "AA",
+     "watchFor": [
+      "AO",
+      "OW"
+     ],
+     "tag": "vowels-ae-ah-aa"
+    },
+    {
+     "word": "have",
+     "phone": "V",
+     "watchFor": [
+      "B",
+      "EPEN"
+     ],
+     "tag": "v-b"
+    },
+    {
+     "word": "coffee",
+     "phone": "F",
+     "watchFor": [
+      "HH"
+     ],
+     "tag": "f-h"
+    },
+    {
+     "word": "can",
+     "phone": "AH",
+     "watchFor": [
+      "AE"
+     ],
+     "tag": "rhythm-stress"
+    },
+    {
+     "word": "of",
+     "phone": "AH",
+     "watchFor": [
+      "AO",
+      "OW"
+     ],
+     "tag": "rhythm-stress"
+    }
+   ]
+  },
+  {
+   "id": "p5",
+   "text": "I'll see you at six.",
+   "ja": "6時に会おう。",
+   "diagnoses": [
+    "s-sh",
+    "final-consonants",
+    "linking-flap-reduction"
+   ],
+   "focus": [
+    {
+     "word": "see",
+     "phone": "S",
+     "watchFor": [
+      "SH"
+     ],
+     "tag": "s-sh"
+    },
+    {
+     "word": "six",
+     "phone": "S",
+     "watchFor": [
+      "SH"
+     ],
+     "tag": "s-sh"
+    },
+    {
+     "word": "six",
+     "phone": "K",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "final-consonants"
+    },
+    {
+     "word": "at",
+     "phone": "T",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "linking-flap-reduction"
+    }
+   ]
+  },
+  {
+   "id": "p6",
+   "text": "Her work starts early.",
+   "ja": "彼女の仕事は朝早く始まる。",
+   "diagnoses": [
+    "er",
+    "final-consonants",
+    "epenthesis"
+   ],
+   "focus": [
+    {
+     "word": "her",
+     "phone": "ER",
+     "watchFor": [
+      "AA",
+      "AH"
+     ],
+     "tag": "er"
+    },
+    {
+     "word": "work",
+     "phone": "ER",
+     "watchFor": [
+      "AA",
+      "AO"
+     ],
+     "tag": "er"
+    },
+    {
+     "word": "early",
+     "phone": "ER",
+     "watchFor": [
+      "AA",
+      "AH"
+     ],
+     "tag": "er"
+    },
+    {
+     "word": "work",
+     "phone": "K",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "final-consonants"
+    },
+    {
+     "word": "starts",
+     "phone": "S",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "epenthesis"
+    }
+   ]
+  },
+  {
+   "id": "p7",
+   "text": "Who would like some food?",
+   "ja": "食べ物がほしい人はいますか？",
+   "diagnoses": [
+    "f-h",
+    "vowels-tense-lax",
+    "r-l"
+   ],
+   "focus": [
+    {
+     "word": "who",
+     "phone": "HH",
+     "watchFor": [
+      "F"
+     ],
+     "tag": "f-h"
+    },
+    {
+     "word": "food",
+     "phone": "F",
+     "watchFor": [
+      "HH"
+     ],
+     "tag": "f-h"
+    },
+    {
+     "word": "would",
+     "phone": "W",
+     "watchFor": [],
+     "tag": "f-h"
+    },
+    {
+     "word": "would",
+     "phone": "UH",
+     "watchFor": [
+      "UW"
+     ],
+     "tag": "vowels-tense-lax"
+    },
+    {
+     "word": "food",
+     "phone": "UW",
+     "watchFor": [
+      "UH"
+     ],
+     "tag": "vowels-tense-lax"
+    },
+    {
+     "word": "like",
+     "phone": "L",
+     "watchFor": [
+      "R"
+     ],
+     "tag": "r-l"
+    }
+   ]
+  },
+  {
+   "id": "p8",
+   "text": "What are you gonna do?",
+   "ja": "これからどうするの？",
+   "diagnoses": [
+    "linking-flap-reduction",
+    "intonation",
+    "rhythm-stress"
+   ],
+   "focus": [
+    {
+     "word": "what",
+     "phone": "T",
+     "watchFor": [
+      "EPEN"
+     ],
+     "tag": "linking-flap-reduction"
+    },
+    {
+     "word": "gonna",
+     "phone": "AH",
+     "watchFor": [
+      "UW",
+      "OW"
+     ],
+     "tag": "linking-flap-reduction"
+    },
+    {
+     "word": "do",
+     "phone": "UW",
+     "watchFor": [],
+     "tag": "intonation"
+    }
+   ]
+  }
+ ],
+ "units": [
+  {
+   "id": "u01",
+   "titleJa": "英語のリズム",
+   "subtitleJa": "強い音と弱い音の差をつける",
+   "feature": "rhythm-stress",
+   "whyJa": "日本語は、\nどの音もほぼ同じ長さで言います。\n英語は、\n強い音節（音のかたまり）を高く長く言い、\n弱い音節を短くあいまいに言います。\nこの差がつくだけで、\n英語らしさが大きく変わります。",
+   "howJa": "お手本で強く聞こえるところだけ、\n声を高く、\n長く、\nはっきり出します。\nそれ以外は力を抜いて、\n短く流します。\n手をたたきながら言うのもおすすめです。",
+   "lessons": [
+    {
+     "id": "u01-l1",
+     "titleJa": "強いところはひとつ",
+     "goalJa": "カタカナ語とは違う場所を、\n強く言えるようになる。",
+     "feature": "rhythm-stress",
+     "items": [
+      {
+       "id": "u01-l1-01",
+       "type": "word",
+       "text": "hotel",
+       "ja": "ホテル",
+       "difficulty": 1,
+       "focus": [
+        "EH"
+       ]
+      },
+      {
+       "id": "u01-l1-02",
+       "type": "word",
+       "text": "idea",
+       "ja": "考え・アイデア",
+       "difficulty": 1,
+       "focus": [
+        "IY"
+       ]
+      },
+      {
+       "id": "u01-l1-03",
+       "type": "word",
+       "text": "guitar",
+       "ja": "ギター",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u01-l1-04",
+       "type": "word",
+       "text": "machine",
+       "ja": "機械",
+       "difficulty": 1,
+       "focus": [
+        "IY"
+       ]
+      },
+      {
+       "id": "u01-l1-05",
+       "type": "word",
+       "text": "banana",
+       "ja": "バナナ",
+       "difficulty": 2,
+       "focus": [
+        "AE",
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l1-06",
+       "type": "word",
+       "text": "camera",
+       "ja": "カメラ",
+       "difficulty": 2,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u01-l1-07",
+       "type": "word",
+       "text": "image",
+       "ja": "イメージ",
+       "difficulty": 2,
+       "focus": [
+        "IH"
+       ]
+      },
+      {
+       "id": "u01-l1-08",
+       "type": "word",
+       "text": "chocolate",
+       "ja": "チョコレート",
+       "difficulty": 3,
+       "focus": [
+        "AO"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u01-l2",
+     "titleJa": "弱い母音",
+     "goalJa": "強くないところの母音を、\n短く弱くする。",
+     "feature": "rhythm-stress",
+     "items": [
+      {
+       "id": "u01-l2-01",
+       "type": "word",
+       "text": "about",
+       "ja": "〜について",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l2-02",
+       "type": "word",
+       "text": "again",
+       "ja": "もう一度",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l2-03",
+       "type": "word",
+       "text": "today",
+       "ja": "今日",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l2-04",
+       "type": "word",
+       "text": "lemon",
+       "ja": "レモン",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l2-05",
+       "type": "word",
+       "text": "salad",
+       "ja": "サラダ",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l2-06",
+       "type": "word",
+       "text": "problem",
+       "ja": "問題",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l2-07",
+       "type": "word",
+       "text": "station",
+       "ja": "駅",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l2-08",
+       "type": "word",
+       "text": "breakfast",
+       "ja": "朝ごはん",
+       "difficulty": 3,
+       "focus": [
+        "AH"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u01-l3",
+     "titleJa": "強い単語と弱い単語",
+     "goalJa": "大事な単語を強く、\na や of などを弱く言う。",
+     "feature": "rhythm-stress",
+     "items": [
+      {
+       "id": "u01-l3-01",
+       "type": "phrase",
+       "text": "go to bed",
+       "ja": "寝る",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l3-02",
+       "type": "phrase",
+       "text": "time to go",
+       "ja": "そろそろ行く時間",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l3-03",
+       "type": "phrase",
+       "text": "a cup of coffee",
+       "ja": "コーヒー1杯",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l3-04",
+       "type": "phrase",
+       "text": "a piece of cake",
+       "ja": "かんたんなこと",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l3-05",
+       "type": "phrase",
+       "text": "in the morning",
+       "ja": "朝に",
+       "difficulty": 2,
+       "focus": [
+        "AO"
+       ]
+      },
+      {
+       "id": "u01-l3-06",
+       "type": "phrase",
+       "text": "for a minute",
+       "ja": "少しの間",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u01-l4",
+     "titleJa": "短い文でリズム",
+     "goalJa": "文の中で、\n強い音と弱い音の差をつける。",
+     "feature": "rhythm-stress",
+     "items": [
+      {
+       "id": "u01-l4-01",
+       "type": "sentence",
+       "text": "Nice to meet you.",
+       "ja": "はじめまして。",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l4-02",
+       "type": "sentence",
+       "text": "See you tomorrow.",
+       "ja": "また明日。",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u01-l4-03",
+       "type": "sentence",
+       "text": "What time is it now?",
+       "ja": "今何時？",
+       "difficulty": 2,
+       "focus": [
+        "AY"
+       ]
+      },
+      {
+       "id": "u01-l4-04",
+       "type": "sentence",
+       "text": "It's a beautiful day.",
+       "ja": "いい天気ですね。",
+       "difficulty": 2,
+       "focus": [
+        "UW"
+       ]
+      },
+      {
+       "id": "u01-l4-05",
+       "type": "sentence",
+       "text": "Can I have the check?",
+       "ja": "お会計をお願いします。",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u01-l4-06",
+       "type": "sentence",
+       "text": "I'd like a cup of tea.",
+       "ja": "紅茶をください。",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u02",
+   "titleJa": "母音を足さない",
+   "subtitleJa": "子音で終わる・子音をつなげる",
+   "feature": "epenthesis",
+   "whyJa": "日本語の音は、\nほとんどが母音で終わります。\nそのため英語の子音のあとに、\nつい「ウ」や「オ」を足してしまいます。\n母音が増えると音節も増えて、\nリズムが崩れ、\n聞き取りにくくなります。",
+   "howJa": "子音の口の形を作ったら、\nそこで止めます。\n母音を足さずに、\n息か声だけを短く出します。\n足した母音が見つかったら、\nその子音だけを短く言い直します。",
+   "lessons": [
+    {
+     "id": "u02-l1",
+     "titleJa": "最後の子音で止める",
+     "goalJa": "good を「グッド」にせず、\nd で止める。",
+     "feature": "epenthesis",
+     "items": [
+      {
+       "id": "u02-l1-01",
+       "type": "word",
+       "text": "good",
+       "ja": "よい",
+       "difficulty": 1,
+       "focus": [
+        "D"
+       ]
+      },
+      {
+       "id": "u02-l1-02",
+       "type": "word",
+       "text": "book",
+       "ja": "本",
+       "difficulty": 1,
+       "focus": [
+        "K"
+       ]
+      },
+      {
+       "id": "u02-l1-03",
+       "type": "word",
+       "text": "big",
+       "ja": "大きい",
+       "difficulty": 1,
+       "focus": [
+        "G"
+       ]
+      },
+      {
+       "id": "u02-l1-04",
+       "type": "word",
+       "text": "night",
+       "ja": "夜",
+       "difficulty": 1,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u02-l1-05",
+       "type": "word",
+       "text": "job",
+       "ja": "仕事",
+       "difficulty": 1,
+       "focus": [
+        "B"
+       ]
+      },
+      {
+       "id": "u02-l1-06",
+       "type": "word",
+       "text": "bed",
+       "ja": "ベッド",
+       "difficulty": 1,
+       "focus": [
+        "D"
+       ]
+      },
+      {
+       "id": "u02-l1-07",
+       "type": "word",
+       "text": "milk",
+       "ja": "牛乳",
+       "difficulty": 2,
+       "focus": [
+        "L",
+        "K"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u02-l2",
+     "titleJa": "子音をつなげる",
+     "goalJa": "street を「ストリート」にせず、\n母音なしで子音をつなげる。",
+     "feature": "epenthesis",
+     "items": [
+      {
+       "id": "u02-l2-01",
+       "type": "word",
+       "text": "stay",
+       "ja": "とどまる",
+       "difficulty": 1,
+       "focus": [
+        "S"
+       ]
+      },
+      {
+       "id": "u02-l2-02",
+       "type": "word",
+       "text": "school",
+       "ja": "学校",
+       "difficulty": 2,
+       "focus": [
+        "S"
+       ]
+      },
+      {
+       "id": "u02-l2-03",
+       "type": "word",
+       "text": "sleep",
+       "ja": "眠る",
+       "difficulty": 2,
+       "focus": [
+        "S"
+       ]
+      },
+      {
+       "id": "u02-l2-04",
+       "type": "word",
+       "text": "dream",
+       "ja": "夢",
+       "difficulty": 2,
+       "focus": [
+        "D"
+       ]
+      },
+      {
+       "id": "u02-l2-05",
+       "type": "word",
+       "text": "glass",
+       "ja": "グラス・コップ",
+       "difficulty": 2,
+       "focus": [
+        "G"
+       ]
+      },
+      {
+       "id": "u02-l2-06",
+       "type": "word",
+       "text": "smile",
+       "ja": "笑顔",
+       "difficulty": 2,
+       "focus": [
+        "S"
+       ]
+      },
+      {
+       "id": "u02-l2-07",
+       "type": "word",
+       "text": "street",
+       "ja": "通り",
+       "difficulty": 3,
+       "focus": [
+        "S",
+        "T"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u02-l3",
+     "titleJa": "語尾の s と ed",
+     "goalJa": "最後の s や ed を、\n母音を足さずに付ける。",
+     "feature": "final-consonants",
+     "items": [
+      {
+       "id": "u02-l3-01",
+       "type": "word",
+       "text": "books",
+       "ja": "本（2冊以上）",
+       "difficulty": 1,
+       "focus": [
+        "S"
+       ]
+      },
+      {
+       "id": "u02-l3-02",
+       "type": "word",
+       "text": "likes",
+       "ja": "（あの人は）〜が好き",
+       "difficulty": 2,
+       "focus": [
+        "S"
+       ]
+      },
+      {
+       "id": "u02-l3-03",
+       "type": "word",
+       "text": "dogs",
+       "ja": "犬（2匹以上）",
+       "difficulty": 2,
+       "focus": [
+        "Z"
+       ]
+      },
+      {
+       "id": "u02-l3-04",
+       "type": "word",
+       "text": "walked",
+       "ja": "歩いた",
+       "difficulty": 2,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u02-l3-05",
+       "type": "word",
+       "text": "played",
+       "ja": "遊んだ",
+       "difficulty": 2,
+       "focus": [
+        "D"
+       ]
+      },
+      {
+       "id": "u02-l3-06",
+       "type": "word",
+       "text": "needed",
+       "ja": "必要だった",
+       "difficulty": 2,
+       "focus": [
+        "D"
+       ]
+      },
+      {
+       "id": "u02-l3-07",
+       "type": "word",
+       "text": "watched",
+       "ja": "見た",
+       "difficulty": 3,
+       "focus": [
+        "T"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u02-l4",
+     "titleJa": "n・ng・l で終わる",
+     "goalJa": "最後の n、\nng、\nl を、\n母音を足さずに言い分ける。",
+     "feature": "final-consonants",
+     "items": [
+      {
+       "id": "u02-l4-01",
+       "type": "pair",
+       "text": "win",
+       "ja": "勝つ ／ 翼",
+       "difficulty": 2,
+       "focus": [
+        "N",
+        "NG"
+       ],
+       "pair": "wing"
+      },
+      {
+       "id": "u02-l4-02",
+       "type": "pair",
+       "text": "ran",
+       "ja": "走った ／ 鳴った",
+       "difficulty": 2,
+       "focus": [
+        "N",
+        "NG"
+       ],
+       "pair": "rang"
+      },
+      {
+       "id": "u02-l4-03",
+       "type": "pair",
+       "text": "sun",
+       "ja": "太陽 ／ 歌われた",
+       "difficulty": 2,
+       "focus": [
+        "N",
+        "NG"
+       ],
+       "pair": "sung"
+      },
+      {
+       "id": "u02-l4-04",
+       "type": "word",
+       "text": "long",
+       "ja": "長い",
+       "difficulty": 2,
+       "focus": [
+        "NG"
+       ]
+      },
+      {
+       "id": "u02-l4-05",
+       "type": "word",
+       "text": "feel",
+       "ja": "感じる",
+       "difficulty": 2,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u02-l4-06",
+       "type": "word",
+       "text": "tell",
+       "ja": "伝える",
+       "difficulty": 2,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u02-l4-07",
+       "type": "word",
+       "text": "people",
+       "ja": "人々",
+       "difficulty": 3,
+       "focus": [
+        "L"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u02-l5",
+     "titleJa": "短い文で",
+     "goalJa": "文の中でも、\n子音のあとに母音を足さない。",
+     "feature": "epenthesis",
+     "items": [
+      {
+       "id": "u02-l5-01",
+       "type": "sentence",
+       "text": "It's a good job.",
+       "ja": "よくできました。",
+       "difficulty": 2,
+       "focus": [
+        "D",
+        "B"
+       ]
+      },
+      {
+       "id": "u02-l5-02",
+       "type": "sentence",
+       "text": "Please stand up.",
+       "ja": "立ってください。",
+       "difficulty": 2,
+       "focus": [
+        "P",
+        "S"
+       ]
+      },
+      {
+       "id": "u02-l5-03",
+       "type": "sentence",
+       "text": "I like this song.",
+       "ja": "この歌が好き。",
+       "difficulty": 2,
+       "focus": [
+        "K",
+        "NG"
+       ]
+      },
+      {
+       "id": "u02-l5-04",
+       "type": "sentence",
+       "text": "Let's take a break.",
+       "ja": "ひと休みしよう。",
+       "difficulty": 2,
+       "focus": [
+        "S",
+        "K"
+       ]
+      },
+      {
+       "id": "u02-l5-05",
+       "type": "sentence",
+       "text": "I drink black coffee.",
+       "ja": "ブラックコーヒーを飲みます。",
+       "difficulty": 3,
+       "focus": [
+        "D",
+        "K"
+       ]
+      },
+      {
+       "id": "u02-l5-06",
+       "type": "sentence",
+       "text": "She walked to school.",
+       "ja": "彼女は歩いて学校へ行った。",
+       "difficulty": 3,
+       "focus": [
+        "T",
+        "L"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u03",
+   "titleJa": "R と L",
+   "subtitleJa": "right と light を言い分ける",
+   "feature": "r-l",
+   "whyJa": "日本語のラ行は、\nR とも L とも違う音です。\n英語では、\nright と light、\nrice と lice のように、\nこの違いで意味が変わる単語がとても多くあります。",
+   "howJa": "R は舌先をどこにも付けず、\nくちびるを少し丸めて始めます。\nL は舌先を上の前歯の付け根に、\nしっかり付けます。\nまずは R だけ、\nL だけで練習し、\nそのあと並べて比べます。",
+   "lessons": [
+    {
+     "id": "u03-l1",
+     "titleJa": "R の音",
+     "goalJa": "舌をどこにも付けない R を出せるようになる。",
+     "feature": "r-l",
+     "items": [
+      {
+       "id": "u03-l1-01",
+       "type": "word",
+       "text": "red",
+       "ja": "赤",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l1-02",
+       "type": "word",
+       "text": "right",
+       "ja": "右・正しい",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l1-03",
+       "type": "word",
+       "text": "rain",
+       "ja": "雨",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l1-04",
+       "type": "word",
+       "text": "read",
+       "ja": "読む",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l1-05",
+       "type": "word",
+       "text": "run",
+       "ja": "走る",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l1-06",
+       "type": "word",
+       "text": "room",
+       "ja": "部屋",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l1-07",
+       "type": "word",
+       "text": "rice",
+       "ja": "ごはん・米",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u03-l2",
+     "titleJa": "L の音",
+     "goalJa": "舌先を付ける L を出せるようになる。",
+     "feature": "r-l",
+     "items": [
+      {
+       "id": "u03-l2-01",
+       "type": "word",
+       "text": "light",
+       "ja": "光・明かり",
+       "difficulty": 1,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l2-02",
+       "type": "word",
+       "text": "late",
+       "ja": "遅い",
+       "difficulty": 1,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l2-03",
+       "type": "word",
+       "text": "look",
+       "ja": "見る",
+       "difficulty": 1,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l2-04",
+       "type": "word",
+       "text": "lunch",
+       "ja": "昼ごはん",
+       "difficulty": 1,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l2-05",
+       "type": "word",
+       "text": "line",
+       "ja": "線・列",
+       "difficulty": 1,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l2-06",
+       "type": "word",
+       "text": "leg",
+       "ja": "脚",
+       "difficulty": 1,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l2-07",
+       "type": "word",
+       "text": "lake",
+       "ja": "湖",
+       "difficulty": 1,
+       "focus": [
+        "L"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u03-l3",
+     "titleJa": "R と L をくらべる",
+     "goalJa": "R と L の違いで、\n意味を言い分ける。",
+     "feature": "r-l",
+     "items": [
+      {
+       "id": "u03-l3-01",
+       "type": "pair",
+       "text": "right",
+       "ja": "右 ／ 光",
+       "difficulty": 2,
+       "focus": [
+        "R",
+        "L"
+       ],
+       "pair": "light"
+      },
+      {
+       "id": "u03-l3-02",
+       "type": "pair",
+       "text": "rice",
+       "ja": "ごはん ／ シラミ",
+       "difficulty": 2,
+       "focus": [
+        "R",
+        "L"
+       ],
+       "pair": "lice"
+      },
+      {
+       "id": "u03-l3-03",
+       "type": "pair",
+       "text": "road",
+       "ja": "道 ／ 荷物",
+       "difficulty": 2,
+       "focus": [
+        "R",
+        "L"
+       ],
+       "pair": "load"
+      },
+      {
+       "id": "u03-l3-04",
+       "type": "pair",
+       "text": "wrong",
+       "ja": "間違った ／ 長い",
+       "difficulty": 2,
+       "focus": [
+        "R",
+        "L"
+       ],
+       "pair": "long"
+      },
+      {
+       "id": "u03-l3-05",
+       "type": "pair",
+       "text": "rock",
+       "ja": "岩 ／ 鍵をかける",
+       "difficulty": 2,
+       "focus": [
+        "R",
+        "L"
+       ],
+       "pair": "lock"
+      },
+      {
+       "id": "u03-l3-06",
+       "type": "pair",
+       "text": "grass",
+       "ja": "草 ／ グラス",
+       "difficulty": 3,
+       "focus": [
+        "R",
+        "L"
+       ],
+       "pair": "glass"
+      },
+      {
+       "id": "u03-l3-07",
+       "type": "pair",
+       "text": "pray",
+       "ja": "祈る ／ 遊ぶ",
+       "difficulty": 3,
+       "focus": [
+        "R",
+        "L"
+       ],
+       "pair": "play"
+      }
+     ]
+    },
+    {
+     "id": "u03-l4",
+     "titleJa": "単語の中の R と L",
+     "goalJa": "単語のまん中でも、\nR と L を言い分ける。",
+     "feature": "r-l",
+     "items": [
+      {
+       "id": "u03-l4-01",
+       "type": "word",
+       "text": "sorry",
+       "ja": "ごめんなさい",
+       "difficulty": 2,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l4-02",
+       "type": "word",
+       "text": "hello",
+       "ja": "こんにちは",
+       "difficulty": 2,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l4-03",
+       "type": "word",
+       "text": "really",
+       "ja": "本当に",
+       "difficulty": 3,
+       "focus": [
+        "R",
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l4-04",
+       "type": "word",
+       "text": "already",
+       "ja": "もう・すでに",
+       "difficulty": 3,
+       "focus": [
+        "L",
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l4-05",
+       "type": "pair",
+       "text": "correct",
+       "ja": "正しい ／ 集める",
+       "difficulty": 3,
+       "focus": [
+        "ER",
+        "L"
+       ],
+       "pair": "collect"
+      },
+      {
+       "id": "u03-l4-06",
+       "type": "word",
+       "text": "library",
+       "ja": "図書館",
+       "difficulty": 4,
+       "focus": [
+        "L",
+        "R"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u03-l5",
+     "titleJa": "短い文で",
+     "goalJa": "文の中でも、\nR と L を言い分ける。",
+     "feature": "r-l",
+     "items": [
+      {
+       "id": "u03-l5-01",
+       "type": "sentence",
+       "text": "That's right.",
+       "ja": "その通り。",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l5-02",
+       "type": "sentence",
+       "text": "Let me read it.",
+       "ja": "読ませて。",
+       "difficulty": 2,
+       "focus": [
+        "L",
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l5-03",
+       "type": "sentence",
+       "text": "The rice is ready.",
+       "ja": "ごはんができたよ。",
+       "difficulty": 2,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u03-l5-04",
+       "type": "sentence",
+       "text": "I'm late for class.",
+       "ja": "授業に遅れそう。",
+       "difficulty": 2,
+       "focus": [
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l5-05",
+       "type": "sentence",
+       "text": "I really like it.",
+       "ja": "すごく気に入っています。",
+       "difficulty": 3,
+       "focus": [
+        "R",
+        "L"
+       ]
+      },
+      {
+       "id": "u03-l5-06",
+       "type": "sentence",
+       "text": "Please call me later.",
+       "ja": "あとで電話してください。",
+       "difficulty": 3,
+       "focus": [
+        "L"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u04",
+   "titleJa": "3つの「ア」",
+   "subtitleJa": "hat・hut・hot を言い分ける",
+   "feature": "vowels-ae-ah-aa",
+   "whyJa": "日本語の「ア」はひとつですが、\n英語には「ア」に聞こえる母音が3つあります。\nhat、\nhut、\nhot は、\n口の開け方だけで意味が変わります。\nどれも、\nよく使う単語にたくさん出てきます。",
+   "howJa": "hat の a は、\n「エ」の口のまま「ア」と言います。\nhut の u は、\n口を小さく、\n短く軽く言います。\nhot の o は、\nあくびのように縦に大きく開けます。",
+   "lessons": [
+    {
+     "id": "u04-l1",
+     "titleJa": "hat の a",
+     "goalJa": "「エ」の口で言う「ア」を出せるようになる。",
+     "feature": "vowels-ae-ah-aa",
+     "items": [
+      {
+       "id": "u04-l1-01",
+       "type": "word",
+       "text": "cat",
+       "ja": "猫",
+       "difficulty": 1,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l1-02",
+       "type": "word",
+       "text": "bad",
+       "ja": "悪い",
+       "difficulty": 1,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l1-03",
+       "type": "word",
+       "text": "back",
+       "ja": "後ろ・戻って",
+       "difficulty": 1,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l1-04",
+       "type": "word",
+       "text": "map",
+       "ja": "地図",
+       "difficulty": 1,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l1-05",
+       "type": "word",
+       "text": "happy",
+       "ja": "うれしい",
+       "difficulty": 1,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l1-06",
+       "type": "word",
+       "text": "apple",
+       "ja": "りんご",
+       "difficulty": 2,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l1-07",
+       "type": "word",
+       "text": "black",
+       "ja": "黒",
+       "difficulty": 2,
+       "focus": [
+        "AE"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u04-l2",
+     "titleJa": "hut の u",
+     "goalJa": "小さく短い「ア」を出せるようになる。",
+     "feature": "vowels-ae-ah-aa",
+     "items": [
+      {
+       "id": "u04-l2-01",
+       "type": "word",
+       "text": "cup",
+       "ja": "カップ",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l2-02",
+       "type": "word",
+       "text": "bus",
+       "ja": "バス",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l2-03",
+       "type": "word",
+       "text": "much",
+       "ja": "たくさん",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l2-04",
+       "type": "word",
+       "text": "fun",
+       "ja": "楽しい",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l2-05",
+       "type": "word",
+       "text": "come",
+       "ja": "来る",
+       "difficulty": 1,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l2-06",
+       "type": "word",
+       "text": "money",
+       "ja": "お金",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l2-07",
+       "type": "word",
+       "text": "young",
+       "ja": "若い",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u04-l3",
+     "titleJa": "hot の o",
+     "goalJa": "縦に大きく開ける「ア」を出せるようになる。",
+     "feature": "vowels-ae-ah-aa",
+     "items": [
+      {
+       "id": "u04-l3-01",
+       "type": "word",
+       "text": "hot",
+       "ja": "熱い・暑い",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u04-l3-02",
+       "type": "word",
+       "text": "not",
+       "ja": "〜ない",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u04-l3-03",
+       "type": "word",
+       "text": "got",
+       "ja": "手に入れた",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u04-l3-04",
+       "type": "word",
+       "text": "shop",
+       "ja": "店",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u04-l3-05",
+       "type": "word",
+       "text": "box",
+       "ja": "箱",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u04-l3-06",
+       "type": "word",
+       "text": "stop",
+       "ja": "止まる",
+       "difficulty": 2,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u04-l3-07",
+       "type": "word",
+       "text": "doctor",
+       "ja": "医者",
+       "difficulty": 2,
+       "focus": [
+        "AA"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u04-l4",
+     "titleJa": "3つをくらべる",
+     "goalJa": "口の開け方で、\n意味を言い分ける。",
+     "feature": "vowels-ae-ah-aa",
+     "items": [
+      {
+       "id": "u04-l4-01",
+       "type": "pair",
+       "text": "hat",
+       "ja": "帽子 ／ 小屋",
+       "difficulty": 2,
+       "focus": [
+        "AE",
+        "AH"
+       ],
+       "pair": "hut"
+      },
+      {
+       "id": "u04-l4-02",
+       "type": "pair",
+       "text": "cap",
+       "ja": "帽子 ／ カップ",
+       "difficulty": 2,
+       "focus": [
+        "AE",
+        "AH"
+       ],
+       "pair": "cup"
+      },
+      {
+       "id": "u04-l4-03",
+       "type": "pair",
+       "text": "bag",
+       "ja": "かばん ／ 虫",
+       "difficulty": 2,
+       "focus": [
+        "AE",
+        "AH"
+       ],
+       "pair": "bug"
+      },
+      {
+       "id": "u04-l4-04",
+       "type": "pair",
+       "text": "match",
+       "ja": "試合 ／ たくさん",
+       "difficulty": 2,
+       "focus": [
+        "AE",
+        "AH"
+       ],
+       "pair": "much"
+      },
+      {
+       "id": "u04-l4-05",
+       "type": "pair",
+       "text": "hot",
+       "ja": "熱い ／ 小屋",
+       "difficulty": 3,
+       "focus": [
+        "AA",
+        "AH"
+       ],
+       "pair": "hut"
+      },
+      {
+       "id": "u04-l4-06",
+       "type": "pair",
+       "text": "black",
+       "ja": "黒 ／ ブロック",
+       "difficulty": 3,
+       "focus": [
+        "AE",
+        "AA"
+       ],
+       "pair": "block"
+      },
+      {
+       "id": "u04-l4-07",
+       "type": "pair",
+       "text": "ran",
+       "ja": "走った ／ 走る",
+       "difficulty": 3,
+       "focus": [
+        "AE",
+        "AH"
+       ],
+       "pair": "run"
+      }
+     ]
+    },
+    {
+     "id": "u04-l5",
+     "titleJa": "短い文で",
+     "goalJa": "文の中でも、\n3つの「ア」を言い分ける。",
+     "feature": "vowels-ae-ah-aa",
+     "items": [
+      {
+       "id": "u04-l5-01",
+       "type": "sentence",
+       "text": "I have a cat.",
+       "ja": "猫を飼っています。",
+       "difficulty": 2,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l5-02",
+       "type": "sentence",
+       "text": "That's not my bag.",
+       "ja": "それは私のかばんではありません。",
+       "difficulty": 2,
+       "focus": [
+        "AA",
+        "AE"
+       ]
+      },
+      {
+       "id": "u04-l5-03",
+       "type": "sentence",
+       "text": "It's hot and sunny.",
+       "ja": "暑くて晴れています。",
+       "difficulty": 2,
+       "focus": [
+        "AA",
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l5-04",
+       "type": "sentence",
+       "text": "I'm so hungry.",
+       "ja": "すごくおなかがすいた。",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l5-05",
+       "type": "sentence",
+       "text": "Let's catch the bus.",
+       "ja": "バスに乗ろう。",
+       "difficulty": 3,
+       "focus": [
+        "AE",
+        "AH"
+       ]
+      },
+      {
+       "id": "u04-l5-06",
+       "type": "sentence",
+       "text": "My mother is a doctor.",
+       "ja": "母は医者です。",
+       "difficulty": 3,
+       "focus": [
+        "AH",
+        "AA"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u05",
+   "titleJa": "ER の音",
+   "subtitleJa": "bird・work・teacher の響き",
+   "feature": "er",
+   "whyJa": "アメリカ英語らしさが、\nいちばんよく出る音のひとつです。\nwork や bird を「ワーク」「バード」と伸ばすと、\nwalk や bad のように聞こえることがあります。\nteacher の er のように、\n単語の最後にもよく出てきます。",
+   "howJa": "R と同じ舌の形で、\n母音を響かせます。\n舌先はどこにも付けずに奥へ引き、\nくちびるは少し丸めます。\n音の最初から最後まで、\n舌の形を変えません。",
+   "lessons": [
+    {
+     "id": "u05-l1",
+     "titleJa": "強い ER",
+     "goalJa": "work や bird の ER を、\n舌の形で響かせる。",
+     "feature": "er",
+     "items": [
+      {
+       "id": "u05-l1-01",
+       "type": "word",
+       "text": "her",
+       "ja": "彼女の",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l1-02",
+       "type": "word",
+       "text": "bird",
+       "ja": "鳥",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l1-03",
+       "type": "word",
+       "text": "turn",
+       "ja": "曲がる",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l1-04",
+       "type": "word",
+       "text": "work",
+       "ja": "働く・仕事",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l1-05",
+       "type": "word",
+       "text": "first",
+       "ja": "最初の",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l1-06",
+       "type": "word",
+       "text": "learn",
+       "ja": "学ぶ",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l1-07",
+       "type": "word",
+       "text": "shirt",
+       "ja": "シャツ",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u05-l2",
+     "titleJa": "語尾の er",
+     "goalJa": "teacher の er を、\n伸ばさずに響かせる。",
+     "feature": "er",
+     "items": [
+      {
+       "id": "u05-l2-01",
+       "type": "word",
+       "text": "teacher",
+       "ja": "先生",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l2-02",
+       "type": "word",
+       "text": "dinner",
+       "ja": "夕食",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l2-03",
+       "type": "word",
+       "text": "paper",
+       "ja": "紙",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l2-04",
+       "type": "word",
+       "text": "summer",
+       "ja": "夏",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l2-05",
+       "type": "word",
+       "text": "sister",
+       "ja": "姉・妹",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l2-06",
+       "type": "word",
+       "text": "number",
+       "ja": "数・番号",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l2-07",
+       "type": "word",
+       "text": "after",
+       "ja": "〜のあとで",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u05-l3",
+     "titleJa": "母音のあとの r",
+     "goalJa": "car や more の最後に、\nr の響きを付ける。",
+     "feature": "er",
+     "items": [
+      {
+       "id": "u05-l3-01",
+       "type": "word",
+       "text": "car",
+       "ja": "車",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l3-02",
+       "type": "word",
+       "text": "park",
+       "ja": "公園",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l3-03",
+       "type": "word",
+       "text": "start",
+       "ja": "始める",
+       "difficulty": 2,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l3-04",
+       "type": "word",
+       "text": "more",
+       "ja": "もっと",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l3-05",
+       "type": "word",
+       "text": "door",
+       "ja": "ドア",
+       "difficulty": 1,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l3-06",
+       "type": "word",
+       "text": "here",
+       "ja": "ここ",
+       "difficulty": 2,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l3-07",
+       "type": "word",
+       "text": "hair",
+       "ja": "髪",
+       "difficulty": 2,
+       "focus": [
+        "R"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u05-l4",
+     "titleJa": "ER と「ア」をくらべる",
+     "goalJa": "ER と「ア」の違いで、\n意味を言い分ける。",
+     "feature": "er",
+     "items": [
+      {
+       "id": "u05-l4-01",
+       "type": "pair",
+       "text": "walk",
+       "ja": "歩く ／ 働く",
+       "difficulty": 2,
+       "focus": [
+        "AO",
+        "ER"
+       ],
+       "pair": "work"
+      },
+      {
+       "id": "u05-l4-02",
+       "type": "pair",
+       "text": "heart",
+       "ja": "心 ／ 痛む",
+       "difficulty": 3,
+       "focus": [
+        "AA",
+        "ER"
+       ],
+       "pair": "hurt"
+      },
+      {
+       "id": "u05-l4-03",
+       "type": "pair",
+       "text": "far",
+       "ja": "遠い ／ 毛皮",
+       "difficulty": 3,
+       "focus": [
+        "AA",
+        "ER"
+       ],
+       "pair": "fur"
+      },
+      {
+       "id": "u05-l4-04",
+       "type": "pair",
+       "text": "star",
+       "ja": "星 ／ かき混ぜる",
+       "difficulty": 3,
+       "focus": [
+        "AA",
+        "ER"
+       ],
+       "pair": "stir"
+      },
+      {
+       "id": "u05-l4-05",
+       "type": "pair",
+       "text": "bud",
+       "ja": "つぼみ ／ 鳥",
+       "difficulty": 3,
+       "focus": [
+        "AH",
+        "ER"
+       ],
+       "pair": "bird"
+      }
+     ]
+    },
+    {
+     "id": "u05-l5",
+     "titleJa": "短い文で",
+     "goalJa": "文の中でも、\nER を響かせる。",
+     "feature": "er",
+     "items": [
+      {
+       "id": "u05-l5-01",
+       "type": "sentence",
+       "text": "What's your number?",
+       "ja": "電話番号は？",
+       "difficulty": 2,
+       "focus": [
+        "R",
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l5-02",
+       "type": "sentence",
+       "text": "Dinner is at four.",
+       "ja": "夕食は4時です。",
+       "difficulty": 2,
+       "focus": [
+        "ER",
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l5-03",
+       "type": "sentence",
+       "text": "Is it far from here?",
+       "ja": "ここから遠いですか？",
+       "difficulty": 2,
+       "focus": [
+        "R"
+       ]
+      },
+      {
+       "id": "u05-l5-04",
+       "type": "sentence",
+       "text": "Her sister is a nurse.",
+       "ja": "彼女の姉は看護師です。",
+       "difficulty": 3,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l5-05",
+       "type": "sentence",
+       "text": "I learned a new word.",
+       "ja": "新しい単語を覚えました。",
+       "difficulty": 3,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u05-l5-06",
+       "type": "sentence",
+       "text": "Turn left at the corner.",
+       "ja": "角を左に曲がってください。",
+       "difficulty": 3,
+       "focus": [
+        "ER"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u06",
+   "titleJa": "音をつなげる",
+   "subtitleJa": "つなげる・はじく t・弱い形",
+   "feature": "linking-flap-reduction",
+   "whyJa": "ネイティブは、\n単語を一つずつ区切らずに、\nつなげて話します。\nwater の t は、\n日本語のラ行に近い軽い音になります。\nto や and は、\n短く弱くなります。\nここが変わると、\n一気に自然に聞こえます。",
+   "howJa": "単語の最後の子音を、\n次の単語の最初の母音にくっつけます。\n母音にはさまれた t は、\n舌先で一回だけ軽くはじきます。\nto、\nand、\nof などは、\n力を抜いて短く言います。",
+   "lessons": [
+    {
+     "id": "u06-l1",
+     "titleJa": "子音と母音をつなげる",
+     "goalJa": "前の単語の最後の子音を、\n次の母音にくっつける。",
+     "feature": "linking-flap-reduction",
+     "items": [
+      {
+       "id": "u06-l1-01",
+       "type": "phrase",
+       "text": "come on",
+       "ja": "さあ・がんばって",
+       "difficulty": 1,
+       "focus": [
+        "M"
+       ]
+      },
+      {
+       "id": "u06-l1-02",
+       "type": "phrase",
+       "text": "wake up",
+       "ja": "起きる",
+       "difficulty": 1,
+       "focus": [
+        "K"
+       ]
+      },
+      {
+       "id": "u06-l1-03",
+       "type": "phrase",
+       "text": "an apple",
+       "ja": "りんご1個",
+       "difficulty": 1,
+       "focus": [
+        "N"
+       ]
+      },
+      {
+       "id": "u06-l1-04",
+       "type": "phrase",
+       "text": "turn off",
+       "ja": "（電気などを）消す",
+       "difficulty": 2,
+       "focus": [
+        "N"
+       ]
+      },
+      {
+       "id": "u06-l1-05",
+       "type": "phrase",
+       "text": "hold on",
+       "ja": "ちょっと待って",
+       "difficulty": 2,
+       "focus": [
+        "D"
+       ]
+      },
+      {
+       "id": "u06-l1-06",
+       "type": "phrase",
+       "text": "check it out",
+       "ja": "見てみて",
+       "difficulty": 3,
+       "focus": [
+        "K",
+        "T"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u06-l2",
+     "titleJa": "はじく t",
+     "goalJa": "water の t を、\nラ行のように軽くはじく。",
+     "feature": "linking-flap-reduction",
+     "items": [
+      {
+       "id": "u06-l2-01",
+       "type": "word",
+       "text": "water",
+       "ja": "水",
+       "difficulty": 2,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l2-02",
+       "type": "word",
+       "text": "better",
+       "ja": "もっとよい",
+       "difficulty": 2,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l2-03",
+       "type": "word",
+       "text": "city",
+       "ja": "街",
+       "difficulty": 2,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l2-04",
+       "type": "word",
+       "text": "party",
+       "ja": "パーティー",
+       "difficulty": 2,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l2-05",
+       "type": "word",
+       "text": "little",
+       "ja": "少し・小さい",
+       "difficulty": 3,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l2-06",
+       "type": "phrase",
+       "text": "get up",
+       "ja": "起きる",
+       "difficulty": 2,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l2-07",
+       "type": "phrase",
+       "text": "a lot of",
+       "ja": "たくさんの",
+       "difficulty": 3,
+       "focus": [
+        "T"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u06-l3",
+     "titleJa": "弱くなる言葉",
+     "goalJa": "and、\nof、\ncan などを、\n弱く短く言う。",
+     "feature": "linking-flap-reduction",
+     "items": [
+      {
+       "id": "u06-l3-01",
+       "type": "phrase",
+       "text": "for you",
+       "ja": "あなたに",
+       "difficulty": 1,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u06-l3-02",
+       "type": "phrase",
+       "text": "you and me",
+       "ja": "あなたと私",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u06-l3-03",
+       "type": "phrase",
+       "text": "salt and pepper",
+       "ja": "塩こしょう",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u06-l3-04",
+       "type": "phrase",
+       "text": "from time to time",
+       "ja": "ときどき",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u06-l3-05",
+       "type": "phrase",
+       "text": "a friend of mine",
+       "ja": "友だちの一人",
+       "difficulty": 3,
+       "focus": [
+        "AH",
+        "V"
+       ]
+      },
+      {
+       "id": "u06-l3-06",
+       "type": "sentence",
+       "text": "I can swim.",
+       "ja": "泳げます。",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u06-l4",
+     "titleJa": "gonna と wanna",
+     "goalJa": "くだけた会話の言い方を、\nまねして言う。",
+     "feature": "linking-flap-reduction",
+     "items": [
+      {
+       "id": "u06-l4-01",
+       "type": "sentence",
+       "text": "I'm gonna go.",
+       "ja": "もう行きます。",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ],
+       "note": "I'm going to go."
+      },
+      {
+       "id": "u06-l4-02",
+       "type": "sentence",
+       "text": "I wanna eat.",
+       "ja": "食べたいな。",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ],
+       "note": "I want to eat."
+      },
+      {
+       "id": "u06-l4-03",
+       "type": "sentence",
+       "text": "Lemme see.",
+       "ja": "ええと。",
+       "difficulty": 2,
+       "focus": [
+        "M"
+       ],
+       "note": "Let me see."
+      },
+      {
+       "id": "u06-l4-04",
+       "type": "sentence",
+       "text": "Do you wanna come?",
+       "ja": "一緒に来る？",
+       "difficulty": 3,
+       "focus": [
+        "AH"
+       ],
+       "note": "Do you want to come?"
+      },
+      {
+       "id": "u06-l4-05",
+       "type": "sentence",
+       "text": "I've gotta go.",
+       "ja": "もう行かなきゃ。",
+       "difficulty": 3,
+       "focus": [
+        "T"
+       ],
+       "note": "I've got to go."
+      },
+      {
+       "id": "u06-l4-06",
+       "type": "sentence",
+       "text": "Gimme a minute.",
+       "ja": "ちょっと待って。",
+       "difficulty": 3,
+       "focus": [
+        "M"
+       ],
+       "note": "Give me a minute."
+      }
+     ]
+    },
+    {
+     "id": "u06-l5",
+     "titleJa": "文でつなげる",
+     "goalJa": "つなげる、\nはじく、\n弱くするを、\n文の中でまとめて使う。",
+     "feature": "linking-flap-reduction",
+     "items": [
+      {
+       "id": "u06-l5-01",
+       "type": "sentence",
+       "text": "Not at all.",
+       "ja": "どういたしまして。",
+       "difficulty": 3,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l5-02",
+       "type": "sentence",
+       "text": "Put it on the table.",
+       "ja": "テーブルに置いて。",
+       "difficulty": 3,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l5-03",
+       "type": "sentence",
+       "text": "It's a lot of fun.",
+       "ja": "とても楽しいです。",
+       "difficulty": 3,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l5-04",
+       "type": "sentence",
+       "text": "Can I get a glass of water?",
+       "ja": "水を1杯もらえますか？",
+       "difficulty": 4,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l5-05",
+       "type": "sentence",
+       "text": "Let's get out of here.",
+       "ja": "ここから出よう。",
+       "difficulty": 4,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u06-l5-06",
+       "type": "sentence",
+       "text": "I'll think about it.",
+       "ja": "考えておきます。",
+       "difficulty": 4,
+       "focus": [
+        "K",
+        "T"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u07",
+   "titleJa": "TH・S・SH",
+   "subtitleJa": "舌先の位置で決まる音",
+   "feature": "th",
+   "whyJa": "think を「シンク」と言うと、\nsink（流し台）に聞こえます。\nTH は the や this のように、\nとてもよく使う単語に出てきます。\nまた sea を「シー」と言うと、\nshe に聞こえます。\nどれも、\n舌先の位置を少し変えるだけで直せます。",
+   "howJa": "TH は、\n舌先を上の前歯の先に軽く当てて息を通します。\n強く噛まなくて大丈夫です。\nS は歯を近づけ、\n舌先を前に保ったまま細い息を出します。\nSH は、\nくちびるを前に突き出して出します。",
+   "lessons": [
+    {
+     "id": "u07-l1",
+     "titleJa": "息だけの TH",
+     "goalJa": "舌先を歯に当てて、\n息だけの TH を出す。",
+     "feature": "th",
+     "items": [
+      {
+       "id": "u07-l1-01",
+       "type": "word",
+       "text": "thank",
+       "ja": "感謝する",
+       "difficulty": 1,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l1-02",
+       "type": "word",
+       "text": "think",
+       "ja": "思う",
+       "difficulty": 1,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l1-03",
+       "type": "word",
+       "text": "thing",
+       "ja": "もの・こと",
+       "difficulty": 1,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l1-04",
+       "type": "word",
+       "text": "both",
+       "ja": "両方",
+       "difficulty": 2,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l1-05",
+       "type": "word",
+       "text": "bath",
+       "ja": "お風呂",
+       "difficulty": 2,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l1-06",
+       "type": "word",
+       "text": "nothing",
+       "ja": "何もない",
+       "difficulty": 2,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l1-07",
+       "type": "word",
+       "text": "birthday",
+       "ja": "誕生日",
+       "difficulty": 3,
+       "focus": [
+        "TH"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u07-l2",
+     "titleJa": "声を出す TH",
+     "goalJa": "the や this の TH を、\n声を出して言う。",
+     "feature": "th",
+     "items": [
+      {
+       "id": "u07-l2-01",
+       "type": "word",
+       "text": "this",
+       "ja": "これ",
+       "difficulty": 1,
+       "focus": [
+        "DH"
+       ]
+      },
+      {
+       "id": "u07-l2-02",
+       "type": "word",
+       "text": "that",
+       "ja": "あれ",
+       "difficulty": 1,
+       "focus": [
+        "DH"
+       ]
+      },
+      {
+       "id": "u07-l2-03",
+       "type": "word",
+       "text": "they",
+       "ja": "彼ら",
+       "difficulty": 1,
+       "focus": [
+        "DH"
+       ]
+      },
+      {
+       "id": "u07-l2-04",
+       "type": "word",
+       "text": "mother",
+       "ja": "母",
+       "difficulty": 2,
+       "focus": [
+        "DH"
+       ]
+      },
+      {
+       "id": "u07-l2-05",
+       "type": "word",
+       "text": "other",
+       "ja": "ほかの",
+       "difficulty": 2,
+       "focus": [
+        "DH"
+       ]
+      },
+      {
+       "id": "u07-l2-06",
+       "type": "word",
+       "text": "weather",
+       "ja": "天気",
+       "difficulty": 2,
+       "focus": [
+        "DH"
+       ]
+      },
+      {
+       "id": "u07-l2-07",
+       "type": "word",
+       "text": "with",
+       "ja": "〜と一緒に",
+       "difficulty": 2,
+       "focus": [
+        "DH"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u07-l3",
+     "titleJa": "TH と S をくらべる",
+     "goalJa": "TH と S の違いで、\n意味を言い分ける。",
+     "feature": "th",
+     "items": [
+      {
+       "id": "u07-l3-01",
+       "type": "pair",
+       "text": "think",
+       "ja": "思う ／ 流し台",
+       "difficulty": 2,
+       "focus": [
+        "TH",
+        "S"
+       ],
+       "pair": "sink"
+      },
+      {
+       "id": "u07-l3-02",
+       "type": "pair",
+       "text": "thing",
+       "ja": "もの ／ 歌う",
+       "difficulty": 2,
+       "focus": [
+        "TH",
+        "S"
+       ],
+       "pair": "sing"
+      },
+      {
+       "id": "u07-l3-03",
+       "type": "pair",
+       "text": "thick",
+       "ja": "厚い ／ 病気の",
+       "difficulty": 2,
+       "focus": [
+        "TH",
+        "S"
+       ],
+       "pair": "sick"
+      },
+      {
+       "id": "u07-l3-04",
+       "type": "pair",
+       "text": "thin",
+       "ja": "薄い ／ 罪",
+       "difficulty": 2,
+       "focus": [
+        "TH",
+        "S"
+       ],
+       "pair": "sin"
+      },
+      {
+       "id": "u07-l3-05",
+       "type": "pair",
+       "text": "mouth",
+       "ja": "口 ／ ネズミ",
+       "difficulty": 3,
+       "focus": [
+        "TH",
+        "S"
+       ],
+       "pair": "mouse"
+      },
+      {
+       "id": "u07-l3-06",
+       "type": "pair",
+       "text": "path",
+       "ja": "小道 ／ 通る",
+       "difficulty": 3,
+       "focus": [
+        "TH",
+        "S"
+       ],
+       "pair": "pass"
+      }
+     ]
+    },
+    {
+     "id": "u07-l4",
+     "titleJa": "スィ・ティ・トゥ",
+     "goalJa": "「シ」「チ」「ツ」にならないように言う。",
+     "feature": "s-sh",
+     "items": [
+      {
+       "id": "u07-l4-01",
+       "type": "word",
+       "text": "sit",
+       "ja": "座る",
+       "difficulty": 1,
+       "focus": [
+        "S"
+       ]
+      },
+      {
+       "id": "u07-l4-02",
+       "type": "pair",
+       "text": "sea",
+       "ja": "海 ／ 彼女",
+       "difficulty": 2,
+       "focus": [
+        "S",
+        "SH"
+       ],
+       "pair": "she"
+      },
+      {
+       "id": "u07-l4-03",
+       "type": "pair",
+       "text": "sip",
+       "ja": "ひと口飲む ／ 船",
+       "difficulty": 2,
+       "focus": [
+        "S",
+        "SH"
+       ],
+       "pair": "ship"
+      },
+      {
+       "id": "u07-l4-04",
+       "type": "word",
+       "text": "team",
+       "ja": "チーム",
+       "difficulty": 1,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u07-l4-05",
+       "type": "word",
+       "text": "ticket",
+       "ja": "切符・チケット",
+       "difficulty": 2,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u07-l4-06",
+       "type": "word",
+       "text": "two",
+       "ja": "2",
+       "difficulty": 1,
+       "focus": [
+        "T"
+       ]
+      },
+      {
+       "id": "u07-l4-07",
+       "type": "word",
+       "text": "music",
+       "ja": "音楽",
+       "difficulty": 2,
+       "focus": [
+        "Z"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u07-l5",
+     "titleJa": "短い文で",
+     "goalJa": "文の中でも、\n舌先の位置を保つ。",
+     "feature": "th",
+     "items": [
+      {
+       "id": "u07-l5-01",
+       "type": "sentence",
+       "text": "I think so.",
+       "ja": "そう思います。",
+       "difficulty": 1,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l5-02",
+       "type": "sentence",
+       "text": "Thank you so much.",
+       "ja": "本当にありがとう。",
+       "difficulty": 1,
+       "focus": [
+        "TH"
+       ]
+      },
+      {
+       "id": "u07-l5-03",
+       "type": "sentence",
+       "text": "They're over there.",
+       "ja": "あそこにいます。",
+       "difficulty": 2,
+       "focus": [
+        "DH"
+       ]
+      },
+      {
+       "id": "u07-l5-04",
+       "type": "sentence",
+       "text": "This is my seat.",
+       "ja": "ここは私の席です。",
+       "difficulty": 2,
+       "focus": [
+        "DH",
+        "S"
+       ]
+      },
+      {
+       "id": "u07-l5-05",
+       "type": "sentence",
+       "text": "Three tickets, please.",
+       "ja": "チケットを3枚ください。",
+       "difficulty": 3,
+       "focus": [
+        "TH",
+        "T"
+       ]
+      },
+      {
+       "id": "u07-l5-06",
+       "type": "sentence",
+       "text": "Thanks for everything.",
+       "ja": "いろいろありがとう。",
+       "difficulty": 3,
+       "focus": [
+        "TH"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u08",
+   "titleJa": "V・F・H・W",
+   "subtitleJa": "くちびると歯の音",
+   "feature": "v-b",
+   "whyJa": "日本語の「ブ」や「フ」は、\n両方のくちびるで作ります。\n英語の V と F は、\n上の歯を下くちびるに当てて作ります。\nvery を「ベリー」と言うと、\nberry（ベリー類）に聞こえます。\n「フ」につられて、\nwho や woman も崩れやすくなります。",
+   "howJa": "上の前歯を、\n下くちびるの内側に軽く乗せます。\nそのすき間から息だけを出すと F、\n声を出すと V です。\nwho は、\nくちびるをこすらずに、\nのどから息を出します。\nwoman は、\nくちびるを小さくすぼめてから始めます。",
+   "lessons": [
+    {
+     "id": "u08-l1",
+     "titleJa": "V の音",
+     "goalJa": "歯を下くちびるに当てて、\nV を出す。",
+     "feature": "v-b",
+     "items": [
+      {
+       "id": "u08-l1-01",
+       "type": "word",
+       "text": "very",
+       "ja": "とても",
+       "difficulty": 1,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l1-02",
+       "type": "word",
+       "text": "voice",
+       "ja": "声",
+       "difficulty": 1,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l1-03",
+       "type": "word",
+       "text": "visit",
+       "ja": "訪ねる",
+       "difficulty": 1,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l1-04",
+       "type": "word",
+       "text": "over",
+       "ja": "〜の上に・終わって",
+       "difficulty": 1,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l1-05",
+       "type": "word",
+       "text": "every",
+       "ja": "毎〜・すべての",
+       "difficulty": 2,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l1-06",
+       "type": "word",
+       "text": "love",
+       "ja": "大好き",
+       "difficulty": 2,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l1-07",
+       "type": "word",
+       "text": "give",
+       "ja": "あげる",
+       "difficulty": 2,
+       "focus": [
+        "V"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u08-l2",
+     "titleJa": "V と B をくらべる",
+     "goalJa": "V と B の違いで、\n意味を言い分ける。",
+     "feature": "v-b",
+     "items": [
+      {
+       "id": "u08-l2-01",
+       "type": "pair",
+       "text": "very",
+       "ja": "とても ／ ベリー",
+       "difficulty": 2,
+       "focus": [
+        "V",
+        "B"
+       ],
+       "pair": "berry"
+      },
+      {
+       "id": "u08-l2-02",
+       "type": "pair",
+       "text": "vote",
+       "ja": "投票する ／ ボート",
+       "difficulty": 2,
+       "focus": [
+        "V",
+        "B"
+       ],
+       "pair": "boat"
+      },
+      {
+       "id": "u08-l2-03",
+       "type": "pair",
+       "text": "van",
+       "ja": "ワゴン車 ／ 禁止する",
+       "difficulty": 2,
+       "focus": [
+        "V",
+        "B"
+       ],
+       "pair": "ban"
+      },
+      {
+       "id": "u08-l2-04",
+       "type": "pair",
+       "text": "vest",
+       "ja": "ベスト（服） ／ いちばんよい",
+       "difficulty": 2,
+       "focus": [
+        "V",
+        "B"
+       ],
+       "pair": "best"
+      },
+      {
+       "id": "u08-l2-05",
+       "type": "pair",
+       "text": "vet",
+       "ja": "獣医 ／ 賭ける",
+       "difficulty": 2,
+       "focus": [
+        "V",
+        "B"
+       ],
+       "pair": "bet"
+      },
+      {
+       "id": "u08-l2-06",
+       "type": "pair",
+       "text": "curve",
+       "ja": "カーブ ／ 縁石",
+       "difficulty": 3,
+       "focus": [
+        "V",
+        "B"
+       ],
+       "pair": "curb"
+      }
+     ]
+    },
+    {
+     "id": "u08-l3",
+     "titleJa": "F の音",
+     "goalJa": "歯を下くちびるに当てて、\nF を出す。",
+     "feature": "f-h",
+     "items": [
+      {
+       "id": "u08-l3-01",
+       "type": "word",
+       "text": "fine",
+       "ja": "元気な・よい",
+       "difficulty": 1,
+       "focus": [
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l3-02",
+       "type": "word",
+       "text": "phone",
+       "ja": "電話",
+       "difficulty": 1,
+       "focus": [
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l3-03",
+       "type": "word",
+       "text": "fun",
+       "ja": "楽しい",
+       "difficulty": 1,
+       "focus": [
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l3-04",
+       "type": "word",
+       "text": "food",
+       "ja": "食べ物",
+       "difficulty": 2,
+       "focus": [
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l3-05",
+       "type": "word",
+       "text": "coffee",
+       "ja": "コーヒー",
+       "difficulty": 2,
+       "focus": [
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l3-06",
+       "type": "word",
+       "text": "fruit",
+       "ja": "果物",
+       "difficulty": 2,
+       "focus": [
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l3-07",
+       "type": "word",
+       "text": "off",
+       "ja": "離れて・オフ",
+       "difficulty": 2,
+       "focus": [
+        "F"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u08-l4",
+     "titleJa": "F・H・W",
+     "goalJa": "「フ」につられずに、\nF、\nH、\nW を言い分ける。",
+     "feature": "f-h",
+     "items": [
+      {
+       "id": "u08-l4-01",
+       "type": "pair",
+       "text": "fat",
+       "ja": "太った ／ 帽子",
+       "difficulty": 2,
+       "focus": [
+        "F",
+        "HH"
+       ],
+       "pair": "hat"
+      },
+      {
+       "id": "u08-l4-02",
+       "type": "pair",
+       "text": "feel",
+       "ja": "感じる ／ かかと",
+       "difficulty": 2,
+       "focus": [
+        "F",
+        "HH"
+       ],
+       "pair": "heel"
+      },
+      {
+       "id": "u08-l4-03",
+       "type": "pair",
+       "text": "fold",
+       "ja": "たたむ ／ 持つ",
+       "difficulty": 2,
+       "focus": [
+        "F",
+        "HH"
+       ],
+       "pair": "hold"
+      },
+      {
+       "id": "u08-l4-04",
+       "type": "word",
+       "text": "who",
+       "ja": "だれ",
+       "difficulty": 2,
+       "focus": [
+        "HH"
+       ]
+      },
+      {
+       "id": "u08-l4-05",
+       "type": "word",
+       "text": "whose",
+       "ja": "だれの",
+       "difficulty": 2,
+       "focus": [
+        "HH"
+       ]
+      },
+      {
+       "id": "u08-l4-06",
+       "type": "word",
+       "text": "woman",
+       "ja": "女性",
+       "difficulty": 2,
+       "focus": [
+        "W"
+       ]
+      },
+      {
+       "id": "u08-l4-07",
+       "type": "word",
+       "text": "would",
+       "ja": "〜だろう・〜したい",
+       "difficulty": 2,
+       "focus": [
+        "W"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u08-l5",
+     "titleJa": "短い文で",
+     "goalJa": "文の中でも、\n歯とくちびるを使い分ける。",
+     "feature": "v-b",
+     "items": [
+      {
+       "id": "u08-l5-01",
+       "type": "sentence",
+       "text": "It's very good.",
+       "ja": "とてもいいです。",
+       "difficulty": 1,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l5-02",
+       "type": "sentence",
+       "text": "I feel fine.",
+       "ja": "元気です。",
+       "difficulty": 2,
+       "focus": [
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l5-03",
+       "type": "sentence",
+       "text": "I love my family.",
+       "ja": "家族が大好きです。",
+       "difficulty": 2,
+       "focus": [
+        "V",
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l5-04",
+       "type": "sentence",
+       "text": "Can I have a fork?",
+       "ja": "フォークをもらえますか？",
+       "difficulty": 2,
+       "focus": [
+        "V",
+        "F"
+       ]
+      },
+      {
+       "id": "u08-l5-05",
+       "type": "sentence",
+       "text": "Five or seven?",
+       "ja": "5ですか？ 7ですか？",
+       "difficulty": 2,
+       "focus": [
+        "V"
+       ]
+      },
+      {
+       "id": "u08-l5-06",
+       "type": "sentence",
+       "text": "Who's that woman?",
+       "ja": "あの女性はだれ？",
+       "difficulty": 3,
+       "focus": [
+        "HH",
+        "W"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u09",
+   "titleJa": "長い音と短い音",
+   "subtitleJa": "ship と sheep、\nfull と fool",
+   "feature": "vowels-tense-lax",
+   "whyJa": "日本語の「イ」と「イー」は、\n長さだけの違いです。\n英語の ship と sheep は、\n長さだけでなく、\n口の形も違います。\nまた make や go は、\n英語では「エイ」「オウ」と、\n口が動く音です。",
+   "howJa": "短い方は、\n口の力を抜いて、\n少しゆるく言います。\n長い方は、\n口を横にしっかり引くか、\nくちびるを丸めて突き出します。\n「エイ」「オウ」は、\n最後まで口を動かします。",
+   "lessons": [
+    {
+     "id": "u09-l1",
+     "titleJa": "イとイー",
+     "goalJa": "ship と sheep を、\n口の形で言い分ける。",
+     "feature": "vowels-tense-lax",
+     "items": [
+      {
+       "id": "u09-l1-01",
+       "type": "pair",
+       "text": "it",
+       "ja": "それ ／ 食べる",
+       "difficulty": 1,
+       "focus": [
+        "IH",
+        "IY"
+       ],
+       "pair": "eat"
+      },
+      {
+       "id": "u09-l1-02",
+       "type": "pair",
+       "text": "sit",
+       "ja": "座る ／ 座席",
+       "difficulty": 2,
+       "focus": [
+        "IH",
+        "IY"
+       ],
+       "pair": "seat"
+      },
+      {
+       "id": "u09-l1-03",
+       "type": "pair",
+       "text": "ship",
+       "ja": "船 ／ 羊",
+       "difficulty": 2,
+       "focus": [
+        "IH",
+        "IY"
+       ],
+       "pair": "sheep"
+      },
+      {
+       "id": "u09-l1-04",
+       "type": "pair",
+       "text": "live",
+       "ja": "住む ／ 去る",
+       "difficulty": 2,
+       "focus": [
+        "IH",
+        "IY"
+       ],
+       "pair": "leave"
+      },
+      {
+       "id": "u09-l1-05",
+       "type": "pair",
+       "text": "chip",
+       "ja": "かけら ／ 安い",
+       "difficulty": 2,
+       "focus": [
+        "IH",
+        "IY"
+       ],
+       "pair": "cheap"
+      },
+      {
+       "id": "u09-l1-06",
+       "type": "pair",
+       "text": "hit",
+       "ja": "打つ ／ 熱",
+       "difficulty": 2,
+       "focus": [
+        "IH",
+        "IY"
+       ],
+       "pair": "heat"
+      },
+      {
+       "id": "u09-l1-07",
+       "type": "pair",
+       "text": "fill",
+       "ja": "満たす ／ 感じる",
+       "difficulty": 3,
+       "focus": [
+        "IH",
+        "IY"
+       ],
+       "pair": "feel"
+      }
+     ]
+    },
+    {
+     "id": "u09-l2",
+     "titleJa": "ウとウー",
+     "goalJa": "full と fool を、\n口の形で言い分ける。",
+     "feature": "vowels-tense-lax",
+     "items": [
+      {
+       "id": "u09-l2-01",
+       "type": "pair",
+       "text": "full",
+       "ja": "いっぱいの ／ おろか者",
+       "difficulty": 2,
+       "focus": [
+        "UH",
+        "UW"
+       ],
+       "pair": "fool"
+      },
+      {
+       "id": "u09-l2-02",
+       "type": "pair",
+       "text": "pull",
+       "ja": "引く ／ プール",
+       "difficulty": 2,
+       "focus": [
+        "UH",
+        "UW"
+       ],
+       "pair": "pool"
+      },
+      {
+       "id": "u09-l2-03",
+       "type": "word",
+       "text": "look",
+       "ja": "見る",
+       "difficulty": 1,
+       "focus": [
+        "UH"
+       ]
+      },
+      {
+       "id": "u09-l2-04",
+       "type": "word",
+       "text": "cook",
+       "ja": "料理する",
+       "difficulty": 1,
+       "focus": [
+        "UH"
+       ]
+      },
+      {
+       "id": "u09-l2-05",
+       "type": "word",
+       "text": "should",
+       "ja": "〜したほうがいい",
+       "difficulty": 2,
+       "focus": [
+        "UH"
+       ]
+      },
+      {
+       "id": "u09-l2-06",
+       "type": "word",
+       "text": "soon",
+       "ja": "もうすぐ",
+       "difficulty": 1,
+       "focus": [
+        "UW"
+       ]
+      },
+      {
+       "id": "u09-l2-07",
+       "type": "word",
+       "text": "choose",
+       "ja": "選ぶ",
+       "difficulty": 2,
+       "focus": [
+        "UW"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u09-l3",
+     "titleJa": "エイとオウ",
+     "goalJa": "「エー」「オー」と伸ばさずに、\n口を動かす。",
+     "feature": "vowels-tense-lax",
+     "items": [
+      {
+       "id": "u09-l3-01",
+       "type": "word",
+       "text": "make",
+       "ja": "作る",
+       "difficulty": 1,
+       "focus": [
+        "EY"
+       ]
+      },
+      {
+       "id": "u09-l3-02",
+       "type": "word",
+       "text": "go",
+       "ja": "行く",
+       "difficulty": 1,
+       "focus": [
+        "OW"
+       ]
+      },
+      {
+       "id": "u09-l3-03",
+       "type": "word",
+       "text": "home",
+       "ja": "家",
+       "difficulty": 1,
+       "focus": [
+        "OW"
+       ]
+      },
+      {
+       "id": "u09-l3-04",
+       "type": "word",
+       "text": "okay",
+       "ja": "いいよ",
+       "difficulty": 2,
+       "focus": [
+        "OW",
+        "EY"
+       ]
+      },
+      {
+       "id": "u09-l3-05",
+       "type": "word",
+       "text": "don't",
+       "ja": "〜しない",
+       "difficulty": 2,
+       "focus": [
+        "OW"
+       ]
+      },
+      {
+       "id": "u09-l3-06",
+       "type": "pair",
+       "text": "wet",
+       "ja": "ぬれた ／ 待つ",
+       "difficulty": 2,
+       "focus": [
+        "EH",
+        "EY"
+       ],
+       "pair": "wait"
+      },
+      {
+       "id": "u09-l3-07",
+       "type": "pair",
+       "text": "called",
+       "ja": "呼んだ ／ 寒い",
+       "difficulty": 3,
+       "focus": [
+        "AO",
+        "OW"
+       ],
+       "pair": "cold"
+      }
+     ]
+    },
+    {
+     "id": "u09-l4",
+     "titleJa": "短い文で",
+     "goalJa": "文の中でも、\n長い音と短い音を言い分ける。",
+     "feature": "vowels-tense-lax",
+     "items": [
+      {
+       "id": "u09-l4-01",
+       "type": "sentence",
+       "text": "Where do you live?",
+       "ja": "どこに住んでいますか？",
+       "difficulty": 2,
+       "focus": [
+        "IH"
+       ]
+      },
+      {
+       "id": "u09-l4-02",
+       "type": "sentence",
+       "text": "Is this seat free?",
+       "ja": "この席は空いていますか？",
+       "difficulty": 2,
+       "focus": [
+        "IY"
+       ]
+      },
+      {
+       "id": "u09-l4-03",
+       "type": "sentence",
+       "text": "It's a good book.",
+       "ja": "いい本です。",
+       "difficulty": 2,
+       "focus": [
+        "UH"
+       ]
+      },
+      {
+       "id": "u09-l4-04",
+       "type": "sentence",
+       "text": "I don't know.",
+       "ja": "わかりません。",
+       "difficulty": 2,
+       "focus": [
+        "OW"
+       ]
+      },
+      {
+       "id": "u09-l4-05",
+       "type": "sentence",
+       "text": "Let's go home.",
+       "ja": "家に帰ろう。",
+       "difficulty": 2,
+       "focus": [
+        "OW"
+       ]
+      },
+      {
+       "id": "u09-l4-06",
+       "type": "sentence",
+       "text": "The pool is full.",
+       "ja": "プールは人でいっぱいです。",
+       "difficulty": 3,
+       "focus": [
+        "UW",
+        "UH"
+       ]
+      },
+      {
+       "id": "u09-l4-07",
+       "type": "sentence",
+       "text": "Please wait a minute.",
+       "ja": "少し待ってください。",
+       "difficulty": 3,
+       "focus": [
+        "EY"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "u10",
+   "titleJa": "声のメロディー",
+   "subtitleJa": "高さの幅・強調・上げ下げ",
+   "feature": "intonation",
+   "whyJa": "日本語で話す英語は、\n声の高さの幅がせまく、\n平らに聞こえがちです。\n英語では、\nいちばん伝えたい単語で、\n声が大きく上がって下がります。\n気持ちや意味も、\nこの動きで伝わります。",
+   "howJa": "お手本の声の高さの線を、\nなぞるように言います。\n少し大げさかなと思うくらいで、\nちょうど自然に聞こえます。\n最初は短い言葉で、\n高さの幅を広げます。",
+   "lessons": [
+    {
+     "id": "u10-l1",
+     "titleJa": "高さの幅を広げる",
+     "goalJa": "声の高さを大きく動かして、\n気持ちを伝える。",
+     "feature": "intonation",
+     "items": [
+      {
+       "id": "u10-l1-01",
+       "type": "word",
+       "text": "Really?",
+       "ja": "本当？",
+       "difficulty": 1,
+       "focus": [
+        "IH"
+       ]
+      },
+      {
+       "id": "u10-l1-02",
+       "type": "word",
+       "text": "Great!",
+       "ja": "いいね！",
+       "difficulty": 1,
+       "focus": [
+        "EY"
+       ]
+      },
+      {
+       "id": "u10-l1-03",
+       "type": "phrase",
+       "text": "No problem.",
+       "ja": "大丈夫ですよ。",
+       "difficulty": 1,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u10-l1-04",
+       "type": "phrase",
+       "text": "That's amazing!",
+       "ja": "すごい！",
+       "difficulty": 2,
+       "focus": [
+        "EY"
+       ]
+      },
+      {
+       "id": "u10-l1-05",
+       "type": "phrase",
+       "text": "Thank you so much!",
+       "ja": "本当にありがとう！",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u10-l1-06",
+       "type": "phrase",
+       "text": "Nice to meet you, too.",
+       "ja": "こちらこそ、\nよろしく。",
+       "difficulty": 2,
+       "focus": [
+        "UW"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u10-l2",
+     "titleJa": "いちばん大事な単語",
+     "goalJa": "伝えたい単語を、\n高く強く目立たせる。",
+     "feature": "intonation",
+     "items": [
+      {
+       "id": "u10-l2-01",
+       "type": "sentence",
+       "text": "Where are you from?",
+       "ja": "出身はどこですか？",
+       "difficulty": 2,
+       "focus": [
+        "AH"
+       ]
+      },
+      {
+       "id": "u10-l2-02",
+       "type": "sentence",
+       "text": "What do you do?",
+       "ja": "お仕事は何ですか？",
+       "difficulty": 2,
+       "focus": [
+        "UW"
+       ]
+      },
+      {
+       "id": "u10-l2-03",
+       "type": "sentence",
+       "text": "Which one? The red one.",
+       "ja": "どれ？ 赤いの。",
+       "difficulty": 3,
+       "focus": [
+        "EH"
+       ]
+      },
+      {
+       "id": "u10-l2-04",
+       "type": "sentence",
+       "text": "It's my turn, not yours.",
+       "ja": "あなたじゃなくて、\n私の番。",
+       "difficulty": 3,
+       "focus": [
+        "AY",
+        "R"
+       ]
+      },
+      {
+       "id": "u10-l2-05",
+       "type": "sentence",
+       "text": "I said coffee, not tea.",
+       "ja": "紅茶じゃなくて、\nコーヒーって言ったの。",
+       "difficulty": 3,
+       "focus": [
+        "AA"
+       ]
+      },
+      {
+       "id": "u10-l2-06",
+       "type": "sentence",
+       "text": "I'm not tired, I'm hungry.",
+       "ja": "疲れたんじゃなくて、\nおなかがすいたの。",
+       "difficulty": 3,
+       "focus": [
+        "AY",
+        "AH"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u10-l3",
+     "titleJa": "質問の上げ下げ",
+     "goalJa": "はい・いいえで答える質問は上げ、\nwhat や where の質問は下げる。",
+     "feature": "intonation",
+     "items": [
+      {
+       "id": "u10-l3-01",
+       "type": "sentence",
+       "text": "Are you ready?",
+       "ja": "準備できた？",
+       "difficulty": 1,
+       "focus": [
+        "EH"
+       ]
+      },
+      {
+       "id": "u10-l3-02",
+       "type": "sentence",
+       "text": "Do you like it?",
+       "ja": "気に入った？",
+       "difficulty": 1,
+       "focus": [
+        "AY"
+       ]
+      },
+      {
+       "id": "u10-l3-03",
+       "type": "sentence",
+       "text": "Is this your first time?",
+       "ja": "初めてですか？",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u10-l3-04",
+       "type": "sentence",
+       "text": "Where do you work?",
+       "ja": "どこで働いていますか？",
+       "difficulty": 2,
+       "focus": [
+        "ER"
+       ]
+      },
+      {
+       "id": "u10-l3-05",
+       "type": "sentence",
+       "text": "What would you like?",
+       "ja": "何にしますか？",
+       "difficulty": 2,
+       "focus": [
+        "AY"
+       ]
+      },
+      {
+       "id": "u10-l3-06",
+       "type": "sentence",
+       "text": "How was your weekend?",
+       "ja": "週末はどうでしたか？",
+       "difficulty": 2,
+       "focus": [
+        "IY"
+       ]
+      },
+      {
+       "id": "u10-l3-07",
+       "type": "sentence",
+       "text": "Coffee or tea?",
+       "ja": "コーヒーと紅茶、\nどちらにしますか？",
+       "difficulty": 2,
+       "focus": [
+        "AA"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "u10-l4",
+     "titleJa": "区切りとまとまり",
+     "goalJa": "長い文を区切りながら、\nメロディーをつける。",
+     "feature": "intonation",
+     "items": [
+      {
+       "id": "u10-l4-01",
+       "type": "sentence",
+       "text": "Sorry, I didn't catch that.",
+       "ja": "すみません、\n聞き取れませんでした。",
+       "difficulty": 3,
+       "focus": [
+        "AE"
+       ]
+      },
+      {
+       "id": "u10-l4-02",
+       "type": "sentence",
+       "text": "Could you say that again, please?",
+       "ja": "もう一度言ってもらえますか？",
+       "difficulty": 3,
+       "focus": [
+        "EH"
+       ]
+      },
+      {
+       "id": "u10-l4-03",
+       "type": "sentence",
+       "text": "I'm not sure, but I think so.",
+       "ja": "よくわからないけど、\nそうだと思います。",
+       "difficulty": 4,
+       "focus": [
+        "R",
+        "IH"
+       ]
+      },
+      {
+       "id": "u10-l4-04",
+       "type": "sentence",
+       "text": "If you have time, let's get lunch.",
+       "ja": "時間があれば、\nお昼を食べに行こう。",
+       "difficulty": 4,
+       "focus": [
+        "AY",
+        "AH"
+       ]
+      },
+      {
+       "id": "u10-l4-05",
+       "type": "sentence",
+       "text": "When I got home, I was really tired.",
+       "ja": "家に帰ったら、\nすごく疲れていました。",
+       "difficulty": 5,
+       "focus": [
+        "OW",
+        "AY"
+       ]
+      },
+      {
+       "id": "u10-l4-06",
+       "type": "sentence",
+       "text": "I'd like a coffee, a salad, and some water.",
+       "ja": "コーヒーとサラダと、\nお水をください。",
+       "difficulty": 5,
+       "focus": [
+        "AA",
+        "AO"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

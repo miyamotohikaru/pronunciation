@@ -5,9 +5,17 @@
  "license": "MIT",
  "files": {
   "onnx": {
-   "int8": "model.int8.onnx"
+   "int8w": "model.int8w.onnx"
   },
-  "defaultOnnx": "int8",
+  "defaultOnnx": "int8w",
+  "hash": {
+   "int8w": "a79272819f3e14a7"
+  },
+  "sessionConfig": {
+   "int8w": {
+    "session.disable_quant_qdq": "1"
+   }
+  },
   "regressor": "regressor.json",
   "melFilters": "mel_filters_80.json"
  },

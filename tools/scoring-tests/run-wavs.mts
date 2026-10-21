@@ -4,8 +4,7 @@
  */
 import { writeFileSync } from "node:fs";
 import { basename, dirname } from "node:path";
-import { makeScorer, readWav, shippedTargets, targetsFromKokoro, targetsFromText } from "./lib.mts";
-import { addConnectedSpeech } from "../../src/engine/scoring/connected.ts";
+import { makeScorer, readWav, targetsFor, targetsFromKokoro } from "./lib.mts";
 import { cases, kokoroJsons, type Case } from "./cases.mts";
 import type { ScoreResult } from "../../src/engine/scoring/types.ts";
 
@@ -68,11 +67,7 @@ async function main() {
   for (const c of cases()) {
     if (filter && !c.file.includes(filter)) continue;
     const { audio } = readWav(c.file);
-    const words = c.text
-      ? addConnectedSpeech(targetsFromText(c.text))
-      : raw
-        ? targetsFromKokoro(kokoroJsons(c.sentence))
-        : (await shippedTargets(scorer, c.sentence, kokoroJsons(c.sentence))).words;
+    const words = raw && !c.text ? targetsFromKokoro(kokoroJsons(c.sentence)) : await targetsFor(scorer, c);
     const r = await scorer.score({ audio, words });
     const v = verdict(c, r);
     n++;

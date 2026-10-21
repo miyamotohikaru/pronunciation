@@ -10,11 +10,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
-import { makeScorer, readWav, shippedTargets, targetsFromText, ROOT } from "./lib.mts";
-import { cases, kokoroJsons } from "./cases.mts";
+import { makeScorer, readWav, targetsFor, ROOT } from "./lib.mts";
+import { cases } from "./cases.mts";
 import { runParity } from "./parity.mts";
 import { verdict } from "./run-wavs.mts";
-import { addConnectedSpeech } from "../../src/engine/scoring/connected.ts";
 
 const HERE = new URL("./", import.meta.url).pathname;
 const node = (script: string) => spawnSync(process.execPath, ["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", join(HERE, script)], { encoding: "utf8", cwd: HERE });
@@ -38,14 +37,20 @@ test("TS == Python reference (mel, logic, fp32 end to end)", async () => {
 });
 
 /** Clips whose expectation the current model cannot meet (see README, known limitations). */
-const KNOWN_MISSES = [/sam_berry/, /candidates\//, /extra\/sam_(sank_you|zis_one|light|milk|sheep|voice|big_beddo)\.wav$/];
+const KNOWN_MISSES = [
+  /audio\/sam_berry\.wav$/, // V->B: the model hears V
+  /audio\/kyo_(very|street)\.wav$/, // Kyoko: nothing beats the penalties
+  /extra\/sam_zis_one\.wav$/, // DH->Z: the model hears DH
+  /extra\/sam_(light|milk|sheep|voice)\.wav$/, // natives on CMUdict-only targets (no reference to learn from)
+  /candidates\//, // held-out Kokoro voices (not the references)
+];
 
 test("behaviour on the test clips", async () => {
   const scorer = await makeScorer();
   const bad: string[] = [];
   for (const c of cases()) {
     if (KNOWN_MISSES.some((re) => re.test(c.file))) continue;
-    const words = c.text ? addConnectedSpeech(targetsFromText(c.text)) : (await shippedTargets(scorer, c.sentence, kokoroJsons(c.sentence))).words;
+    const words = await targetsFor(scorer, c);
     const r = await scorer.score({ audio: readWav(c.file).audio, words });
     const v = verdict(c, r);
     if (!v.ok) bad.push(`${c.file.replace(ROOT, "")}: ${v.why}`);

@@ -3,7 +3,8 @@
   .venv/bin/python tools/model/export/export_onnx.py [MODEL_DIR] [OUT_DIR]
 
 Writes OUT_DIR/model.fp32.onnx and OUT_DIR/model.int8.onnx (dynamic quantization of
-the MatMul weights) and checks both against PyTorch on real and random mels.
+the MatMul weights) and checks both against PyTorch on real and random mels. Run
+quantize_weights.py afterwards for model.int8w.onnx (weight-only int8, the shipped one).
 
 Graph: mel [1, 80, L] (float32) -> log_probs [1, ceil(L/2), V] (log-softmax inside).
 The positional embedding is sliced to the real frame count, so no 30-s padding.

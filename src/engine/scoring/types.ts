@@ -45,8 +45,12 @@ export type ModelMeta = {
   license: string;
   /** File names relative to the meta.json URL. */
   files: {
-    onnx: Record<string, string>; // e.g. { int8: "model.int8.onnx", fp32: "model.fp32.onnx" }
+    onnx: Record<string, string>; // e.g. { int8w: "model.int8w.onnx" }
     defaultOnnx: string; // key of onnx
+    /** ONNX Runtime session config entries per variant (passed as SessionOptions.extra). */
+    sessionConfig?: Record<string, Record<string, string>>;
+    /** Content hash per variant (cache key: a new model is downloaded once, then cached). */
+    hash?: Record<string, string>;
     regressor: string; // regressor.json
     melFilters: string; // mel_filters_80.json
   };
@@ -105,6 +109,10 @@ export type DiagnosisConfig = {
   insertionPenalty: number;
   /** Penalty for skipping a target phone. */
   deletionPenalty: number;
+  /** Per target base phone overrides (e.g. { JH: 9 } where a native drops it too). */
+  deletionPenaltyFor?: Record<string, number>;
+  /** Insertion penalty after a given base phone (e.g. { K: 3 } where a native releases it). */
+  insertionPenaltyAfter?: Record<string, number>;
   /** Shortest inserted vowel we report, in encoder frames. */
   minInsertionFrames: number;
   /** A phone below this 0..100 score with no confusion found is a "distortion". */
@@ -144,6 +152,29 @@ export type ScoreOptions = {
    * the best word score. "likelihood": the Viterbi choice only (faster, a little harsher).
    */
   variantChoice?: "score" | "likelihood";
+  /**
+   * Also force-align the take to exactly this phone sequence (e.g. the reference voice's
+   * realized phones) and return it as `alignedTo` — src/engine/prosody needs the user and
+   * the reference aligned to the same sequence.
+   */
+  alignTo?: { phone: string; word: number }[];
+  /** Also return `margins` (build time: per-item penalties from the native references). */
+  measureMargins?: boolean;
+  /**
+   * Native baseline per phone ("<word>:<base>:<n>" -> raw 0..2 the reference got): a take
+   * gets the same handicap where the recognizer rates even the native low. From the item data.
+   */
+  baseline?: Record<string, number>;
+};
+
+/** See diagnose.ts measureMargins(). */
+export type PhoneMargin = {
+  word: number;
+  index: number;
+  phone: string;
+  sub: Record<string, number>;
+  del: number;
+  ins?: number;
 };
 
 // ------------------------------------------------------------------ output
@@ -201,6 +232,10 @@ export type ScoreResult = {
   spans: AlignedPhoneSpan[];
   /** Free (greedy) CTC decode, ARPAbet base symbols. For debugging and the lab page. */
   heard: string[];
+  /** Only with options.alignTo: the take aligned to that sequence (one span per entry). */
+  alignedTo?: AlignedPhoneSpan[];
+  /** Only with options.measureMargins: evidence margins per realized phone. */
+  margins?: PhoneMargin[];
   /** Milliseconds per stage. */
   timing: { mel: number; model: number; align: number; total: number };
   backend: string;

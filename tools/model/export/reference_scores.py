@@ -2,7 +2,7 @@
 
   .venv/bin/python tools/model/export/reference_scores.py REQUEST.json RESPONSE.json
 
-REQUEST: {"modelDir": "public/models/whisper-phoneme", "onnxPath": ".../model.int8.onnx",
+REQUEST: {"modelDir": "public/models/whisper-phoneme", "onnxPath": ".../model.int8w.onnx",
           "useTsLogProbs": false,
           "items": [{"wav": path, "nPad": int, "phones": ["R", "AY1", "DX", ...],
                      "tsMel": path of the TS mel (.f32, [80, L]),

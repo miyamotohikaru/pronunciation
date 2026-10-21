@@ -7,7 +7,7 @@
  *     vowel may be inserted (cost: insertionPenalty) -> epenthesis (Japanese u/o/i)
  * The canonical path costs nothing, so a finding needs the audio to beat it by the penalty.
  */
-import type { DiagnosisConfig } from "./types.ts";
+import type { DiagnosisConfig, PhoneMargin } from "./types.ts";
 import { nodeSpans, slotGraph, viterbiGraph, type Slot } from "./graph.ts";
 import { baseOf, columnFor, type UnitSpace } from "./phones.ts";
 
@@ -89,10 +89,11 @@ export function diagnose(
       alts.push({ column: col, cost: cfg.pairPenalty?.[`${base}>${q}`] ?? cfg.substitutionPenalty });
     }
     phoneSlot.push(slots.length);
-    slots.push({ alts, optional: true, skipCost: cfg.deletionPenalty });
+    slots.push({ alts, optional: true, skipCost: cfg.deletionPenaltyFor?.[base] ?? cfg.deletionPenalty });
     if (p.insertionAfter) {
       insSlot.push({ slot: slots.length, word: p.word, afterIndex: p.index });
-      slots.push({ alts: vowelCols.map((x) => ({ column: x.col, cost: cfg.insertionPenalty })), optional: true, skipCost: 0 });
+      const cost = cfg.insertionPenaltyAfter?.[base] ?? cfg.insertionPenalty;
+      slots.push({ alts: vowelCols.map((x) => ({ column: x.col, cost })), optional: true, skipCost: 0 });
     }
   });
   const { graph, slotOf, altOf } = slotGraph(slots);
@@ -117,4 +118,43 @@ export function diagnose(
     insertions.push({ word: s.word, afterIndex: s.afterIndex, vowel: vowelCols[u.alt].v, start: u.start, end: u.end });
   }
   return { phones: outPhones, insertions };
+}
+
+/**
+ * One alternative at a time against the canonical path. The content build runs this on the
+ * native references to set per-item penalties just above what the native itself shows.
+ */
+export function measureMargins(
+  em: Float32Array,
+  T: number,
+  C: number,
+  blank: number,
+  phones: DiagPhone[],
+  space: UnitSpace,
+  cfg: DiagnosisConfig,
+): PhoneMargin[] {
+  const base: Slot[] = phones.map((p) => ({ alts: [{ column: p.column, cost: 0 }], optional: false, skipCost: 0 }));
+  const run = (slots: Slot[]) => viterbiGraph(em, T, C, blank, slotGraph(slots).graph).score;
+  const s0 = run(base);
+  const vowelCols = cfg.epentheticVowels.map((v) => columnFor(space, v));
+  return phones.map((p, i) => {
+    const b = baseOf(p.symbol);
+    const sub: Record<string, number> = {};
+    for (const q of cfg.confusions[b] ?? []) {
+      const col = space.baseColumn.get(q);
+      if (col === undefined || col === p.column) continue;
+      const sl = base.slice();
+      sl[i] = { alts: [{ column: p.column, cost: 0 }, { column: col, cost: 0 }], optional: false, skipCost: 0 };
+      sub[q] = Math.max(0, run(sl) - s0);
+    }
+    const sd = base.slice();
+    sd[i] = { ...sd[i], optional: true, skipCost: 0 };
+    const out: PhoneMargin = { word: p.word, index: p.index, phone: p.symbol, sub, del: Math.max(0, run(sd) - s0) };
+    if (p.insertionAfter) {
+      const si = base.slice();
+      si.splice(i + 1, 0, { alts: vowelCols.map((column) => ({ column, cost: 0 })), optional: true, skipCost: 0 });
+      out.ins = Math.max(0, run(si) - s0);
+    }
+    return out;
+  });
 }

@@ -35,6 +35,7 @@ createServer(async (req, res) => {
     const meta = JSON.parse(await readFile(join(ROOT, "public/models/whisper-phoneme/meta.json"), "utf8"));
     meta.files.onnx.fp32 = "model.fp32.onnx";
     meta.files.onnx.int8w = "model.int8w.onnx";
+    meta.files.sessionConfig = { ...meta.files.sessionConfig, int8w: { "session.disable_quant_qdq": "1" } };
     return res.writeHead(200, { ...headers, "Content-Type": "application/json" }).end(JSON.stringify(meta));
   }
   const file = extra ? join(ROOT, ".work/onnx", `model.${extra[1]}.onnx`) : normalize(join(route[1], path.slice(route[0].length)));
