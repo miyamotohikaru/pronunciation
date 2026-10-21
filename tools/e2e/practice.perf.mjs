@@ -64,7 +64,7 @@ async function oneTake(label) {
     window.__marks = { start: performance.now() };
   });
   await page.click('button[aria-label="録音して話す"], button[aria-label="もう一回"]').catch(async () => {
-    await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("もう一回"))?.click());
+    await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("もう一度話す"))?.click());
   });
   await page.waitForFunction(() => window.__practice?.phase !== "result" && window.__practice?.phase !== "ready", { timeout: 30000 });
   await page.waitForFunction(() => window.__practice?.phase === "result", { timeout: 180000 });

@@ -527,12 +527,12 @@ export default function PracticeScreen({ item, takes, progress, backHref, nextHr
               <button
                 type="button"
                 onClick={() => startRecording(attempt + 1)}
-                className={`press ${retryFirst ? "" : "press-deep"} h-[60px] flex-[1.25] text-[18px]`}
+                className={`press ${retryFirst ? "" : "press-ghost"} h-[60px] flex-[1.25] text-[18px]`}
               >
                 <IconRetry size={22} />
                 もう一回
               </button>
-              <Link href={nextHref} className={`press ${retryFirst ? "press-deep" : ""} h-[60px] flex-1 text-[18px]`}>
+              <Link href={nextHref} className={`press ${retryFirst ? "press-ghost" : ""} h-[60px] flex-1 text-[18px]`}>
                 {retryFirst && take.attempt >= 3 ? "あとでもう一回" : "次へ"}
                 <IconNext size={20} />
               </Link>

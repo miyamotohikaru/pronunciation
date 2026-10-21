@@ -1,7 +1,7 @@
 import type { PhoneSpan, PitchFrame, ProsodyIssue, ProsodyResult, Syllable, SyllableStats } from "./types.ts";
 import { syllabify } from "./syllables.ts";
 import { contour, speakerMedianHz, syllableStats, toRegions, warpByKnots, type Region } from "./features.ts";
-import { clamp, mean, pearson, quantile, slope } from "./stats.ts";
+import { clamp, mean, median, pearson, quantile } from "./stats.ts";
 
 /** 1回ぶんの発話（お手本 or 自分）。phones は同じ目標音素列への強制アラインメント。 */
 export type Take = {
@@ -11,6 +11,28 @@ export type Take = {
   speech: [number, number];
 };
 
+/**
+ * 生の点（0..100）→ 見せる点（0..100）の換算表。[生, 見せる] を区分線形でつなぐ。
+ * 2026-10-22 に、お手本の2声（af_heart / am_michael）どうしを比べた分布で合わせた。
+ * ネイティブどうしの下位1割（文 56）が 82、中央値（文 73）が 92 になり、
+ * 棒読み（高さを一定にした声。文の中央値 23）は 45 前後に下がる。
+ * 1〜2音節の語は形の比較が不安定なので、別の表で甘めにする。
+ */
+export const INTONATION_CURVE: readonly (readonly [number, number])[] = [[0, 0], [25, 45], [56, 82], [73, 92], [85, 98], [100, 100]];
+export const INTONATION_CURVE_SHORT: readonly (readonly [number, number])[] = [[0, 0], [20, 45], [45, 80], [85, 95], [100, 100]];
+/** リズム: ネイティブどうしの文の下位1割 73 → 85、中央値 90 → 95。 */
+export const RHYTHM_CURVE: readonly (readonly [number, number])[] = [[0, 0], [40, 45], [73, 85], [90, 95], [100, 100]];
+
+export function curve(raw: number, table: readonly (readonly [number, number])[]): number {
+  const x = clamp(raw, 0, 100);
+  for (let i = 0; i + 1 < table.length; i++) {
+    const [x0, y0] = table[i];
+    const [x1, y1] = table[i + 1];
+    if (x <= x1) return y0 + ((x - x0) / Math.max(1e-9, x1 - x0)) * (y1 - y0);
+  }
+  return table[table.length - 1][1];
+}
+
 /** 隣り合う音節の長さの揺れ（nPVI）。英語は大きく、モーラ拍の日本語は小さい。 */
 function npvi(d: number[]): number {
   if (d.length < 2) return 0;
@@ -19,16 +41,23 @@ function npvi(d: number[]): number {
   return (100 * s) / (d.length - 1);
 }
 
-/** 末尾の約0.3秒の上がり下がり（半音/秒）。 */
+/**
+ * 文末の上がり下がり（半音/秒）。最後の音節の母音（核）の終わりまでを見る。
+ * 語末の子音（t の破裂など）で音程の読み取りが跳ねる所は入れない。
+ * 1フレームの跳ねは3点の中央値で消し、傾きは外れ値に強い Theil–Sen（2点ずつの傾きの中央値）で出して ±40 に収める。
+ */
 function finalSlope(stats: SyllableStats[], points: { t: number; st: number | null }[]): number {
   if (stats.length === 0) return 0;
-  const end = stats[stats.length - 1].end;
-  const tail = points.filter((p) => p.st !== null && p.t >= end - 0.35 && p.t <= end);
-  if (tail.length < 4) return 0;
-  return slope(
-    tail.map((p) => p.t),
-    tail.map((p) => p.st as number),
-  );
+  const last = stats[stats.length - 1];
+  const end = last.nucleusEnd + 0.03;
+  const start = Math.max(last.nucleusStart - 0.2, end - 0.35);
+  const raw = points.filter((p): p is { t: number; st: number } => p.st !== null && p.t >= start && p.t <= end);
+  if (raw.length < 5) return 0;
+  const st = raw.map((p, i) => median([raw[Math.max(0, i - 1)].st, p.st, raw[Math.min(raw.length - 1, i + 1)].st]));
+  const slopes: number[] = [];
+  for (let i = 0; i < raw.length; i++) for (let j = i + 3; j < raw.length; j++) slopes.push((st[j] - st[i]) / (raw[j].t - raw[i].t));
+  if (slopes.length === 0) return 0;
+  return clamp(median(slopes), -40, 40);
 }
 
 /** お手本にない長い間（250ms 以上）を数える。 */
@@ -175,7 +204,8 @@ export function compareProsody(ref: Take, user: Take, words: string[]): ProsodyR
   const rangeScore = rRange < 2 ? (uRange < 6 ? 1 : 0.7) : uRange <= 0 ? 0 : 1 - Math.min(1, Math.abs(Math.log(uRange / rRange)) / Math.log(2.5));
   const rFinal = finalSlope(rs, refC);
   const uFinal = finalSlope(us, userC);
-  const finalScore = Math.abs(rFinal) < 3 ? 1 : Math.sign(rFinal) === Math.sign(uFinal) && Math.abs(uFinal) >= 1.5 ? 1 : Math.sign(rFinal) === Math.sign(uFinal) ? 0.6 : 0;
+  // 1〜2音節の語は文末の傾きが不安定なので、はっきり動くときだけ比べる
+  const finalScore = Math.abs(rFinal) < (lowConfidence ? 8 : 3) ? 1 : Math.sign(rFinal) === Math.sign(uFinal) && Math.abs(uFinal) >= 1.5 ? 1 : Math.sign(rFinal) === Math.sign(uFinal) ? 0.6 : 0;
   detail.pitchCorr = pitchCorr;
   detail.pitchDist = pitchDist;
   detail.rangeRef = rRange;
@@ -204,9 +234,11 @@ export function compareProsody(ref: Take, user: Take, words: string[]): ProsodyR
   if (pace < 0.7) issues.push({ kind: "too-fast", weight: clamp((0.7 - pace) / 0.4) });
 
   issues.sort((a, b) => b.weight - a.weight);
+  detail.rawRhythm = rhythm;
+  detail.rawIntonation = intonation;
   return {
-    rhythm: Math.round(rhythm),
-    intonation: Math.round(intonation),
+    rhythm: Math.round(curve(rhythm, RHYTHM_CURVE)),
+    intonation: Math.round(curve(intonation, lowConfidence ? INTONATION_CURVE_SHORT : INTONATION_CURVE)),
     fluency: Math.round(fluency),
     lowConfidence,
     syllables,

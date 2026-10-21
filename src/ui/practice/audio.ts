@@ -32,6 +32,11 @@ export function newRecorder(maxSeconds: number, events: MicRecorderEvents): MicR
   );
 }
 
+/** A recorder for saying one word again: plain VAD (stops ~0.8 s after you finish), 5 s at most. */
+export function newWordRecorder(events: MicRecorderEvents): MicRecorder {
+  return new MicRecorder({ workletUrl: WORKLET_URL, vad: { maxDurationMs: 5000 }, playback: false }, events);
+}
+
 /** Warm the worklet module without a gesture (first take starts faster). */
 export function warmRecorder() {
   void new MicRecorder({ workletUrl: WORKLET_URL }).prepare();

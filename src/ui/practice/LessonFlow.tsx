@@ -169,10 +169,10 @@ function Summary({
               次のレッスン：{next.titleJa}
             </Link>
           ) : null}
-          <button type="button" onClick={onAgain} className="press press-deep h-[56px] w-full text-[16px]">
+          <button type="button" onClick={onAgain} className="press press-ghost h-[56px] w-full text-[16px]">
             もう一度このレッスン
           </button>
-          <Link href="/home" className="press press-deep h-[56px] w-full text-[16px]">
+          <Link href="/home" className="press press-ghost h-[56px] w-full text-[16px]">
             ホームへ
           </Link>
         </div>

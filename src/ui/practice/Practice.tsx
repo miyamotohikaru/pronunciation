@@ -23,19 +23,19 @@ import Telop from "../Telop";
 import TopBar from "../TopBar";
 import MicButton from "../MicButton";
 import RoundButton from "../RoundButton";
-import ScoreReadout from "../result/ScoreReadout";
-import Breakdown from "../result/Breakdown";
+import ScoreHead from "../result/ScoreHead";
+import ResultSentence from "../result/ResultSentence";
 import DirectionSlider from "../result/DirectionSlider";
-import WordJudgements from "../result/WordJudgements";
-import SoundCard, { type Voice } from "../SoundCard";
+import SoundSheet, { type RetryState } from "../SoundSheet";
+import type { Voice } from "../SoundCard";
 import TelopText from "../TelopText";
-import { IconNext, IconPlay, IconRetry, IconSpeaker, IconSwap } from "../icons";
-import { RETRY_FIRST_BELOW, rangePosition, step7, tempoPosition, total, verdict } from "../score";
-import { noteLine, soundLabel } from "../copy";
+import { IconMic, IconNext, IconPlay, IconSpeaker } from "../icons";
+import { RETRY_FIRST_BELOW, mark, rangePosition, step7, tempoPosition, total, verdict } from "../score";
+import { chartReadingJa, heardShort } from "../copy";
 import { buzz, setMuted, sfx } from "../sfx";
 import type { PhoneScore, ProsodyNote, Scores, WordScore } from "../types";
 import { SPEEDS, VOICES, fetchItem, guideFor, keepItems, speedsFor, type GuideTake, type Speed } from "./content";
-import { getPlayer, keepBuffers, loadBuffer, newRecorder, onScoringStatus, playableTake, scoringStatus, startScoring, warmRecorder } from "./audio";
+import { getPlayer, keepBuffers, loadBuffer, newRecorder, newWordRecorder, onScoringStatus, playableTake, scoringStatus, startScoring, warmRecorder } from "./audio";
 import { alignLetters } from "./letters";
 import { DEFAULT_SETTINGS, bestOf, loadSettings, saveBest, saveSettings, type Settings } from "./progress";
 import type { FieldClass } from "./fields";
@@ -60,6 +60,8 @@ export type PracticeResult = {
   /** your words in take time (segment playback) */
   spans: { start: number; end: number }[];
   bestBefore: number | null;
+  /** total of the previous attempt on this line (this visit); null on the first */
+  previous: number | null;
 };
 
 export type PracticeProps = {
@@ -111,6 +113,12 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   const raf = useRef(0);
   const lastFocus = useRef<HTMLElement | null>(null);
   const alive = useRef(true);
+  const lastTotal = useRef<number | null>(null);
+  // word retries inside the sound card
+  const [retry, setRetry] = useState<RetryState>({ state: "idle" });
+  const [sheetBefore, setSheetBefore] = useState<number | null>(null);
+  const heardEnd = useRef<Record<number, string | null>>({});
+  const wordTakes = useRef<Record<number, { take: Take; start: number; end: number }>>({});
   const debugRef = useRef<unknown>(null);
 
   const guide: GuideTake | null = useMemo(() => (item ? guideFor(item, settings.voice, settings.speed) : null), [item, settings.voice, settings.speed]);
@@ -258,6 +266,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     l.version++;
     level.current = 0;
     takeRef.current = null; // the previous take can go
+    wordTakes.current = {};
+    heardEnd.current = {};
 
     let anchor: { rec: number; perf: number } | null = null;
     let stopping = false;
@@ -313,6 +323,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     });
     recRef.current = rec;
     const pending = rec.record(); // must stay synchronous in the tap handler (iOS)
+    const guideStartRec = () => (anchor ? anchor.rec + COUNT_IN : 0);
     // no sound at all from the mic within 5 s: say so instead of waiting forever
     const watchdog = setTimeout(() => {
       if (anchor || !alive.current) return;
@@ -337,7 +348,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     pending
       .then((take) => {
         clearTimeout(watchdog);
-        return finishTake(take, judge, g, n);
+        return finishTake(trimCountIn(take, guideStartRec()), judge, g, n);
       })
       .catch((e: unknown) => {
         clearTimeout(watchdog);
@@ -424,13 +435,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
       intonation: clamp100(prosody ? prosody.intonation : hit),
     };
     scores.overall = total(scores);
-    const words: WordScore[] = scored.words.map((w, i) => {
-      const text = it.words[i]?.text ?? w.text;
-      const letters = alignLetters(text, w.phones.map((p) => p.phone));
-      const phones: PhoneScore[] = w.phones.map((p, k) => ({ phone: p.phone, score: p.score, heardAs: p.heardAs, issue: p.issue, letters: letters[k] }));
-      for (const ins of scored.insertions) if (ins.wordIndex === i && phones[ins.afterPhoneIndex]) phones[ins.afterPhoneIndex].inserted = ins.vowel;
-      return { text, score: Math.round(w.score), phones };
-    });
+    const words: WordScore[] = scored.words.map((w, i) => toWordScore(it.words[i]?.text ?? w.text, scored, i));
     // take time → guide time, through the forced alignment to the model's phones
     const knots: [number, number][] = [];
     if (scored.alignedTo && scored.alignedTo.length === g.phones.length)
@@ -469,6 +474,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
       toGuide,
       spans: scored.words.map((w) => ({ start: w.start, end: w.end })),
       bestBefore: prev ? prev.score : null,
+      previous: lastTotal.current,
     };
   };
 
@@ -477,6 +483,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     reveal.current = 1;
     setRevealDone(true);
     const s = result.scores.overall;
+    lastTotal.current = s;
     saveBest(itemId, s);
     onResult?.(itemId, s);
     sfx(result.bestBefore !== null && s > result.bestBefore ? "best" : "score");
@@ -511,9 +518,12 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     const g = guide!;
     const w = g.words[word];
     const mine = result!.spans[word];
+    const again = wordTakes.current[word];
     return {
       model: { source: bufferRef.current!, t0: Math.max(0, w.start - 0.04), t1: w.end + 0.06, label: "model" },
-      you: { source: playableTake(takeRef.current!), t0: Math.max(0, mine.start), t1: mine.end, label: "you" },
+      you: again
+        ? { source: playableTake(again.take), t0: Math.max(0, again.start - 0.05), t1: again.end + 0.05, label: "you" }
+        : { source: playableTake(takeRef.current!), t0: Math.max(0, mine.start), t1: mine.end, label: "you" },
     };
   };
   const playSeq = (seq: ("model" | "you")[], word: number) => {
@@ -525,7 +535,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
         const l = live.current;
         l.follow = false;
         if (e.label === "you") {
-          l.t = result.toGuide(e.t);
+          l.t = wordTakes.current[word] ? null : result.toGuide(e.t);
           l.tone = "voice";
         } else {
           l.t = e.t;
@@ -552,10 +562,61 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     (i: number) => {
       stopPlayback();
       lastFocus.current = document.activeElement as HTMLElement | null;
+      setSheetBefore(null);
+      setRetry({ state: "idle" });
       setSelected(i);
     },
     [stopPlayback],
   );
+
+  // say one word again from the sound card: record (VAD stop), score it alone, update in place
+  const retryWord = (i: number) => {
+    if (retry.state === "recording") {
+      recRef.current?.stop();
+      return;
+    }
+    if (retry.state === "scoring" || !item || !result) return;
+    const player = getPlayer();
+    player.stop();
+    player.events = {};
+    const rec = newWordRecorder({ onLevel: (e) => (level.current = Math.min(1, Math.max(0, (e.db + 60) / 45))) });
+    recRef.current = rec;
+    const pending = rec.record(); // synchronous inside the tap (iOS)
+    const before = result.words[i];
+    if (heardEnd.current[i] === undefined) {
+      const worstPh = [...before.phones].sort((a, b) => a.score - b.score)[0];
+      heardEnd.current[i] = worstPh ? heardShort(before, worstPh) : null;
+    }
+    setTimeout(startScoring, 0);
+    startTransition(() => setRetry({ state: "recording" }));
+    pending
+      .then(async (take) => {
+        level.current = 0;
+        if (!alive.current) return;
+        if (!take.speech) {
+          setRetry({ state: "error", message: "声が聞こえませんでした。◇もう一度、◆押してください。" });
+          return;
+        }
+        setRetry({ state: "scoring" });
+        const w = item.words[i];
+        const scored = await startScoring().score(take.pcm16k, [w], { ...item.scoring });
+        if (!alive.current) return;
+        const ws = toWordScore(w.text, scored, 0);
+        wordTakes.current[i] = { take, start: scored.words[0].start, end: scored.words[0].end };
+        startTransition(() => {
+          setSheetBefore(before.score);
+          setResult((r) => (r ? { ...r, words: r.words.map((x, k) => (k === i ? ws : x)) } : r));
+          setRetry({ state: "idle" });
+        });
+        sfx(ws.score > before.score ? "best" : "tap");
+      })
+      .catch((e: unknown) => {
+        level.current = 0;
+        if (!alive.current) return;
+        const name = (e as DOMException)?.name;
+        setRetry(name === "AbortError" ? { state: "idle" } : { state: "error", message: "マイクが使えません。◇もう一度、◆押してください。" });
+      });
+  };
   const closeWord = useCallback(() => {
     stopPlayback();
     setSelected(null);
@@ -589,16 +650,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   const score = result?.scores.overall ?? 0;
   const retryFirst = score < RETRY_FIRST_BELOW;
   const words = item?.words.map((w) => w.text) ?? [];
-  const worst = result ? result.words.reduce((a, w, i, arr) => (w.score < arr[a].score ? i : a), 0) : 0;
-  const worstPhone = result ? [...result.words[worst].phones].sort((a, b) => a.score - b.score)[0] : null;
-  const topNote = result ? [...result.notes].sort((a, b) => b.weight - a.weight)[0] : undefined;
-  const comment = !result
-    ? ""
-    : result.words[worst].score < 75 && worstPhone
-      ? `いちばんの伸びしろは、◆${result.words[worst].text} の ${soundLabel(worstPhone.phone)}。${topNote ? "◇" + noteLine(topNote, words) : ""}`
-      : topNote
-        ? `音は、お手本に近いです。◇${noteLine(topNote, words)}`
-        : "お手本に、かなり近いです。◇次へ進みましょう。";
+  const reading = result ? chartReadingJa(result.notes, words) : "";
+  const passed = score >= RETRY_FIRST_BELOW;
   const tipFor = (word: number) => (phone: string) => {
     const base = phone.replace(/\d/g, "");
     const f = item?.focus.find((x) => !x.inPair && x.word === word && x.phone === base && x.tipJa);
@@ -610,233 +663,242 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
 
   return (
     <div className={`kara ${field} flex min-h-dvh flex-col`}>
-      <TopBar backHref={backHref} index={index + 1} total={totalItems} combo={busyTake ? 0 : combo} muted={muted} onToggleMute={() => setMutedState((m) => !m)} />
+      <TopBar backHref={backHref} index={index + 1} total={totalItems} combo={busyTake ? 0 : combo} />
 
       {/* fetch the font subsets the result uses while the learner is still on the guide */}
       <span aria-hidden className="pointer-events-none absolute -left-[9999px] top-0 select-none whitespace-nowrap font-bold opacity-0">
-        点伝わりますいい感じお手本にそっくりここから伸びます回目ベスト更新音リズム抑揚テンポゆっくり早口平坦大げさ聞こえました
+        点伝わりますいい感じお手本にそっくりここから伸びます前回比音リズム抑揚波線の文字を押すと直し方が出ます高さの幅が小さく平らに聞こえます日本語のラ行が入っています
       </span>
       <span aria-hidden className="pointer-events-none absolute -left-[9999px] top-0 select-none whitespace-nowrap font-black opacity-0">
-        0123456789.点伝わりますいい感じお手本にそっくりパーフェクトここから伸びます回目ベスト更新までの音リズム抑揚テンポゆっくり早口平坦大げさ少しほんのかなりいちばん伸びしろは聞こえました母音が入りましたあいまいでした話している間判定節ごと単語自分声交互に聞く止める一回次へあとで
+        0123456789.点伝わりますいい感じお手本にそっくりパーフェクトここから伸びますもう一度話す言う次へあとで自分の声交互止める聞こえました
       </span>
+
       <main className="flex flex-1 flex-col">
-        <section aria-label="練習する文" className={`mx-auto flex w-full max-w-[1120px] flex-col px-4 md:px-8 ${isResult ? "pt-2 md:pt-4" : "flex-1 justify-center py-2"}`}>
-          <div className="mx-auto w-full max-w-[1040px] px-1 text-[clamp(44px,13.2vw,108px)]">
-            {item && guide ? (
-              <Telop
-                text={item.text}
-                words={guide.words}
-                mode={isResult ? "result" : "karaoke"}
-                clock={clock}
-                results={result?.words}
-                reveal={reveal}
-                selected={selected}
-                onSelect={openWord}
-              />
-            ) : (
-              <div className="h-[1.3em]" aria-hidden />
-            )}
-          </div>
-          {item ? (
-            <p className="jp mt-3 text-center text-[15px] font-bold leading-snug md:mt-4 md:text-[18px]">
-              <BreakText text={item.ja.replace(/\n/g, "◆")} />
-              {item.note ? <span className="mt-1 block text-[13px]">もとの形：{item.note}</span> : null}
-            </p>
-          ) : null}
-
-          <div className="monitor relative mx-auto mt-5 w-full max-w-[960px] overflow-hidden rounded-(--radius-monitor) bg-(--monitor) text-(--monitor-ink) shadow-[0_6px_0_var(--field-deep)] [contain:layout_paint] md:mt-7">
-            <div className="relative h-[clamp(176px,26dvh,240px)] md:h-[260px] lg:h-[290px]">
-              {guide ? (
-                <Guide
-                  className="absolute inset-0"
-                  wave={guide.wave}
-                  syllables={guide.syllables}
-                  words={guide.words}
-                  live={live}
-                  overlay={isResult ? result?.userOnRef ?? null : null}
-                  progressive={playing === "replay"}
-                  focusWord={selected}
-                  label={label}
-                />
-              ) : null}
-              {phase === "countin" && count > 0 ? (
-                <div aria-live="assertive" className="pointer-events-none absolute inset-0 grid place-items-center">
-                  <span key={count} className="anim-pop leading-none">
-                    <TelopText text={String(count)} className="text-[88px] md:text-[120px]" />
-                    <span className="sr-only">{count}</span>
-                  </span>
-                </div>
-              ) : null}
-            </div>
-            <div className="flex min-h-[54px] items-center gap-3 border-t border-(--monitor-line) px-4 py-2 text-[13px] font-extrabold">
-              {isResult ? (
-                <>
-                  <button type="button" onClick={replayMine} aria-pressed={playing === "replay"} className="press press-voice h-[40px] rounded-[14px] px-4 text-[14px]" style={{ ["--edge" as string]: "4px" }}>
-                    <IconPlay size={16} />
-                    自分の声
-                  </button>
-                  <button type="button" onClick={playModel} aria-pressed={playing === "model"} className="press press-guide h-[40px] rounded-[14px] px-4 text-[14px]" style={{ ["--edge" as string]: "4px" }}>
-                    <IconPlay size={16} />
-                    お手本
-                  </button>
-                </>
-              ) : phase === "scoring" ? (
-                <span aria-live="polite">{scorer.ready ? "お手本とくらべています" : `採点の準備中 ${Math.round(scorer.progress * 100)}%`}</span>
-              ) : phase === "silent" ? (
-                <span aria-live="polite">声が聞こえませんでした。もう一度どうぞ。</span>
-              ) : (
-                <span className="flex items-center gap-2 text-(--monitor-muted)">
-                  <span aria-hidden className="h-[8px] w-[20px] rounded-full bg-(--guide)" />
-                  お手本の声の波
-                  <span aria-hidden className="ml-2 h-[3px] w-[18px] rounded-full bg-white" />
-                  あなた
-                </span>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {!isResult ? (
-          <div className="mx-auto w-full max-w-[560px] px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-4 [contain:layout] md:pb-10">
-            {/* settings: speed, voice, the model alongside */}
-            <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="練習の設定">
-              <Chip
-                label="速さ"
-                value={speedLabel}
-                disabled={busyTake}
-                onClick={() => {
-                  const i = speeds.indexOf(guide?.speed ?? "native");
-                  changeSettings({ speed: speeds[(i + 1) % speeds.length] });
-                }}
-              />
-              <Chip label="声" value={voiceLabel} disabled={busyTake} onClick={() => changeSettings({ voice: settings.voice === "af_heart" ? "am_michael" : "af_heart" })} />
-              <Chip label="お手本と一緒に" value={settings.together ? "オン" : "オフ"} pressed={settings.together} disabled={busyTake} onClick={() => changeSettings({ together: !settings.together })} />
-            </div>
-            <p className="mt-2 h-4 text-center text-[12px] font-bold leading-4" style={{ visibility: settings.together ? "visible" : "hidden" }}>
-              イヤホンをおすすめします
-            </p>
-
-            <div className="mt-4 flex items-start justify-center gap-5 md:gap-10">
-              <RoundButton
-                icon={<IconSpeaker size={28} />}
-                label="お手本"
-                ariaLabel={playing === "model" ? "お手本を止める" : "お手本を聞く"}
-                onPress={playModel}
-                playingMs={playing === "model" && guide ? guide.duration * 1000 : null}
-                disabled={!bufferReady || busyTake || phase === "scoring"}
-              />
-              <MicButton
-                state={busyTake ? "recording" : phase === "scoring" ? "thinking" : "idle"}
-                level={level}
-                onPress={onMic}
-                label={
-                  phase === "starting"
-                    ? "準備中"
-                    : phase === "countin"
-                      ? "カウント"
-                      : phase === "singing"
-                        ? "波に合わせて"
-                        : phase === "scoring"
-                          ? "くらべています"
-                          : phase === "loading"
-                            ? "準備中"
-                            : "押して話す"
-                }
-                hint={busyTake ? "最後まで行くと、自動で止まります" : undefined}
-              />
-              <RoundButton
-                icon={<IconPlay size={24} />}
-                label="自分の声"
-                ariaLabel="さっきの自分の声を聞く"
-                onPress={replayMine}
-                playingMs={null}
-                disabled={!takeRef.current || !result || busyTake || phase === "scoring"}
-              />
-            </div>
-            {phase === "error" && error ? (
-              <p className="jp mt-4 rounded-[16px] bg-(--paper) px-4 py-3 text-center text-[14px] font-bold text-(--ink)" role="alert">
-                <BreakText text={error} />
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        {isResult && result ? (
-          <div className="mx-auto w-full max-w-[680px] px-5 pb-8 pt-6 md:pt-8" onPointerDown={() => !revealDone && setSkip(true)}>
-            <ScoreReadout
+        {isResult && result && item && guide ? (
+          // ------------------------------------------------ the result: score, the sentence as the diagnosis, the chart
+          <section aria-label="結果" className="mx-auto w-full max-w-[680px] px-4 pt-1 md:pt-6" onPointerDown={() => !revealDone && setSkip(true)}>
+            <ScoreHead
               key={revealKey}
-              value={score}
+              scores={result.scores}
               run
               skip={skip}
-              onProgress={(k) => {
-                reveal.current = Math.min(1, Math.max(0, (k - 0.1) / 0.75));
-              }}
               onDone={onRevealDone}
               verdict={verdict(score)}
-              delta={result.bestBefore === null ? null : Math.round((score - result.bestBefore) * 1000) / 1000}
-              attempt={result.attempt}
+              previous={result.previous}
+              celebrate={score >= 90}
             />
             {!revealDone ? (
               <button type="button" className="sr-only" onClick={() => setSkip(true)}>
                 結果をすぐに見る
               </button>
             ) : null}
-            <div className="mt-6 min-h-[132px]">{stage >= 1 ? <Breakdown key={revealKey} scores={result.scores} run /> : null}</div>
+            <div className="mt-4">
+              <ResultSentence text={item.text} ja={item.ja.replace(/\n/g, "◆")} words={result.words} onOpen={openWord} selected={selected} />
+            </div>
+
+            <div className="monitor relative mt-4 overflow-hidden rounded-[22px] bg-(--monitor) text-(--monitor-ink) [contain:layout_paint]">
+              <div className="relative h-[clamp(118px,15dvh,150px)] md:h-[170px]">
+                <Guide
+                  className="absolute inset-0"
+                  wave={guide.wave}
+                  syllables={guide.syllables}
+                  words={guide.words}
+                  live={live}
+                  overlay={result.userOnRef}
+                  progressive={playing === "replay"}
+                  focusWord={null}
+                  label={`${label}${reading}`}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-(--monitor-line) px-4 py-[10px] text-[12px] font-bold">
+                <span className="flex items-center gap-[6px]">
+                  <span aria-hidden className="h-[7px] w-[18px] rounded-full bg-(--guide)" />
+                  お手本
+                </span>
+                <span className="flex items-center gap-[6px]">
+                  <span aria-hidden className="h-[3px] w-[18px] rounded-full bg-(--voice)" />
+                  あなた
+                </span>
+                <span className="jp basis-full text-[13px] font-extrabold leading-snug text-white">{reading}</span>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" onClick={replayMine} aria-pressed={playing === "replay"} className="press press-voice h-12 text-[15px]">
+                {playing === "replay" ? <IconSpeaker size={18} /> : <IconPlay size={16} />}
+                自分の声
+              </button>
+              <button type="button" onClick={playModel} aria-pressed={playing === "model"} className="press press-guide h-12 text-[15px]">
+                {playing === "model" ? <IconSpeaker size={18} /> : <IconPlay size={16} />}
+                お手本
+              </button>
+            </div>
+
             {more ? (
-              <div className="[content-visibility:auto] [contain-intrinsic-size:auto_900px]">
-                <div className="mt-8 grid gap-6 md:grid-cols-2 md:gap-8">
-                  <DirectionSlider label="テンポ" left="ゆっくり" right="早口" step={step7(tempoPosition(result.tempoRatio))} />
-                  <DirectionSlider label="抑揚" left="平坦" right="大げさ" step={step7(rangePosition(result.rangeRatio))} />
-                </div>
-                <div className="mt-8 rounded-[20px] bg-(--paper) px-5 py-4 text-(--ink)">
-                  <p className="jp text-[16px] font-black leading-relaxed md:text-[18px]">
-                    <BreakText text={comment} />
-                  </p>
-                  {result.words[worst].score < 75 ? (
-                    <button type="button" onClick={() => openWord(worst)} className="press press-guide mt-4 h-[52px] w-full text-[16px]">
-                      <IconSwap size={20} />
-                      {result.words[worst].text} を音ごとに聞きくらべる
-                    </button>
-                  ) : null}
-                </div>
-                <div className="mt-8">
-                  <WordJudgements words={result.words} notes={result.notes} onOpen={openWord} counts={result.counts} />
+              <div className="mt-6 pb-4 [content-visibility:auto] [contain-intrinsic-size:auto_420px]">
+                <div className="rounded-[20px] bg-(--paper) px-4 py-4 text-(--ink)">
+                  <p className="text-[12px] font-bold opacity-75">話している間の当たり（音節ごと）</p>
+                  <ul className="mt-2 grid grid-cols-4 gap-2 text-center">
+                    {(["perfect", "great", "good", "miss"] as const).map((k) => (
+                      <li key={k} className="rounded-[12px] bg-[#f1f2f8] py-2">
+                        <span className="en block text-[11px] font-extrabold">{k.toUpperCase()}</span>
+                        <span className="num text-[22px] font-black leading-none">{result.counts[k]}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-5 grid gap-5 md:grid-cols-2">
+                    <DirectionSlider label="テンポ" left="ゆっくり" right="早口" step={step7(tempoPosition(result.tempoRatio))} />
+                    <DirectionSlider label="抑揚" left="平坦" right="大げさ" step={step7(rangePosition(result.rangeRatio))} />
+                  </div>
                 </div>
               </div>
             ) : null}
-          </div>
-        ) : null}
+          </section>
+        ) : (
+          <>
+            {/* ------------------------------------------------ the stage: caption + guide */}
+            <section aria-label="練習する文" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col justify-center px-4 py-2 md:px-8">
+              {/* long lines get a smaller caption so the guide and the mic stay on screen */}
+              <div
+                className="mx-auto w-full max-w-[1040px] px-1"
+                style={{ fontSize: (item?.text.length ?? 0) > 26 ? "clamp(32px,8.8vw,88px)" : (item?.text.length ?? 0) > 15 ? "clamp(38px,10.6vw,96px)" : "clamp(42px,12.4vw,104px)" }}
+              >
+                {item && guide ? <Telop text={item.text} words={guide.words} mode="karaoke" clock={clock} reveal={reveal} selected={null} onSelect={openWord} /> : <div className="h-[1.3em]" aria-hidden />}
+              </div>
+              {item ? (
+                <p className="jp mt-3 text-center text-[15px] font-bold leading-snug md:mt-4 md:text-[18px]">
+                  <BreakText text={item.ja.replace(/\n/g, "◆")} />
+                  {item.note ? <span className="mt-1 block text-[13px]">もとの形：{item.note}</span> : null}
+                </p>
+              ) : null}
 
-        {selected !== null && result ? (
-          <div className="fixed inset-x-0 bottom-0 z-20 md:static md:z-auto md:mt-8 md:px-4">
-            <div className="mx-auto max-w-[680px]">
-              <SoundCard
-                key={selected}
-                word={result.words[selected]}
-                tipFor={tipFor(selected)}
-                onClose={closeWord}
-                onPlay={(who) => playSeq([who], selected)}
-                onAlternate={() => {
-                  if (alternating) return stopPlayback();
-                  setAlternating(true);
-                  playSeq(["model", "you", "model", "you"], selected);
-                }}
-                playing={segVoice}
-                alternating={alternating}
-              />
+              <div className="monitor relative mx-auto mt-5 w-full max-w-[960px] overflow-hidden rounded-(--radius-monitor) bg-(--monitor) text-(--monitor-ink) [contain:layout_paint] md:mt-7">
+                <div className="relative h-[clamp(176px,26dvh,240px)] md:h-[260px] lg:h-[290px]">
+                  {guide ? (
+                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} live={live} overlay={null} progressive={false} focusWord={null} label={label} />
+                  ) : null}
+                  {phase === "countin" && count > 0 ? (
+                    <div aria-live="assertive" className="pointer-events-none absolute inset-0 grid place-items-center">
+                      <span key={count} className="anim-pop leading-none">
+                        <TelopText text={String(count)} className="text-[88px] md:text-[120px]" />
+                        <span className="sr-only">{count}</span>
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex min-h-[48px] items-center gap-3 border-t border-(--monitor-line) px-4 py-2 text-[12px] font-bold">
+                  {phase === "scoring" ? (
+                    <span aria-live="polite" className="text-[13px] font-extrabold">
+                      {scorer.ready ? "お手本とくらべています" : `採点の準備中 ${Math.round(scorer.progress * 100)}%`}
+                    </span>
+                  ) : phase === "silent" ? (
+                    <span aria-live="polite" className="text-[13px] font-extrabold">
+                      声が聞こえませんでした。もう一度どうぞ。
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-4 text-(--monitor-muted)">
+                      <span className="flex items-center gap-[6px]">
+                        <span aria-hidden className="h-[7px] w-[18px] rounded-full bg-(--guide)" />
+                        お手本の声の高さ
+                      </span>
+                      <span className="flex items-center gap-[6px]">
+                        <span aria-hidden className="h-[3px] w-[18px] rounded-full bg-(--voice)" />
+                        あなた
+                      </span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* ------------------------------------------------ the remote */}
+            <div className="mx-auto w-full max-w-[560px] px-4 pt-4 [contain:layout] [padding-bottom:max(18px,calc(env(safe-area-inset-bottom)+10px))] md:pb-10">
+              {/* settings can't change mid-take: hide them (keep their space) instead of greying them out */}
+              <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="練習の設定" style={{ visibility: busyTake ? "hidden" : "visible" }}>
+                <Chip
+                  label="速さ"
+                  value={speedLabel}
+                  disabled={busyTake}
+                  onClick={() => {
+                    const i = speeds.indexOf(guide?.speed ?? "native");
+                    changeSettings({ speed: speeds[(i + 1) % speeds.length] });
+                  }}
+                />
+                <Chip label="声" value={voiceLabel} disabled={busyTake} onClick={() => changeSettings({ voice: settings.voice === "af_heart" ? "am_michael" : "af_heart" })} />
+                <Chip label="お手本と一緒に" value={settings.together ? "オン" : "オフ"} pressed={settings.together} disabled={busyTake} onClick={() => changeSettings({ together: !settings.together })} />
+              </div>
+              <p className="mt-2 h-4 text-center text-[12px] font-bold leading-4" style={{ visibility: settings.together ? "visible" : "hidden" }}>
+                イヤホンをおすすめします
+              </p>
+              <div className="mt-3 flex items-start justify-center gap-5 md:gap-10">
+                <RoundButton
+                  icon={<IconSpeaker size={28} />}
+                  label="お手本"
+                  ariaLabel={playing === "model" ? "お手本を止める" : "お手本を聞く"}
+                  onPress={playModel}
+                  playingMs={playing === "model" && guide ? guide.duration * 1000 : null}
+                  disabled={!bufferReady || busyTake || phase === "scoring"}
+                />
+                <MicButton
+                  state={busyTake ? "recording" : phase === "scoring" ? "thinking" : "idle"}
+                  level={level}
+                  onPress={onMic}
+                  label={phase === "starting" || phase === "loading" ? "準備中" : phase === "countin" ? "カウント" : phase === "singing" ? "波に合わせて" : phase === "scoring" ? "くらべています" : "押して話す"}
+                  hint={busyTake ? "最後まで行くと、自動で止まります" : undefined}
+                />
+                <RoundButton
+                  icon={<IconPlay size={24} />}
+                  label="自分の声"
+                  ariaLabel="さっきの自分の声を聞く"
+                  onPress={replayMine}
+                  playingMs={null}
+                  disabled={!takeRef.current || !result || busyTake || phase === "scoring"}
+                />
+              </div>
+              {phase === "error" && error ? (
+                <p className="jp mt-4 rounded-[16px] bg-(--paper) px-4 py-3 text-center text-[14px] font-bold text-(--ink)" role="alert">
+                  <BreakText text={error} />
+                </p>
+              ) : null}
             </div>
-          </div>
+          </>
+        )}
+
+        {selected !== null && result && item ? (
+          <SoundSheet
+            key={selected}
+            word={result.words[selected]}
+            token={item.words[selected]?.text ?? result.words[selected].text}
+            before={sheetBefore}
+            heardEnd={heardEnd.current[selected] ?? heardEndFor(result.words[selected])}
+            tipFor={tipFor(selected)}
+            onClose={closeWord}
+            onPlayModel={() => playSeq(["model"], selected)}
+            onPlayMine={() => playSeq(["you"], selected)}
+            onAlternate={() => {
+              if (alternating) return stopPlayback();
+              setAlternating(true);
+              playSeq(["model", "you", "model", "you"], selected);
+            }}
+            playing={segVoice}
+            alternating={alternating}
+            retry={retry}
+            level={level}
+            onRetry={() => retryWord(selected)}
+          />
         ) : null}
 
         {isResult ? (
-          <div className="sticky bottom-0 z-10 mt-auto bg-(--field) px-4 pb-[calc(14px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-3px_0_var(--field-deep)]">
+          <div
+            className="sticky bottom-0 z-10 mt-auto px-4 pt-6 [padding-bottom:max(14px,calc(env(safe-area-inset-bottom)+10px))]"
+            style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--field) 0%, transparent), var(--field) 45%)" }}
+          >
             <div className="mx-auto flex max-w-[680px] gap-3">
-              <button type="button" onClick={onMic} className={`press ${retryFirst ? "" : "press-deep"} h-[60px] flex-[1.25] text-[18px]`}>
-                <IconRetry size={22} />
-                もう一回
+              <button type="button" onClick={onMic} className={`press ${passed ? "press-ghost" : "press-voice"} h-[60px] flex-[1.25] text-[18px]`}>
+                <IconMic size={22} />
+                もう一度話す
               </button>
-              <button type="button" onClick={onNext} className={`press ${retryFirst ? "press-deep" : ""} h-[60px] flex-1 text-[18px]`}>
-                {retryFirst && attempt >= 3 ? "あとでもう一回" : "次へ"}
+              <button type="button" onClick={onNext} className={`press ${passed ? "" : "press-ghost"} h-[60px] flex-1 text-[18px]`}>
+                {!passed && attempt >= 3 ? "あとでもう一回" : "次へ"}
                 <IconNext size={20} />
               </button>
             </div>
@@ -847,6 +909,12 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   );
 }
 
+/** the far end of the sound card's meter: what the AI heard for the worst sound */
+function heardEndFor(w: WordScore): string | null {
+  const worst = [...w.phones].filter((p) => mark(p) === "miss").sort((a, b) => a.score - b.score)[0];
+  return worst ? heardShort(w, worst) : null;
+}
+
 function Chip({ label, value, onClick, pressed, disabled }: { label: string; value: string; onClick: () => void; pressed?: boolean; disabled?: boolean }) {
   return (
     <button
@@ -855,7 +923,7 @@ function Chip({ label, value, onClick, pressed, disabled }: { label: string; val
       disabled={disabled}
       aria-pressed={pressed}
       aria-label={`${label}：${value}。押すと切り替わります`}
-      className="inline-flex h-11 items-center gap-2 rounded-full border-[3px] border-(--ink) bg-(--paper) px-4 text-[13px] font-black text-(--ink) disabled:opacity-50"
+      className="inline-flex h-11 items-center gap-2 rounded-full bg-(--paper) px-4 text-[13px] font-black text-(--ink) disabled:opacity-50"
     >
       <span className="font-extrabold">{label}</span>
       <span className="rounded-full px-2 py-[2px]" style={{ background: pressed === false ? "#e6e8f6" : "var(--voice)" }}>
@@ -866,4 +934,36 @@ function Chip({ label, value, onClick, pressed, disabled }: { label: string; val
 }
 
 const clamp100 = (v: number) => Math.max(0, Math.min(100, Number.isFinite(v) ? v : 0));
+
+/** one scored word → what the screen draws (letters for the marks, inserted vowels on their phone) */
+function toWordScore(text: string, scored: ScoreResult, i: number): WordScore {
+  const w = scored.words[i];
+  const letters = alignLetters(text, w.phones.map((p) => p.phone));
+  const phones: PhoneScore[] = w.phones.map((p, k) => ({ phone: p.phone, score: p.score, heardAs: p.heardAs, issue: p.issue, letters: letters[k] }));
+  for (const ins of scored.insertions) if (ins.wordIndex === i && phones[ins.afterPhoneIndex]) phones[ins.afterPhoneIndex].inserted = ins.vowel;
+  return { text, score: Math.round(w.score), phones };
+}
+
+/**
+ * Anything said during the 3·2·1 is not part of the line: cut the take to start just before the
+ * guide (recording clock → take time through Take.offset). Views share memory (no copies).
+ */
+function trimCountIn(take: Take, guideStartRec: number): Take {
+  const cut = Math.round((guideStartRec - 0.3 - take.offset) * 100) / 100; // 10 ms grid
+  if (!(cut > 0.05) || cut >= take.duration - 0.2) return take;
+  const sr = take.sampleRate;
+  const a = Math.round(cut * sr);
+  const a16 = Math.round(cut * 16000);
+  const speech = take.speech ? { start: Math.max(0, take.speech.start - cut), end: take.speech.end - cut } : null;
+  return {
+    ...take,
+    pcm: take.pcm.subarray(a),
+    playback: take.playback.subarray(Math.min(a, take.playback.length)),
+    pcm16k: take.pcm16k.subarray(a16),
+    duration: take.duration - cut,
+    offset: take.offset + cut,
+    speech: speech && speech.end > 0.05 ? speech : null,
+    pitch: take.pitch.filter((f) => f.t >= cut).map((f) => ({ ...f, t: Math.round((f.t - cut) * 100) / 100 })),
+  };
+}
 

@@ -119,7 +119,7 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
   return (
     <div
       ref={boxRef}
-      className={`telop relative w-full ${className ?? ""}`}
+      className={`telop en relative w-full ${className ?? ""}`}
       data-mode={mode}
       // room under the last line for descenders + outline, and for the sound marks in result mode
       style={{ paddingBottom: mode === "result" ? "0.42em" : "0.14em" }}

@@ -17,6 +17,7 @@ ARPAbet -> student tokens (logsumexp over the listed tokens):
 """
 import hashlib
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -26,7 +27,11 @@ from export_assets import CALIBRATION, DIAGNOSIS, export_filters, export_regress
 
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / ".work/distill/export"
-OUT = ROOT / "public/models/student-ipa"
+# env overrides, to evaluate another round without touching the shipped folder
+ONNX_FILE = SRC / os.environ.get("STUDENT_ONNX", "student.int8w.onnx")
+META_FILE = SRC / os.environ.get("STUDENT_META", "metadata.json")
+OUT = Path(os.environ.get("STUDENT_OUT", ROOT / "public/models/student-ipa"))
+TUNING_FILE = Path(os.environ.get("STUDENT_TUNING", Path(__file__).parent / "student_tuning.json"))
 
 UNITS = {
     # consonants
@@ -57,7 +62,7 @@ TAIL_PAD_SECONDS = float(__import__("os").environ.get("STUDENT_TAIL", "0.0"))
 
 
 def main():
-    md = json.loads((SRC / "metadata.json").read_text())
+    md = json.loads(META_FILE.read_text())
     vocab = md["vocab"]
     idx = {t: i for i, t in enumerate(vocab)}
     units = {b: [idx[t] for t in toks] for b, toks in UNITS.items()}
@@ -70,7 +75,7 @@ def main():
     bases = list(UNITS)
     class_of = {b: i for i, b in enumerate(bases)}
     OUT.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(SRC / "student.int8w.onnx", OUT / "model.int8w.onnx")
+    shutil.copyfile(ONNX_FILE, OUT / "model.int8w.onnx")
     export_filters(OUT / "mel_filters_80.json")
     reg_src = Path(sys.argv[1]) if len(sys.argv) > 1 else None
     if reg_src and reg_src.suffix == ".json":
@@ -85,8 +90,7 @@ def main():
     diag = dict(DIAGNOSIS)
     diag["confusions"] = CONFUSIONS
     diag["epentheticVowels"] = ["UW", "UH", "OW", "AO", "IH", "IY", "AH", "ɯ", "o", "a", "e"]
-    tuning_file = Path(__file__).parent / "student_tuning.json"
-    tuning = json.loads(tuning_file.read_text()) if tuning_file.exists() else {}
+    tuning = json.loads(TUNING_FILE.read_text()) if TUNING_FILE.exists() else {}
     diag.update(tuning.get("diagnosis", {}))
     calib = tuning.get("calibration", CALIBRATION)
     meta = {

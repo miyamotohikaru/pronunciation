@@ -1,5 +1,5 @@
 import type { Viewport } from "next";
-import { M_PLUS_Rounded_1c } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, M_PLUS_Rounded_1c } from "next/font/google";
 import "@/ui/tokens.css";
 
 // Japanese font: no subsets (the CSS is split by unicode-range), not preloaded.
@@ -12,6 +12,13 @@ const rounded = M_PLUS_Rounded_1c({
   variable: "--font-rounded",
 });
 
+// English text: a Latin face whose l has a tail (rounded l reads as I or 1). Variable, latin only (~40 KB).
+const latin = Atkinson_Hyperlegible_Next({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-latin",
+});
+
 export const viewport: Viewport = {
   themeColor: "#2d5bff",
   colorScheme: "light",
@@ -19,5 +26,5 @@ export const viewport: Viewport = {
 
 /** Game routes (/home, /play, /check, /learn): own fonts and tokens; each page sets its field colour. */
 export default function GameLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className={rounded.variable}>{children}</div>;
+  return <div className={`${rounded.variable} ${latin.variable}`}>{children}</div>;
 }

@@ -10,8 +10,9 @@ export type TopBarProps = {
   total: number;
   /** consecutive GREAT-or-better lines; hidden below 2 (a broken combo just disappears) */
   combo?: number;
-  muted: boolean;
-  onToggleMute: () => void;
+  /** sound-effect toggle; omitted = not shown (the practice screen keeps the top quiet) */
+  muted?: boolean;
+  onToggleMute?: () => void;
 };
 
 export default function TopBar({ backHref, index, total, combo = 0, muted, onToggleMute }: TopBarProps) {
@@ -34,13 +35,15 @@ export default function TopBar({ backHref, index, total, combo = 0, muted, onTog
         aria-valuenow={index}
         aria-valuetext={`${total}文中 ${index}文目`}
       >
+        {/* done: filled; now: filled and taller; still to come: faint */}
         {Array.from({ length: total }, (_, i) => (
           <span
             key={i}
-            className="h-[10px] flex-1 rounded-full"
+            className="flex-1 rounded-full"
             style={{
-              background: i < index - 1 ? "var(--paper)" : i === index - 1 ? "var(--paper)" : "var(--field-deep)",
-              boxShadow: i === index - 1 ? "0 0 0 3px var(--field-deep), 0 0 0 5px var(--paper)" : undefined,
+              height: i === index - 1 ? 12 : 8,
+              background: "var(--field-ink)",
+              opacity: i < index ? 1 : 0.28,
             }}
           />
         ))}
@@ -57,15 +60,19 @@ export default function TopBar({ backHref, index, total, combo = 0, muted, onTog
         ) : null}
       </div>
 
-      <button
-        type="button"
-        onClick={onToggleMute}
-        aria-pressed={muted}
-        aria-label={muted ? "効果音をオンにする" : "効果音をオフにする"}
-        className="grid size-11 shrink-0 place-items-center rounded-full"
-      >
-        <IconSound size={24} muted={muted} />
-      </button>
+      {onToggleMute ? (
+        <button
+          type="button"
+          onClick={onToggleMute}
+          aria-pressed={muted}
+          aria-label={muted ? "効果音をオンにする" : "効果音をオフにする"}
+          className="grid size-11 shrink-0 place-items-center rounded-full"
+        >
+          <IconSound size={24} muted={muted} />
+        </button>
+      ) : (
+        <span className="w-11 shrink-0" aria-hidden />
+      )}
     </header>
   );
 }

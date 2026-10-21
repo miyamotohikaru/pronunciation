@@ -3,6 +3,7 @@
  * Tips are written for Japanese mouths (what to do differently from ラ行 etc.), not translated.
  */
 import type { PhoneScore, ProsodyNote, WordScore } from "./types";
+import { heardAsJa, heardLabel, insertedVowelJa } from "@/engine/scoring/heard-labels.ts";
 
 const base = (p: string) => p.replace(/[0-9]/g, "").toUpperCase();
 
@@ -29,11 +30,22 @@ export function soundIpa(phone: string): string {
 }
 
 /** "r が l に聞こえました" */
-const KANA: Record<string, string> = { UW: "ウ", UH: "ウ", AH: "ア", AA: "ア", AE: "ア", IH: "イ", IY: "イ", OW: "オ", AO: "オ", EH: "エ", EY: "エ", ER: "ア" };
+/**
+ * The one-line diagnosis for a learner, in plain Japanese. `target` is how the sound is spelled in
+ * the word ("r", "th"); heard sounds come from the scorer's labels (ARPAbet or the student model's
+ * IPA units) through src/engine/scoring/heard-labels.ts.
+ */
+export function diagnosisJa(p: PhoneScore, target: string): string | null {
+  if (p.heardAs) return heardAsJa(target, p.heardAs);
+  if (p.inserted) return `${target} のあとに${insertedVowelJa(p.inserted)}`;
+  if (p.issue === "deletion") return `${target} が聞こえませんでした`;
+  if (p.score < 60) return `${target} が少しあいまいでした`;
+  return null;
+}
 
 export function heardLine(p: PhoneScore, label: (phone: string) => string = soundLabel): string | null {
-  if (p.heardAs) return `${label(p.phone)} が ${label(p.heardAs)} に聞こえました`;
-  if (p.inserted) return `${label(p.phone)} のあとに「${KANA[base(p.inserted)] ?? "母音"}」が入りました`;
+  if (p.heardAs) return heardAsJa(label(p.phone), p.heardAs);
+  if (p.inserted) return `${label(p.phone)} のあとに${insertedVowelJa(p.inserted)}`;
   if (p.issue === "deletion") return `${label(p.phone)} が聞こえませんでした`;
   if (p.score < 60) return `${label(p.phone)} が少しあいまいでした`;
   return null;
@@ -42,8 +54,50 @@ export function heardLine(p: PhoneScore, label: (phone: string) => string = soun
 /** The other word of the minimal pair, by swapping the letters that spell the sound. */
 export function heardWord(w: WordScore, p: PhoneScore): string | null {
   if (!p.heardAs || !p.letters) return null;
+  if (!/^[A-Z]+[0-2]?$/.test(p.heardAs)) return null; // an IPA unit (日本語のラ行…) has no English spelling
   const [a, b] = p.letters;
   return w.text.slice(0, a) + soundLabel(p.heardAs) + w.text.slice(b);
+}
+
+/** short name of what was heard, for the end of the meter ("lice" or "日本語のラ行の音") */
+export function heardShort(w: WordScore, p: PhoneScore): string | null {
+  if (p.heardAs) return heardWord(w, p) ?? heardLabel(p.heardAs);
+  if (p.inserted) return `${heardLabel(p.inserted)}入り`;
+  return null;
+}
+
+/** one line: how to fix it (the item's own tip first, else the sound's first tip line) */
+export function fixLineJa(phone: string, own: string | null): string | null {
+  if (own) return own;
+  const t = TIPS[base(phone)];
+  return t ? t[0] : null;
+}
+
+/** one-line reading of the pitch chart, from compareProsody's issues */
+export function chartReadingJa(notes: ProsodyNote[], words: string[]): string {
+  const n = [...notes].sort((a, b) => b.weight - a.weight)[0];
+  if (!n) return "高さの動きは、お手本に近いです。";
+  const w = n.word !== undefined ? words[n.word] : undefined;
+  switch (n.kind) {
+    case "flat-intonation":
+      return "高さの幅が小さく、平らに聞こえます。";
+    case "contour-mismatch":
+      return w ? `${w} の上がり下がりが、お手本と違います。` : "上がり下がりの形が、お手本と違います。";
+    case "final-contour":
+      return "文の終わりの上げ下げが、お手本と逆です。";
+    case "equal-timing":
+      return "どの音も同じ長さになっています。";
+    case "weak-contrast":
+      return "強い所と弱い所の差が、小さめです。";
+    case "stress-misplaced":
+      return w ? `${w} の強い所が、ずれています。` : "強い所が、ずれています。";
+    case "pause":
+      return w ? `${w} の前で、止まっています。` : "途中で、止まっています。";
+    case "too-slow":
+      return "お手本より、ゆっくりです。";
+    case "too-fast":
+      return "お手本より、速めです。";
+  }
 }
 
 /** Two lines: where the tongue/lips go. Keyed by the target sound. */

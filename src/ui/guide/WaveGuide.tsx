@@ -206,19 +206,23 @@ function WaveGuide(props: GuideProps) {
         ctx.fill();
       };
       const capR = (pt: { w: number; b?: true }) => thick(pt.w, !!pt.b) / 2;
+      const settled = !!(p.overlay && p.overlay.length);
       const color = (f: WaveFill): string => {
+        // after the take the chart is a calm comparison: the model's wave in one cyan
+        if (settled) return rgba(col.guide, 0.62);
         switch (f) {
           case 5:
-            return "rgba(255,244,190,1)";
+            return "rgba(226,247,255,1)"; // lighting up as you match
           case 4:
+            return "rgba(255,255,255,1)";
           case 3:
-            return rgba(col.voice, 1);
+            return "rgba(176,232,255,1)";
           case 2:
-            return rgba(col.good, 0.9);
+            return rgba(col.guide, 0.85);
           case 1:
-            return "rgba(118,124,190,0.55)";
+            return rgba(col.guide, 0.26);
           default:
-            return rgba(col.guide, k > 0.5 || live.t !== null ? 0.55 : 0.62);
+            return rgba(col.guide, k > 0.5 || live.t !== null ? 0.5 : 0.62);
         }
       };
 
@@ -237,10 +241,10 @@ function WaveGuide(props: GuideProps) {
           const end = Math.min(seg.length - 1, i); // overlap one point so runs meet without a seam
           ctx.fillStyle = color(cur as WaveFill);
           ribbon(seg, runStart, end, 0);
-          if (cur === 4) {
+          if (cur === 4 && !settled) {
             ctx.fillStyle = rgba(col.hit, 0.28);
             ribbon(seg, runStart, end, 3 * scale);
-            ctx.fillStyle = rgba(col.voice, 1);
+            ctx.fillStyle = "rgba(255,255,255,1)";
             ribbon(seg, runStart, end, 0);
           }
           runStart = i;
@@ -271,41 +275,58 @@ function WaveGuide(props: GuideProps) {
       });
 
       // ---- a line (yours): navy halo, white core
-      const line = (pts: readonly { t: number; st: number | null }[], upTo: number | null, width: number) => {
-        const path = () => {
-          ctx.beginPath();
-          let pen = false;
-          let prevSt: number | null = null;
-          for (let i = 0; i < pts.length; i++) {
-            const pt = pts[i];
-            if (upTo !== null && pt.t > upTo) break;
-            // pitch-tracker spikes (octave jumps on a final consonant) break the line instead of drawing a needle
-            const spike = pt.st !== null && prevSt !== null && Math.abs(pt.st - prevSt) > 7;
-            prevSt = pt.st;
-            if (pt.st === null || spike || pt.t < tVis0 || pt.t > tVis1) {
-              pen = false;
-              continue;
-            }
-            const x = X(pt.t);
-            const y = Math.min(H - PAD.b + 6, Math.max(PAD.t - 12, Y(pt.st)));
-            if (pen) ctx.lineTo(x, y);
-            else {
-              ctx.moveTo(x, y);
-              pen = true;
-            }
+      const line = (pts: readonly { t: number; st: number | null }[], upTo: number | null, width: number, tidy: boolean) => {
+        // runs of voiced points (spikes = octave jumps on a consonant end a run)
+        const runs: { x: number; y: number; t: number }[][] = [];
+        let cur: { x: number; y: number; t: number }[] = [];
+        let prevSt: number | null = null;
+        for (let i = 0; i < pts.length; i++) {
+          const pt = pts[i];
+          if (upTo !== null && pt.t > upTo) break;
+          const spike = pt.st !== null && prevSt !== null && Math.abs(pt.st - prevSt) > 6;
+          prevSt = pt.st;
+          if (pt.st === null || spike) {
+            if (cur.length) runs.push(cur);
+            cur = [];
+            continue;
           }
+          if (pt.t < tVis0 || pt.t > tVis1) continue;
+          cur.push({ x: X(pt.t), y: Math.min(H - PAD.b + 6, Math.max(PAD.t - 12, Y(pt.st))), t: pt.t });
+        }
+        if (cur.length) runs.push(cur);
+        const keep = tidy ? runs.filter((r) => r.length >= 8) : runs; // no floating crumbs after the take
+        const stroke = (style: string, w: number, dash: number[]) => {
+          ctx.strokeStyle = style;
+          ctx.lineWidth = w;
+          ctx.setLineDash(dash);
+          ctx.beginPath();
+          keep.forEach((r, ri) => {
+            if (dash.length) {
+              // dotted bridge from the previous run when the voice only broke for a moment
+              const prev = keep[ri - 1];
+              if (prev && r[0].t - prev[prev.length - 1].t < 0.45) {
+                ctx.moveTo(prev[prev.length - 1].x, prev[prev.length - 1].y);
+                ctx.lineTo(r[0].x, r[0].y);
+              }
+              return;
+            }
+            ctx.moveTo(r[0].x, r[0].y);
+            for (let k2 = 1; k2 < r.length; k2++) ctx.lineTo(r[k2].x, r[k2].y);
+          });
+          ctx.stroke();
+          ctx.setLineDash([]);
         };
-        path();
-        ctx.strokeStyle = rgba(col.monitor, 0.92);
-        ctx.lineWidth = width + 4 * scale;
-        ctx.stroke();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = width;
-        ctx.stroke();
+        stroke(rgba(col.monitor, 0.92), width + 4 * scale, []);
+        stroke(rgba(col.voice, 1), width, []);
+        if (tidy) stroke(rgba(col.voice, 0.75), Math.max(1.5, width * 0.6), [1.5 * scale, 5 * scale]);
       };
-      if (p.overlay && p.overlay.length) line(p.overlay, p.progressive ? live.t ?? -1 : null, 2.6 * scale);
-      else if (live.line.length) {
-        line(live.line, null, 2.6 * scale);
+      if (p.overlay && p.overlay.length) {
+        // only where the model speaks (no tail after the last syllable)
+        const end = (p.syllables[p.syllables.length - 1]?.end ?? Infinity) + 0.08;
+        const upTo = p.progressive ? Math.min(live.t ?? -1, end) : end;
+        line(p.overlay, upTo, 2.8 * scale, true);
+      } else if (live.line.length) {
+        line(live.line, null, 2.6 * scale, false);
         // head of the live line
         for (let i = live.line.length - 1; i >= 0; i--) {
           const pt = live.line[i];
@@ -313,11 +334,11 @@ function WaveGuide(props: GuideProps) {
           if (live.t !== null && live.follow && live.t - pt.t < 0.15) {
             const x = X(pt.t);
             const y = Math.min(H - PAD.b + 6, Math.max(PAD.t - 12, Y(pt.st)));
-            ctx.fillStyle = "rgba(255,255,255,0.25)";
+            ctx.fillStyle = rgba(col.voice, 0.3);
             ctx.beginPath();
             ctx.arc(x, y, 9 * scale, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillStyle = "#fff";
+            ctx.fillStyle = rgba(col.voice, 1);
             ctx.beginPath();
             ctx.arc(x, y, 4 * scale, 0, Math.PI * 2);
             ctx.fill();
@@ -398,7 +419,8 @@ function WaveGuide(props: GuideProps) {
         ctx.lineWidth = 5;
         ctx.strokeStyle = rgba(col.monitor, 1);
         const label = POP_LABEL[pop.grade];
-        const x = X(tc);
+        const half = ctx.measureText(label).width / 2 + 6;
+        const x = Math.min(W - half, Math.max(half, X(tc))); // keep the word on the monitor
         const y = Math.max(PAD.t, y0 - rise);
         ctx.strokeText(label, x, y);
         ctx.fillStyle = pop.grade === "perfect" ? rgba(col.hit, 1) : pop.grade === "great" ? rgba(col.great, 1) : rgba(col.good, 1);

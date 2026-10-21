@@ -25,6 +25,8 @@
   --voice: #ffd23f; /* you: live line, your replay, your score */
   --hit: #ff4fa3; /* sparkles, combo, PERFECT */
 
+  /* errors: one colour, used on white surfaces only (never coral on the electric blue) */
+  --miss: #d6245f;
   /* judgement grammar (word & sound). Never the only cue: label text or mark shape goes with it. */
   --j-perfect: #ff4fa3;
   --j-great: #5be89a;
@@ -102,6 +104,15 @@
   --wipe: #2d5bff;
   --focus-ring: #0c0f33;
 }
+/* home: a calm ground so the unit colours carry meaning */
+.field-calm {
+  --field: #f4f5fa;
+  --field-deep: #dfe2ee;
+  --field-ink: #0c0f33;
+  --field-ink-soft: #3d4166;
+  --wipe: #2d5bff;
+  --focus-ring: #0c0f33;
+}
 .field-shell {
   --field: #ffd338;
   --field-deep: #d9a800;
@@ -132,6 +143,9 @@ html:has(.field-berry) {
 }
 html:has(.field-amber) {
   background: #ffb300;
+}
+html:has(.field-calm) {
+  background: #f4f5fa;
 }
 html:has(.field-shell) {
   background: #ffd338;
@@ -168,6 +182,12 @@ html:has(.field-shell) {
   font-weight: 900;
   line-height: 1.14;
   letter-spacing: 0.01em;
+}
+/* the English caption: the Latin face at its heaviest, a slightly thinner outline */
+.telop.en {
+  font-weight: 800;
+  letter-spacing: 0;
+  --telop-stroke: 0.27em;
 }
 .telop-word {
   display: inline-grid;
@@ -209,45 +229,40 @@ button.telop-word::before {
 }
 
 @layer components {
-  /* ---------- pressable 3D buttons ----------
-     Drawn like the telop: light face, navy outline, navy drop. Pressing pushes the face down
-     onto its drop (Duolingo's juice, in our ink). The monitor stays the only dark surface. */
+  /* ---------- buttons: flat (the outline + drop is kept for the stars only: score, caption) ----------
+     Pressing scales the face a little; colour does the rest. */
   .press {
     --face: var(--paper);
     --face-ink: var(--ink);
-    --edge-color: var(--ink);
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5em;
-    border: 3px solid var(--ink);
     border-radius: var(--radius-button);
     background: var(--face);
     color: var(--face-ink);
     font-weight: 900;
-    box-shadow: 0 var(--edge) 0 var(--edge-color);
-    transform: translateY(0);
     transition:
-      transform 70ms ease-out,
-      box-shadow 70ms ease-out,
-      background-color 120ms;
+      transform 90ms ease-out,
+      filter 90ms ease-out;
     touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
   }
   .press:active:not(:disabled),
   .press[data-down="true"] {
-    transform: translateY(var(--edge));
-    box-shadow: 0 0 0 var(--edge-color);
+    transform: scale(0.97);
+    filter: brightness(0.94);
   }
   .press:disabled {
     cursor: default;
   }
-  /* secondary: the field's own deeper shade */
-  .press-deep {
-    --face: var(--field-deep);
-    --face-ink: var(--paper);
+  /* secondary on a colour field: an outline you can see is a button (never navy on navy) */
+  .press-ghost {
+    --face: transparent;
+    --face-ink: var(--field-ink);
+    box-shadow: inset 0 0 0 3px var(--field-ink);
   }
   .press-voice {
     --face: var(--voice);
@@ -255,11 +270,16 @@ button.telop-word::before {
   .press-guide {
     --face: var(--guide);
   }
-  /* inside the monitor the outline would vanish: lift the face instead */
-  .monitor .press {
-    border-color: #05071c;
-    --edge-color: #05071c;
+  .press-ink {
+    --face: var(--ink);
+    --face-ink: var(--paper);
   }
+}
+
+/* English text everywhere: the Latin face (tailed l, open shapes) */
+.kara .en {
+  font-family: var(--font-latin), "Atkinson Hyperlegible", system-ui, sans-serif;
+  font-feature-settings: normal;
 }
 
 /* ---------- small motion vocabulary ---------- */
@@ -313,6 +333,23 @@ button.telop-word::before {
     stroke-dashoffset: 0;
   }
 }
+@keyframes kara-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes kara-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.18);
+  }
+}
 @keyframes kara-spin {
   to {
     transform: rotate(360deg);
@@ -343,6 +380,12 @@ button.telop-word::before {
 .kara .anim-spin {
   animation: kara-spin 900ms linear infinite;
 }
+.kara .anim-fade {
+  animation: kara-fade 200ms ease-out both;
+}
+.kara .anim-glow {
+  animation: kara-glow 2.4s ease-in-out infinite;
+}
 .kara .anim-spark {
   animation: kara-spark 1000ms cubic-bezier(0.1, 0.8, 0.3, 1) both;
 }
@@ -355,7 +398,8 @@ button.telop-word::before {
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
-  .kara .anim-spin {
+  .kara .anim-spin,
+  .kara .anim-glow {
     animation: none;
   }
   .kara .anim-float {
