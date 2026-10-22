@@ -7,7 +7,7 @@
  * Colours: blue = お手本, amber = your recording, pink = the "don't".
  */
 import { SAGITTAL_STATIC } from "./sagittal-data";
-import { blend, closedPath, differingPath, mostMoved, outline, tipOf, type Pt, type ShapeKey } from "./geometry";
+import { TIP, blend, closedPath, differingPath, outline, tipOf, type Pt, type ShapeKey } from "./geometry";
 
 export type SagittalRefs = {
   svg?: { current: SVGSVGElement | null };
@@ -67,15 +67,14 @@ export function sagittalPoints(target: ShapeKey, heard: ShapeKey | null, pos: nu
   return heard ? blend(a, outline(heard), pos) : a;
 }
 
-export function gripIndex(target: ShapeKey, heard: ShapeKey | null): number {
-  return heard ? mostMoved(outline(target), outline(heard)) : 0;
-}
+/** the grip and the arrow sit on the tongue's tip (the same index in every outline) */
+export const gripIndex = (): number => TIP;
 
 export default function Sagittal({ target, heard, pos, active, grip, refs, className }: SagittalProps) {
   const a = outline(target);
   const b = heard ? outline(heard) : null;
   const now = sagittalPoints(target, heard, pos);
-  const gi = gripIndex(target, heard);
+  const gi = gripIndex();
   const contact = contactFor(target);
   const from = b ? b[gi] : null;
   const to = a[gi];
@@ -122,7 +121,7 @@ export default function Sagittal({ target, heard, pos, active, grip, refs, class
 
       {/* mark 1: must / must not touch */}
       {contact ? (
-        <g className={active && contact.kind === "dont" ? "kara-blink" : undefined}>
+        <g data-mark="contact" className={active && contact.kind === "dont" ? "kara-blink" : undefined}>
           {contact.kind === "do" ? (
             <circle cx={contact.at[0]} cy={contact.at[1]} r="1.8" fill="var(--guide-ink)" stroke="#fff" strokeWidth="0.6" />
           ) : (
@@ -130,7 +129,8 @@ export default function Sagittal({ target, heard, pos, active, grip, refs, class
               <path d={`M${contact.at[0] - 1.8},${contact.at[1] - 1.8} L${contact.at[0] + 1.8},${contact.at[1] + 1.8} M${contact.at[0] + 1.8},${contact.at[1] - 1.8} L${contact.at[0] - 1.8},${contact.at[1] + 1.8}`} />
             </g>
           )}
-          <text x={contact.at[0] - 3} y={contact.at[1] - 3.6} fontSize="3.6" fontWeight="700" textAnchor="end" fill={contact.kind === "do" ? "var(--guide-ink)" : "var(--miss)"}>
+          {/* the label up and to the left of the spot, clear of the grip; a white halo keeps it legible on the tongue */}
+          <text x={contact.at[0] - 5.5} y={contact.at[1] - 7} fontSize="3.6" fontWeight="700" textAnchor="end" fill={contact.kind === "do" ? "var(--guide-ink)" : "var(--miss)"} stroke="#fff" strokeWidth="1.1" strokeLinejoin="round" paintOrder="stroke">
             {contact.label}
           </text>
         </g>
@@ -141,15 +141,13 @@ export default function Sagittal({ target, heard, pos, active, grip, refs, class
         <g stroke="var(--guide-ink)" strokeWidth="0.8" strokeLinecap="round" fill="none">
           <path d={`M${from[0].toFixed(1)},${from[1].toFixed(1)} L${to[0].toFixed(1)},${to[1].toFixed(1)}`} />
           <ArrowHead from={from} to={to} />
-          <text x={(from[0] + to[0]) / 2} y={Math.max(from[1], to[1]) + 5} fontSize="3.6" fontWeight="700" textAnchor="middle" fill="var(--guide-ink)" stroke="none">
-            {wayJa(from, to)}
-          </text>
+          <title>{wayJa(from, to)}</title>
         </g>
       ) : null}
 
       {/* the grip on the part that moves (44 pt to touch) */}
       {grip && heard ? (
-        <g ref={refs?.grip} transform={`translate(${now[gi][0].toFixed(2)},${now[gi][1].toFixed(2)})`} style={{ cursor: "grab" }}>
+        <g ref={refs?.grip} data-grip transform={`translate(${now[gi][0].toFixed(2)},${now[gi][1].toFixed(2)})`} style={{ cursor: "grab" }}>
           <circle r="6.5" fill="transparent" />
           <circle r="2.6" fill="#fff" stroke="var(--ink)" strokeWidth="0.7" />
           <path d="M-1.1,-0.7 L-1.8,0 L-1.1,0.7 M1.1,-0.7 L1.8,0 L1.1,0.7" fill="none" stroke="var(--ink)" strokeWidth="0.45" strokeLinecap="round" strokeLinejoin="round" />

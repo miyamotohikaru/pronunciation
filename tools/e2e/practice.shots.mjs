@@ -180,29 +180,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   }, r.words[wi][0].toLowerCase());
   if (!picked) throw new Error("the r / l word is not on the card");
   await sleep(900); // the pair recording (rice / lice) arrives
-  // drag the tongue itself toward L: the tip springs over and lands on the ridge
+  // drag the grip on the tongue toward the ridge (the contact mark): the tongue springs over
   const pt = await page.evaluate(() => {
-    const coach = document.getElementById("coach");
-    coach?.scrollIntoView({ block: "start" });
-    const svg = document.querySelector("#coach svg[viewBox]");
-    const m = svg?.getScreenCTM();
-    if (!m) return null;
-    const at = (x, y) => {
-      const q = new DOMPoint(x, y).matrixTransform(m);
-      return { x: q.x, y: q.y };
-    };
-    return { a: at(92, 100), b: at(68, 100) };
+    document.getElementById("coach")?.scrollIntoView({ block: "start" });
+    const g = document.querySelector("#coach [data-grip]")?.getBoundingClientRect();
+    const m = document.querySelector('#coach [data-mark="contact"]')?.getBoundingClientRect();
+    if (!g || !m) return null;
+    return { a: { x: g.x + g.width / 2, y: g.y + g.height / 2 }, b: { x: m.x + m.width / 2, y: m.y + m.height / 2 } };
   });
   if (pt) {
     await page.mouse.move(pt.a.x, pt.a.y);
     await page.mouse.down();
     for (let k = 1; k <= 10; k++) {
-      await page.mouse.move(pt.a.x + ((pt.b.x - pt.a.x) * k) / 10, pt.a.y);
+      await page.mouse.move(pt.a.x + ((pt.b.x - pt.a.x) * k) / 10, pt.a.y + ((pt.b.y - pt.a.y) * k) / 10);
       await sleep(30);
     }
     await page.mouse.up();
     await sleep(700);
-  }
+  } else console.log("card: no grip to drag");
   await page.evaluate(() => document.getElementById("coach")?.scrollIntoView({ block: "start" }));
   await sleep(150);
   await page.screenshot({ path: join(OUT, "ours-card.png") });

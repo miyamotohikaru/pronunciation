@@ -1,18 +1,18 @@
 "use client";
 
 /**
- * The wrong letters of a word: error colour and a wavy line under exactly those letters (r for
- * R) — a fine wave, so even one letter carries more than one crest and never reads as a ✓.
+ * The wrong letters of a word: a light tag over the whole sound with a 2 px line under it (r for
+ * R, "th" for /ð/) — a mark the size of the sound, not a red letter with a squiggle.
  */
 import type { ReactNode } from "react";
 import type { WordScore } from "../types";
 import { mark } from "../score";
 
+/** the letters of a wrong sound: a light tag over the whole sound, a 2 px line under it, the text stays ink */
 export function Wavy({ children }: { children: ReactNode }) {
   return (
-    <span className="relative inline-block font-extrabold text-(--miss)">
+    <span className="rounded-[0.18em] px-[0.04em] pb-[0.02em] shadow-[inset_0_-2px_0_var(--miss)]" style={{ background: "color-mix(in srgb, var(--miss) 14%, transparent)" }}>
       {children}
-      <span aria-hidden data-wave className="kara-wavy pointer-events-none absolute inset-x-0 top-[100%] h-[0.2em]" />
     </span>
   );
 }

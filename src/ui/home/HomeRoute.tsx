@@ -15,7 +15,7 @@ import type { ItemData } from "@/data/schema";
 import type { MicRecorder } from "@/engine/audio/mic-recorder.ts";
 import { Player } from "@/engine/audio/player.ts";
 import { audioCore } from "@/engine/audio/context.ts";
-import { IconCheck, IconMic, IconNext, IconPlay, IconStar } from "../icons";
+import { IconCheck, IconFlame, IconMic, IconNext, IconPlay, IconStar } from "../icons";
 import { allBest, loadSettings, type Best } from "../practice/progress";
 import { fieldFor } from "../practice/fields";
 import { fetchItem, refFor } from "../practice/content";
@@ -49,6 +49,19 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
   const today = new Date().toDateString();
   const todayMin = best ? Math.floor(Object.values(best).filter((b) => new Date(b.at).toDateString() === today).length * MIN_PER_ITEM) : 0;
   const href = `${lesson.href}?i=${cur.i}`;
+  // days in a row with something practised (today, or up to yesterday)
+  const streak = (() => {
+    if (!best) return 0;
+    const days = new Set(Object.values(best).map((b) => new Date(b.at).toDateString()));
+    const d = new Date();
+    if (!days.has(d.toDateString())) d.setDate(d.getDate() - 1);
+    let n = 0;
+    while (days.has(d.toDateString())) {
+      n++;
+      d.setDate(d.getDate() - 1);
+    }
+    return n;
+  })();
 
   const [item, setItem] = useState<ItemData | null>(null);
   useEffect(() => {
@@ -65,12 +78,24 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
     <div className="kara field-calm flex min-h-dvh flex-col">
       <header className="mx-auto flex h-14 w-full max-w-[720px] items-center justify-between px-4 md:h-16">
         <span className="text-[20px] font-black leading-none md:text-[24px]">発音カラオケ</span>
-        <span className="flex items-center gap-2 text-[13px] font-medium" aria-label={`今日の目標 ${todayMin}分 / ${DAILY_MIN}分`}>
-          <GoalRing k={Math.min(1, todayMin / DAILY_MIN)} />
-          今日 <span className="num -ml-1 text-[15px] font-bold">{Math.min(todayMin, DAILY_MIN)}</span>
-          <span className="num -ml-2">/{DAILY_MIN}分</span>
+        <span className="flex items-center gap-3 text-[13px] font-medium">
+          {streak > 0 ? (
+            <span className="flex items-center gap-1" aria-label={`${streak}日続いています`}>
+              <IconFlame size={16} />
+              <span className="num text-[15px] font-bold">{streak}</span>日
+            </span>
+          ) : null}
+          <span className="flex items-center gap-2" aria-label={`今日の目標 ${todayMin}分 / ${DAILY_MIN}分`}>
+            <GoalRing k={Math.min(1, todayMin / DAILY_MIN)} />
+            今日 <span className="num -ml-1 text-[15px] font-bold">{Math.min(todayMin, DAILY_MIN)}</span>
+            <span className="num -ml-2">/{DAILY_MIN}分</span>
+          </span>
         </span>
       </header>
+      {streak === 0 && todayMin === 0 ? (
+        // nothing yet: something to look forward to, not an empty ring
+        <p className="mx-auto -mt-1 w-full max-w-[720px] px-4 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_78%,transparent)]">最初の1文で、連続記録がはじまります。</p>
+      ) : null}
 
       <main className="mx-auto w-full max-w-[720px] flex-1 px-4 pb-8">
         <NowCard unitId={unit.id} lessonTitle={lesson.titleJa} item={item} index={cur.i} count={lesson.items.length} href={href} lessonMin={minutes(lesson.items.length - cur.i)} />
@@ -90,7 +115,7 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
                       <span className={`block text-[15px] font-bold leading-tight ${state === "next" ? "text-[color-mix(in_srgb,var(--ink)_78%,transparent)]" : ""}`}>{u.titleJa}</span>
                       <UnitBar k={(items.length - left) / Math.max(1, items.length)} />
                     </span>
-                    <span className="num shrink-0 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{left === 0 ? "できた" : `のこり ${minutes(left)}分`}</span>
+                    <span className="num w-14 shrink-0 text-right text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{left === 0 ? "できた" : `${minutes(left)}分`}</span>
                   </Link>
                 </li>
               );
@@ -102,23 +127,27 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
                     <span className="block text-[16px] font-black leading-tight">{u.titleJa}</span>
                     <UnitBar k={(items.length - left) / Math.max(1, items.length)} />
                   </span>
-                  <span className="num shrink-0 text-[13px] font-medium">のこり {minutes(left)}分</span>
+                  <span className="num w-20 shrink-0 text-right text-[13px] font-medium">のこり {minutes(left)}分</span>
                 </div>
-                <ol className="ml-[8px]">
+                <ol>
                   {u.lessons.map((l, li) => {
                     const st = li < cur.l ? "done" : li === cur.l ? "now" : "next";
                     const last = li === u.lessons.length - 1;
                     return (
                       <li key={l.id} className="relative">
                         {/* the line runs from this step to the next one, and stops at the last */}
-                        {last ? null : <span aria-hidden className="absolute left-[19px] top-6 h-12 w-[2px] bg-[#a9aec8]" />}
-                        <Link href={st === "now" ? href : l.href} className={`relative flex min-h-12 items-center gap-4 rounded-[12px] pl-[10px] pr-2 ${st === "now" ? "bg-(--paper)" : ""}`} aria-current={st === "now" ? "step" : undefined}>
+                        {/* one axis: the line, the steps and the star are centred under the unit's number */}
+                        {last ? null : <span aria-hidden className="absolute left-[17px] top-6 h-12 w-[2px] bg-[#8f95b3]" />}
+                        <Link href={st === "now" ? href : l.href} className={`relative flex min-h-12 items-center gap-4 rounded-[12px] pl-[8px] ${st === "now" ? "bg-(--paper)" : ""}`} aria-current={st === "now" ? "step" : undefined}>
                           <Step state={st} boss={l.boss} />
                           <span className={`min-w-0 flex-1 text-[15px] leading-tight ${st === "now" || l.boss ? "font-bold" : "font-medium"}`}>
                             {l.boss ? <span className="mr-2 rounded-full bg-(--ink) px-2 py-[2px] align-[2px] text-[12px] font-bold text-(--paper)">まとめ</span> : null}
                             {l.titleJa}
                           </span>
-                          <span className="num shrink-0 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{st === "done" ? "できた" : `のこり ${minutes(st === "now" ? l.items.length - cur.i : l.items.length)}分`}</span>
+                          {st === "now" ? (
+                            <span className={`${fieldFor(u.id)} shrink-0 rounded-full bg-(--field) px-2 py-[2px] text-[12px] font-bold text-(--field-ink)`}>いまここ</span>
+                          ) : null}
+                          <span className="num w-14 shrink-0 text-right text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{st === "done" ? "できた" : `${minutes(st === "now" ? l.items.length - cur.i : l.items.length)}分`}</span>
                         </Link>
                       </li>
                     );
@@ -147,6 +176,11 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
             </li>
           ))}
         </ul>
+        <p className="mt-10 text-center text-[13px] font-medium">
+          <Link href="/credits" className="underline underline-offset-2">
+            クレジット（使わせてもらっている声・図・データ）
+          </Link>
+        </p>
       </main>
     </div>
   );
@@ -163,8 +197,9 @@ function GoalRing({ k }: { k: number }) {
   const r = 8;
   const len = 2 * Math.PI * r;
   return (
-    <svg aria-hidden viewBox="0 0 20 20" className="size-5 -rotate-90">
-      <circle cx="10" cy="10" r={r} fill="none" stroke="#d6d9e8" strokeWidth="3" />
+    <svg aria-hidden viewBox="0 0 20 20" className="size-6 -rotate-90">
+      {/* a visible base, so an empty day still shows the ring to fill */}
+      <circle cx="10" cy="10" r={r} fill="#ffffff" stroke="#b9bed3" strokeWidth="3" />
       <circle cx="10" cy="10" r={r} fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - k)} />
     </svg>
   );
@@ -173,7 +208,7 @@ function GoalRing({ k }: { k: number }) {
 /** a unit's progress, a thin bar under its name */
 function UnitBar({ k }: { k: number }) {
   return (
-    <span aria-hidden className="mt-[6px] block h-1 w-full max-w-[200px] overflow-hidden rounded-full bg-[#dfe2ee]">
+    <span aria-hidden className="mt-[6px] block h-1 w-full overflow-hidden rounded-full bg-[#d4d8e6]">
       <span className="block h-full origin-left rounded-full bg-(--ink)" style={{ transform: `scaleX(${k})` }} />
     </span>
   );
@@ -241,6 +276,17 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
   const buffer = useRef<Promise<AudioBuffer> | null>(null);
   const rec = useRef<MicRecorder | null>(null);
   const [flow, setFlow] = useState<Flow>("idle");
+  // when the card's button has scrolled off the screen, the same button waits at the bottom
+  const mainBtn = useRef<HTMLButtonElement>(null);
+  const card = useRef<HTMLElement>(null);
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    const el = mainBtn.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setAway(!e.isIntersecting && e.boundingClientRect.top < 0), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const flowRef = useRef<Flow>("idle");
   flowRef.current = flow;
 
@@ -346,7 +392,8 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
 
   // fit the line to the card: the blocks' weighted length decides the size (cqw of the card)
   const weight = flat.reduce((a, s) => a + s.text.length * (s.strong ? 1 : 0.7), 0) + flat.filter((s) => s.dot).length * 0.4 + Math.max(0, (pieces?.length ?? 1) - 1) * 0.3;
-  const fit = weight <= 14 ? `min(84px, calc(100cqw / ${(Math.max(4, weight) * 0.66).toFixed(2)}))` : "clamp(30px, 8.4cqw, 44px)";
+  // a short line big; a long one shrinks to fit (it wraps between words, never inside one)
+  const fit = weight <= 14 ? `min(84px, calc(100cqw / ${(Math.max(4, weight) * 0.66).toFixed(2)}))` : `max(20px, min(44px, calc(100cqw / ${(weight * 0.36).toFixed(2)})))`;
 
   // the button says what it does (a verb); how it works goes small underneath
   const label = flow === "model" ? "お手本を聞いています" : flow === "turn" ? "話してください" : flow === "done" ? "練習を続ける" : "話す";
@@ -355,16 +402,18 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
 
   return (
     <section
+      ref={card}
       aria-label="次に言う文"
       onClick={(e) => {
         // the whole card presses the button (except the button itself, which handles its own tap)
         if ((e.target as HTMLElement).closest("button, a")) return;
         void press();
       }}
-      className={`${field} mt-2 cursor-pointer rounded-[24px] bg-(--field) px-6 pb-6 pt-4 text-(--field-ink) [container-type:inline-size]`}
+      className={`${field} hero-card mt-2 cursor-pointer rounded-[24px] bg-(--paper) px-6 pb-6 pt-4 text-(--ink) shadow-[inset_0_6px_0_var(--field)] [container-type:inline-size]`}
     >
       <p className="flex items-center justify-between gap-4 text-[13px] font-medium">
-        <span className="min-w-0 truncate font-bold">{lessonTitle}</span>
+        {/* the same lesson as the route's 「いまここ」 row */}
+        <span className="min-w-0 truncate rounded-full bg-(--field) px-3 py-[3px] font-bold text-(--field-ink)">{lessonTitle}</span>
         <span className="shrink-0">
           このセット <span className="num ml-1 text-[15px] font-bold">{index + 1}</span>
           <span className="num">/{count}</span>
@@ -376,7 +425,8 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
         {pieces && item ? (
           <p className="hero en relative grid leading-[1.15]" style={{ fontSize: fit }}>
             <span className="sr-only">{`${item.text}。強く読むところ：${flat.filter((s) => s.strong).map((s) => s.text.toLowerCase()).join("、")}`}</span>
-            {(["outline", "fill", "guide", "voice"] as const).map((layer) => {
+            {/* one look: plain type (no TV-caption outline); strength only by size and weight */}
+            {(["fill", "guide", "voice"] as const).map((layer) => {
               let k = 0;
               return (
                 <span key={layer} aria-hidden className={`hero-layer hero-${layer} flex flex-wrap items-baseline gap-x-[0.28em] gap-y-[0.3em] pb-[0.32em]`} style={{ gridArea: "1 / 1" }}>
@@ -406,7 +456,7 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
                             </span>
                             {layer === "fill" ? (
                               // the stress pattern under its own block: ・ weak, ● strong
-                              <span className="absolute left-1/2 top-full -translate-x-1/2 rounded-full bg-(--field-ink)" style={s.strong ? { width: "0.2em", height: "0.2em", marginTop: "0.02em" } : { width: "0.1em", height: "0.1em", marginTop: "0.07em" }} />
+                              <span className="absolute left-1/2 top-full -translate-x-1/2 rounded-full bg-(--ink)" style={s.strong ? { width: "0.2em", height: "0.2em", marginTop: "0.02em" } : { width: "0.1em", height: "0.1em", marginTop: "0.07em" }} />
                             ) : null}
                           </span>
                         );
@@ -423,10 +473,10 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
       </div>
       {item ? (
         <>
-          <p className="ipa mt-2 text-[16px] leading-snug" style={{ color: "color-mix(in srgb, var(--field-ink) 92%, transparent)" }}>
+          <p className="ipa mt-2 text-[16px] leading-snug" style={{ color: "color-mix(in srgb, var(--ink) 85%, transparent)" }}>
             {lineIpa(item)}
           </p>
-          <p className="jp mt-1 min-h-5 text-[13px] font-medium" style={{ color: "color-mix(in srgb, var(--field-ink) 85%, transparent)" }}>
+          <p className="jp mt-1 min-h-5 text-[13px] font-medium" style={{ color: "color-mix(in srgb, var(--ink) 80%, transparent)" }}>
             {item.ja.replace(/\n/g, "")}
           </p>
         </>
@@ -434,13 +484,13 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
 
       {/* the one button, for the whole loop */}
       <div className="mt-6">
-        <button type="button" onClick={press} disabled={!item} aria-live="polite" className={`press ${flow === "turn" ? "press-ink" : ""} h-14 w-full text-[16px]`}>
-          <span ref={ringRef} aria-hidden className={`grid size-8 place-items-center rounded-full will-change-transform ${flow === "turn" ? "bg-(--paper) text-(--ink)" : "bg-(--ink) text-(--paper)"}`}>
+        <button ref={mainBtn} type="button" onClick={press} disabled={!item} aria-live="polite" className="press press-ink h-14 w-full text-[16px]">
+          <span ref={ringRef} aria-hidden className="grid size-8 place-items-center rounded-full bg-(--paper) text-(--ink) will-change-transform">
             {flow === "done" ? <IconNext size={15} /> : flow === "idle" || flow === "model" ? <IconPlay size={13} /> : <IconMic size={16} />}
           </span>
           <span className="text-[17px]">{label}</span>
         </button>
-        <p className="mt-2 min-h-4 text-center text-[13px] font-medium" style={{ color: "color-mix(in srgb, var(--field-ink) 88%, transparent)" }}>
+        <p className="mt-2 min-h-4 text-center text-[13px] font-medium" style={{ color: "color-mix(in srgb, var(--ink) 78%, transparent)" }}>
           {note}
         </p>
         {flow === "done" ? (
@@ -449,6 +499,21 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
           </button>
         ) : null}
       </div>
+      {away ? (
+        <div className="fixed inset-x-0 bottom-0 z-20 bg-[#f4f5fa] px-4 pt-3 shadow-[0_-1px_0_#dfe2ee] [padding-bottom:max(16px,calc(env(safe-area-inset-bottom)+10px))]">
+          <button
+            type="button"
+            onClick={() => {
+              card.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              void press();
+            }}
+            className="press press-ink mx-auto flex h-14 w-full max-w-[560px] text-[16px]"
+          >
+            <IconMic size={18} />
+            {flow === "done" ? "練習を続ける" : "話す"}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }

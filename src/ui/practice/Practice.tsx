@@ -10,7 +10,7 @@
  * Per-frame work lives in requestAnimationFrame loops that read refs (guide canvas, lyric wipe,
  * mic ring, count-in clock). React state changes only on events: phase, count-in digit, result.
  */
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import BreakText from "@/components/BreakText";
 import type { ItemData } from "@/data/schema";
 import type { MicRecorder, Take } from "@/engine/audio";
@@ -97,6 +97,8 @@ export type PracticeProps = {
   role?: "you" | "partner";
   /** inside another flow: no top bar of its own */
   embedded?: boolean;
+  /** shown above the caption (a dialogue keeps the partner's line there during your turn) */
+  context?: ReactNode;
   onResult?: (itemId: string, score: number) => void;
   /** a partner's line has been heard to the end */
   onListened?: () => void;
@@ -112,7 +114,7 @@ declare global {
   }
 }
 
-export default function Practice({ itemId, item: itemProp, nextItemId, field, index = 0, total: totalItems = 1, combo = 0, backHref = "/home", speed: speedProp, voice: voiceProp, role = "you", embedded, onResult, onListened, onNext, pairs }: PracticeProps) {
+export default function Practice({ itemId, item: itemProp, nextItemId, field, index = 0, total: totalItems = 1, combo = 0, backHref = "/home", speed: speedProp, voice: voiceProp, role = "you", embedded, context, onResult, onListened, onNext, pairs }: PracticeProps) {
   const [item, setItem] = useState<ItemData | null>(itemProp ?? null);
   const [stored, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   // what this line uses: the saved settings, unless the caller fixes the speed or the voice
@@ -943,11 +945,14 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
             <details
               open={details}
               onToggle={(e) => setDetails((e.currentTarget as HTMLDetailsElement).open)}
-              className="group mt-3 rounded-[22px] bg-[color-mix(in_srgb,var(--paper)_14%,transparent)] px-4 py-1 [&_summary::-webkit-details-marker]:hidden"
+              className="group mt-2 px-1 [&_summary::-webkit-details-marker]:hidden"
             >
-              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-[15px] font-bold">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 text-[15px] font-bold">
                 くわしく
-                <span aria-hidden className="text-[13px] transition-transform group-open:rotate-180">▾</span>
+                {/* an SVG chevron: a rare text glyph (⌄) costs a system-wide font lookup on its first layout */}
+                <svg aria-hidden viewBox="0 0 12 12" className="size-3 transition-transform group-open:rotate-180">
+                  <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </summary>
               {details ? (
               <div className="pb-4">
@@ -994,21 +999,23 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
           <>
             {/* ------------------------------------------------ the stage: caption + guide */}
             <section aria-label="練習する文" className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col justify-center px-4 py-2 md:px-8">
-              {/* long lines get a smaller caption so the guide and the mic stay on screen */}
-              <div
-                className="mx-auto w-full max-w-[1040px] px-1"
-                style={{ fontSize: (item?.text.length ?? 0) > 26 ? "clamp(32px,8.8vw,88px)" : (item?.text.length ?? 0) > 15 ? "clamp(38px,10.6vw,96px)" : "clamp(42px,12.4vw,104px)" }}
-              >
+              {/* another flow's own line above ours (a dialogue: the partner's line) */}
+              {context ? <div className="mx-auto mb-3 w-full max-w-[1040px] px-1">{context}</div> : null}
+              {/* the caption fits its length (a 100-letter line keeps the lane and the mic on screen) and
+                  steps back while you speak: the sentence then rides the band below */}
+              <div className="mx-auto w-full max-w-[1040px] px-1" style={{ fontSize: captionSize(item?.text.length ?? 0, fold) }}>
                 {item && guide ? <Telop text={item.text} words={guide.words} mode="karaoke" clock={clock} reveal={reveal} selected={null} hits={hits} /> : <div className="h-[1.3em]" aria-hidden />}
               </div>
               {item ? (
                 <div className="mx-auto w-full max-w-[1040px] px-1">
-                  {/* sentence > meaning > sounds: the meaning, then the IPA smaller and quieter */}
-                  <p className="jp mt-2 text-[16px] font-medium leading-snug md:mt-3 md:text-[19px]">
-                    <BreakText text={item.ja.replace(/\n/g, "◆")} />
-                    {item.note ? <span className="mt-1 block text-[13px]">もとの形：{item.note}</span> : null}
-                  </p>
-                  <p className="ipa mt-1 text-[14px] leading-snug opacity-70 md:text-[16px]">{lineIpa(item)}</p>
+                  {/* English → its sounds right under it → the meaning */}
+                  <p className="ipa mt-1 text-[15px] leading-snug opacity-90 md:text-[17px]">{lineIpa(item)}</p>
+                  {fold ? null : (
+                    <p className="jp mt-2 text-[15px] font-medium leading-snug md:mt-3 md:text-[18px]">
+                      <BreakText text={item.ja.replace(/\n/g, "◆")} />
+                      {item.note ? <span className="mt-1 block text-[13px]">もとの形：{item.note}</span> : null}
+                    </p>
+                  )}
                 </div>
               ) : null}
 
@@ -1019,7 +1026,8 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
                     <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} live={live} overlay={null} progressive={false} focusWord={null} tolSt={2.5} label={label} />
                   ) : null}
                   {hint && (phase === "countin" || phase === "singing") ? (
-                    <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+                    // top left, clear of the playhead in the middle
+                    <div className="pointer-events-none absolute left-4 top-3 flex">
                       <span className="rounded-full bg-[rgba(255,255,255,0.14)] px-3 py-[6px] text-[13px] font-bold">線を青い帯に重ねよう</span>
                     </div>
                   ) : null}
@@ -1124,7 +1132,7 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
             <div className="mx-auto flex max-w-[680px] gap-3">
               {main === "word" && coachWord && item ? (
                 // first: say the worst word again (the coach above shows how)
-                <button type="button" onClick={() => retryWord(coachIdx)} disabled={retry.state === "scoring"} className="press press-ink h-14 flex-[1.6] text-[17px]">
+                <button type="button" onClick={() => retryWord(coachIdx)} disabled={retry.state === "scoring"} className="press press-ink h-14 flex-[1.5] text-[15px]">
                   <span ref={barRing} aria-hidden className="grid size-8 place-items-center rounded-full bg-(--paper) text-(--ink) will-change-transform">
                     <IconMic size={16} />
                   </span>
@@ -1142,17 +1150,17 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
               ) : null}
               {main === "word" ? (
                 // the whole line again stays one tap away, quietly
-                <button type="button" onClick={onMic} aria-label="文をもう一度話す" className="press press-ghost h-14 w-16 shrink-0 flex-col gap-0 text-[12px]">
-                  <IconRetry size={18} />
+                <button type="button" onClick={onMic} aria-label="文をもう一度話す" className="press press-ghost h-14 flex-1 text-[15px]">
+                  <IconRetry size={16} />
                   文ごと
                 </button>
               ) : (
-              <button type="button" onClick={onMic} className={`press ${main === "again" ? "press-ink" : "press-ghost"} h-14 flex-[1.25] text-[17px]`}>
+              <button type="button" onClick={onMic} className={`press ${main === "again" ? "press-ink" : "press-ghost"} h-14 flex-[1.25] text-[15px]`}>
                 <IconMic size={20} />
                 もう一度話す
               </button>
               )}
-              <button type="button" onClick={onNext} className={`press ${main === "next" ? "" : "press-ghost"} h-14 flex-1 text-[17px]`}>
+              <button type="button" onClick={onNext} className={`press ${main === "next" ? "" : "press-ghost"} h-14 flex-1 text-[15px]`}>
                 {!passed && attempt >= 3 ? "あとでもう一回" : "次へ"}
                 <IconNext size={20} />
               </button>
@@ -1176,6 +1184,16 @@ function worstFlagged(words: WordScore[]): number {
       }
   });
   return at;
+}
+
+/**
+ * The caption's size from the line's length, so even a 100-letter line leaves the lane and the mic on
+ * a phone; while you speak it steps back to about 60 % (the words ride the band then).
+ */
+function captionSize(len: number, speaking: boolean): string {
+  const [vw, min, max] = len <= 15 ? [12.4, 40, 104] : len <= 26 ? [10.6, 36, 96] : len <= 40 ? [8.4, 30, 80] : len <= 64 ? [6.4, 24, 60] : len <= 96 ? [5.2, 20, 48] : [4.4, 17, 40];
+  const k = speaking ? 0.6 : 1;
+  return `clamp(${Math.round(Math.max(15, min * k))}px, ${(vw * k).toFixed(2)}vw, ${Math.round(max * k)}px)`;
 }
 
 /** the far end of the sound card's meter: what the AI heard for the worst sound */

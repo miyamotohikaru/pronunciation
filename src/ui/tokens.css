@@ -233,7 +233,7 @@ html:has(.field-shell) {
   paint-order: stroke fill;
   clip-path: inset(-0.35em calc(100% - var(--p) * (100% + 0.7em) + 0.35em) -0.35em -0.35em);
 }
-/* karaoke caption: plain white type (no outline, no shadow); the words not reached yet at 55 %;
+/* karaoke caption: plain white type (no outline, no shadow); the words not reached yet at 90 %;
    each word paints gold from the left while your voice is inside the band (--g, 0..1) */
 .telop[data-mode="karaoke"] {
   --telop-stroke: 0;
@@ -254,7 +254,7 @@ html:has(.field-shell) {
   transition: opacity 120ms linear;
 }
 .telop[data-mode="karaoke"] .telop-word[data-state="todo"] {
-  opacity: 0.55;
+  opacity: 0.9;
 }
 /* result: every word gets its judgement colour; the outline stays navy */
 .telop[data-mode="result"] .tl-b {
@@ -326,10 +326,13 @@ button.telop-word::before {
 }
 
 /* the sounds, dictionary-style IPA (/ðə ráɪs/): a face with every IPA letter, so no glyph falls back alone */
-.kara .ipa {
-  font-family: "Charis SIL", "Doulos SIL", "Gentium Plus", "Noto Sans", system-ui, "Helvetica Neue", Arial, sans-serif;
+/* THE one style for sounds in the whole app (every screen, every corner): dictionary IPA in
+   Gentium Plus — upright, full IPA coverage, an l that never reads as I or |. Use class="ipa". */
+.ipa {
+  font-family: var(--font-ipa), "Gentium Plus", "Charis SIL", "Doulos SIL", "Noto Serif", "Times New Roman", serif;
+  font-style: normal;
+  font-weight: 400;
   font-feature-settings: normal;
-  font-weight: 500;
   letter-spacing: 0.01em;
 }
 
@@ -492,10 +495,8 @@ button.telop-word::before {
   background-position: center;
 }
 
-/* ---------- home: the syllable blocks, outlined as one shape
-   four stacked copies: one outline layer (stroke + the one shadow) under everything, one fill,
-   then お手本's cyan and your yellow, each wiping in per block (--p) without an outline of its own,
-   so strokes never cut into neighbouring fills */
+/* ---------- home: the syllable blocks — plain type, strength by size and weight only;
+   three stacked copies: the fill, then お手本's cyan and your yellow wiping in per block (--p) */
 .kara .hero-block {
   display: inline-block;
   vertical-align: baseline;
@@ -504,25 +505,17 @@ button.telop-word::before {
   letter-spacing: 0.05em;
   --p: 0;
 }
-.kara .hero-outline .hero-block {
-  color: transparent;
-  -webkit-text-stroke: 0.17em var(--ink);
-  paint-order: stroke fill;
-  text-shadow: 0 0.07em 0 var(--ink);
-}
-.kara .hero-outline .hero-dot {
-  -webkit-text-stroke-width: 0.1em;
-}
 .kara .hero-fill .hero-block {
-  color: var(--paper);
+  color: var(--ink);
 }
 .kara .hero-guide .hero-block,
 .kara .hero-voice .hero-block {
   clip-path: inset(-0.3em calc(100% - var(--p) * (100% + 0.3em) + 0.3em) -0.3em -0.3em);
 }
+/* on the white card: the on-white blue and amber */
 .kara .hero-guide .hero-block {
-  color: var(--guide);
+  color: var(--guide-ink);
 }
 .kara .hero-voice .hero-block {
-  color: var(--voice);
+  color: var(--voice-ink);
 }

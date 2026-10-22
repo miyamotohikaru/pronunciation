@@ -9,7 +9,8 @@ import { SAGITTAL_SHAPES, type ShapeKey } from "./sagittal-data";
 export type Pt = [number, number];
 export type { ShapeKey };
 
-const N = 240; // points per blended outline
+const HALF = 120; // points per half of an outline: start → tongue tip, tongue tip → end
+const N = HALF * 2 - 1;
 
 /** a sound (ARPAbet, or one of the scorer's Japanese-like units) → the drawing that shows it */
 export function shapeFor(unit: string | null | undefined): ShapeKey | null {
@@ -26,17 +27,26 @@ export function shapeFor(unit: string | null | undefined): ShapeKey | null {
 }
 
 const cache = new Map<ShapeKey, Pt[]>();
-/** a drawing's outline, resampled to N points by arc length */
+/**
+ * A drawing's outline, resampled in two halves around the tongue's tip (start → tip, tip → end),
+ * so that in any two drawings point i means the same place: the tips meet the tips, the jaw the jaw.
+ */
 export function outline(key: ShapeKey): Pt[] {
   const hit = cache.get(key);
   if (hit) return hit;
   const flat = SAGITTAL_SHAPES[key];
   const pts: Pt[] = [];
   for (let i = 0; i + 1 < flat.length; i += 2) pts.push([flat[i], flat[i + 1]]);
-  const out = resample(pts, N);
+  const tip = tipOf(pts);
+  const at = pts.findIndex((p) => p[0] === tip[0] && p[1] === tip[1]);
+  const k = at > 0 && at < pts.length - 1 ? at : pts.length >> 1;
+  const out = [...resample(pts.slice(0, k + 1), HALF), ...resample(pts.slice(k), HALF).slice(1)];
   cache.set(key, out);
   return out;
 }
+
+/** the index of the tongue's tip in every outline() */
+export const TIP = HALF - 1;
 
 function resample(pts: Pt[], n: number): Pt[] {
   const seg: number[] = [0];
@@ -63,12 +73,21 @@ export function closedPath(pts: Pt[]): string {
   return `M${pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" L")} Z`;
 }
 
-/** the runs of `a` where it is away from `b` (what moves between the two sounds), as open paths */
-export function differingPath(a: Pt[], b: Pt[], tol = 0.7): string {
+/** how far a point is from a polyline (nearest vertex; the outlines are dense) */
+function away(p: Pt, poly: Pt[]): number {
+  let d = Infinity;
+  for (const q of poly) d = Math.min(d, (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2);
+  return Math.sqrt(d);
+}
+
+/** the runs of `a` that are not on `b` at all (what really differs between the two sounds), as open paths */
+export function differingPath(a: Pt[], b: Pt[], tol = 0.9): string {
   let d = "";
   let open = false;
+  const from = tongueStart(a);
   for (let i = 0; i < a.length; i++) {
-    const far = Math.hypot(a[i][0] - b[i][0], a[i][1] - b[i][1]) > tol;
+    // the tongue only (the drawings' lips, teeth and chins differ a little too, but that is not the lesson)
+    const far = i >= from && a[i][1] < 160 && a[i][0] > 104 && away(a[i], b) > tol;
     if (far) {
       d += `${open ? " L" : " M"}${a[i][0].toFixed(2)},${a[i][1].toFixed(2)}`;
       open = true;
@@ -77,31 +96,30 @@ export function differingPath(a: Pt[], b: Pt[], tol = 0.7): string {
   return d.trim();
 }
 
-/** where the tongue's tip is: the frontmost point of the tongue above the lower teeth */
+/**
+ * Where the tongue's tip is. Every outline runs neck → chin → lower lip → lower incisor → floor of
+ * the mouth → tongue tip → back of the tongue; so: past the lip and the incisor, the frontmost point.
+ */
+/** the index where the tongue begins: the floor of the mouth, just behind the lower incisor */
+export function tongueStart(pts: Pt[]): number {
+  let i = pts.findIndex((p) => p[0] > 151 && p[1] < 150); // the lower lip
+  if (i < 0) i = 0;
+  const j = pts.findIndex((p, k) => k > i && p[0] < 146 && p[1] > 148); // the floor behind the incisor
+  return j < 0 ? i : j;
+}
+
 export function tipOf(pts: Pt[]): Pt {
-  let best: Pt = pts[0];
+  const j = tongueStart(pts);
+  let best: Pt = pts[j];
   let score = -Infinity;
-  for (const p of pts) {
-    if (p[1] > 141 || p[1] < 110 || p[0] < 118) continue; // the oral cavity, above the lower incisors
-    const s = p[0] - 0.15 * p[1];
-    if (s > score) {
-      score = s;
+  for (let k = j + 1; k < pts.length; k++) {
+    const p = pts[k];
+    if (p[1] > 147 || p[1] < 110 || p[0] < 118) continue;
+    const sc = p[0] - 0.15 * p[1];
+    if (sc > score) {
+      score = sc;
       best = p;
     }
   }
   return best;
-}
-
-/** the index of the point that moves most between two sounds (where the arrow and the grip go) */
-export function mostMoved(a: Pt[], b: Pt[]): number {
-  let at = 0;
-  let far = -1;
-  for (let i = 0; i < a.length; i++) {
-    const d = Math.hypot(a[i][0] - b[i][0], a[i][1] - b[i][1]);
-    if (d > far) {
-      far = d;
-      at = i;
-    }
-  }
-  return at;
 }

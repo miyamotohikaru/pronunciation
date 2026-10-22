@@ -127,7 +127,8 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
           </span>
         ) : null}
       </div>
-      <p className={`mt-1 min-h-[40px] font-black leading-tight ${celebrate ? "text-[36px] md:text-[44px]" : "text-[32px] md:text-[40px]"}`} aria-live="polite">
+      {/* the verdict, under the score and never bigger than the diagnosis that follows */}
+      <p className={`mt-1 min-h-[32px] font-black leading-tight ${celebrate ? "text-[28px] md:text-[34px]" : "text-[22px] md:text-[28px]"}`} aria-live="polite">
         {done ? verdict : ""}
         <span className="sr-only">{done ? `${total}点。` : ""}</span>
       </p>

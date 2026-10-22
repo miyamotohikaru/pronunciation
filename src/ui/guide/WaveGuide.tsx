@@ -18,9 +18,9 @@ import { memo, useEffect, useRef } from "react";
 import type { GuideProps } from "./types";
 import { WORD_GRADE_LABEL, wordGrade, type WordGrade } from "./grades";
 
-const PAD = { l: 12, r: 12, t: 30, b: 40 };
+const PAD = { l: 12, r: 12, t: 34, b: 18 };
 const NOW_X = 0.5; // the word being sung stays in the middle of the card
-const EDGE = 26; // px of fade at the left and right edges
+const EDGE = 32; // px of fade at the left and right edges (also keeps words clear of the rounded corners)
 
 type RGB = [number, number, number];
 const rgb = (hex: string, fb: RGB): RGB => {
@@ -121,9 +121,9 @@ function WaveGuide(props: GuideProps) {
       // the band's own thickness and a little air above and below; a flat line still gets some room
       lo -= tol + 1;
       hi += tol + 1;
-      // at least 16 semitones tall, so the ±tol ribbon stays a ribbon (not a blob) on a calm line
-      if (hi - lo < 16) {
-        const add = (16 - (hi - lo)) / 2;
+      // at least 28 semitones tall: the ±tol band is ~18 % of the height, so the rises and falls read
+      if (hi - lo < 28) {
+        const add = (28 - (hi - lo)) / 2;
         lo -= add;
         hi += add;
       }
@@ -228,29 +228,17 @@ function WaveGuide(props: GuideProps) {
         }
       }
 
-      // ---- お手本: one quiet ribbon of constant width (the band, ±tol); a won syllable a little brighter
+      // ---- お手本: a bright thin core (the melody) in a faint halo exactly as wide as the tolerance
       const sylOf = (t: number) => {
         for (let i = 0; i < p.syllables.length; i++) if (t >= p.syllables[i].start && t <= p.syllables[i].end) return i;
         return -1;
       };
+      // all segments in ONE path (no seams where they meet), lightly smoothed (±3 points);
+      // painted twice: a faint halo exactly as wide as the tolerance, then a bright thin core
+      const melody = new Path2D();
+      let any = false;
       for (const seg of p.wave.segments) {
-        if (seg.length < 2 || seg[seg.length - 1].t < tVis0 || seg[0].t > tVis1) continue;
-        const style = (i: number) => {
-          const pt = seg[i];
-          const si = sylOf(pt.t);
-          const g = si >= 0 && bars ? bars[si]?.grade : null;
-          const won = !settled && (g === "great" || g === "perfect");
-          const a = (won ? 0.42 : 0.26) * (pt.b ? 0.6 : 1) * fade(pt.t);
-          return rgba(col.guide, a);
-        };
-        const xa = X(seg[0].t);
-        const xb = X(seg[seg.length - 1].t);
-        const grad = ctx.createLinearGradient(xa, 0, Math.max(xa + 1, xb), 0);
-        const step = Math.max(1, Math.floor(seg.length / 60));
-        for (let i = 0; i < seg.length; i += step) grad.addColorStop(Math.min(1, Math.max(0, (X(seg[i].t) - xa) / Math.max(1, xb - xa))), style(i));
-        grad.addColorStop(1, style(seg.length - 1));
-        // one stroke as wide as the band, through the midpoints of a lightly smoothed melody (±3 points):
-        // a calm ribbon with round ends instead of lumps at every sharp turn
+        if (seg.length < 2 || seg[seg.length - 1].t < tVis0 - 0.5 || seg[0].t > tVis1 + 0.5) continue;
         const ys = seg.map((_, i) => {
           let sum = 0;
           let n = 0;
@@ -260,13 +248,32 @@ function WaveGuide(props: GuideProps) {
           }
           return Y(sum / n);
         });
-        ctx.strokeStyle = grad;
+        melody.moveTo(X(seg[0].t), ys[0]);
+        for (let i = 1; i < seg.length - 1; i++) melody.quadraticCurveTo(X(seg[i].t), ys[i], (X(seg[i].t) + X(seg[i + 1].t)) / 2, (ys[i] + ys[i + 1]) / 2);
+        melody.lineTo(X(seg[seg.length - 1].t), ys[seg.length - 1]);
+        any = true;
+      }
+      if (any) {
+        // one gradient across the view: sung parts fade as they scroll away; a won syllable a little brighter
+        const xa = Math.max(0, X(tVis0));
+        const xb = Math.min(W, X(tVis1));
+        const halo = ctx.createLinearGradient(xa, 0, Math.max(xa + 1, xb), 0);
+        const core = ctx.createLinearGradient(xa, 0, Math.max(xa + 1, xb), 0);
+        for (let k = 0; k <= 24; k++) {
+          const t = tVis0 + ((tVis1 - tVis0) * k) / 24;
+          const si = sylOf(t);
+          const g = si >= 0 && bars ? bars[si]?.grade : null;
+          const won = !settled && (g === "great" || g === "perfect");
+          const f = fade(t);
+          halo.addColorStop(k / 24, rgba(col.guide, (won ? 0.26 : 0.16) * f));
+          core.addColorStop(k / 24, rgba(col.guide, (won ? 1 : 0.92) * f));
+        }
+        ctx.strokeStyle = halo;
         ctx.lineWidth = band;
-        ctx.beginPath();
-        ctx.moveTo(X(seg[0].t), ys[0]);
-        for (let i = 1; i < seg.length - 1; i++) ctx.quadraticCurveTo(X(seg[i].t), ys[i], (X(seg[i].t) + X(seg[i + 1].t)) / 2, (ys[i] + ys[i + 1]) / 2);
-        ctx.lineTo(X(seg[seg.length - 1].t), ys[seg.length - 1]);
-        ctx.stroke();
+        ctx.stroke(melody);
+        ctx.strokeStyle = core;
+        ctx.lineWidth = Math.max(2, 2.4 * scale);
+        ctx.stroke(melody);
       }
 
       // ---- the playhead (under your line, so the pen tip sits on it)
@@ -284,7 +291,8 @@ function WaveGuide(props: GuideProps) {
       // ---- your line: smooth, glowing; gold inside the band, white outside
       const pts: readonly SmPt[] = settled ? smoothLine(p.overlay!).map((q) => ({ t: q.t, st: q.st, inBand: q.st !== null && Math.abs(q.st - guideAt(p.wave, q.t)) <= tol })) : smoothLive(live.line);
       const upTo = settled ? (p.progressive ? Math.min(live.t ?? -1, (p.syllables[p.syllables.length - 1]?.end ?? 1e9) + 0.08) : (p.syllables[p.syllables.length - 1]?.end ?? 1e9) + 0.08) : null;
-      const gap = settled ? 0.25 : 0.06;
+      // short unvoiced stretches (consonants) are bridged so the line reads as one phrase
+      const gap = settled ? 0.25 : 0.16;
       let tip: { x: number; y: number; t: number; st: number; inBand: boolean } | null = null;
       // a run = consecutive voiced points; drawn as quadratic curves through the midpoints, one path per colour
       let runPts: { x: number; y: number; t: number; inBand: boolean; st: number }[] = [];
@@ -331,8 +339,8 @@ function WaveGuide(props: GuideProps) {
         const q = pts[i];
         if (upTo !== null && q.t > upTo) break;
         if (q.t < tVis0 - 0.3) continue;
-        if (q.st === null || q.t - prevT > gap) flush();
-        if (q.st === null) continue;
+        if (q.st === null) continue; // unvoiced: bridged if the voice comes back soon
+        if (q.t - prevT > gap) flush();
         if (q.t > tVis1) break;
         runPts.push({ x: X(q.t), y: clampY(Y(q.st)), t: q.t, inBand: q.inBand, st: q.st });
         prevT = q.t;
@@ -371,33 +379,53 @@ function WaveGuide(props: GuideProps) {
         }
       }
 
-      // ---- words: a small bracket under each, its name below; the word at the playhead bright
-      const yb = H - PAD.b + 12;
-      const nowWord = following ? p.words.findIndex((w) => cursor >= w.start - 0.02 && cursor <= w.end + 0.02) : -1;
-      ctx.textAlign = "center";
-      ctx.font = `700 ${Math.round(12 * Math.min(scale, 1.3))}px ${latin || font}`;
-      let labelEnd = -Infinity;
+      // ---- the sentence rides the melody: each word at its own time, just above its part of the band
+      //      (a strong syllable is higher, so its word is too). Sung words turn yellow as far as your
+      //      voice was inside the band (all of it once the word is won); the rest stay near-white.
+      const wordFont = Math.round(Math.min(22, 17 * scale));
+      ctx.font = `700 ${wordFont}px ${latin || font}`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      let wordEnd = -Infinity;
+      let lastY = Y(0) - band / 2 - 8;
+      const wordBox: { x: number; y: number; w: number }[] = [];
       for (let i = 0; i < p.words.length; i++) {
         const w = p.words[i];
-        const x0 = X(w.start) + 2;
-        const x1 = Math.max(x0 + 4, X(w.end) - 2);
-        if (x1 < 0 || x0 > W) continue;
-        const bright = p.focusWord != null ? p.focusWord === i : nowWord < 0 ? !following : nowWord === i;
-        const a = (bright ? 0.95 : 0.5) * (following ? fade(w.end) : 1);
-        ctx.strokeStyle = `rgba(255,255,255,${a})`;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(x0, yb - 5);
-        ctx.lineTo(x0, yb);
-        ctx.lineTo(x1, yb);
-        ctx.lineTo(x1, yb - 5);
-        ctx.stroke();
         const tw = ctx.measureText(w.text).width;
-        const cx = Math.max((x0 + x1) / 2, labelEnd + 6 + tw / 2);
-        labelEnd = cx + tw / 2;
-        // ≥ 4.5:1 on the monitor even when dim; the word at the playhead white
-        ctx.fillStyle = bright ? "#ffffff" : rgba(col.muted, 0.9 * (following ? Math.max(0.75, fade(w.end)) : 1));
-        ctx.fillText(w.text, cx, yb + 16 * Math.min(scale, 1.3));
+        let top = Infinity;
+        for (const seg of p.wave.segments) for (const pt of seg) if (pt.t >= w.start && pt.t <= w.end) top = Math.min(top, Y(pt.st));
+        const y = Number.isFinite(top) ? top - band / 2 - 8 : lastY;
+        lastY = y;
+        const cx = Math.max((X(w.start) + X(w.end)) / 2, wordEnd + 8 + tw / 2);
+        wordEnd = cx + tw / 2;
+        const yy = Math.max(PAD.t - 6 + wordFont, Math.min(H - PAD.b - 4, y));
+        wordBox[i] = { x: cx - tw / 2, y: yy, w: tw };
+        if (cx + tw / 2 < -20 || cx - tw / 2 > W + 20) continue;
+        // how much of it you sang inside the band
+        let hit = 0;
+        if (following && bars) {
+          const g = wordGrade(bars, p.syllables, i);
+          if (g && (g.grade === "great" || g.grade === "perfect")) hit = 1;
+          else
+            for (const q of live.line)
+              if (q.inBand && q.t >= w.start - 0.04 && q.t <= w.end + 0.04) hit = Math.max(hit, Math.min(1, (q.t + 0.06 - w.start) / Math.max(0.05, w.end - w.start)));
+        }
+        const upcoming = following && cursor < w.start - 0.03;
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = rgba(col.monitor, 0.9);
+        ctx.strokeText(w.text, cx - tw / 2, yy);
+        ctx.fillStyle = upcoming ? "rgba(255,255,255,0.9)" : "#ffffff";
+        ctx.fillText(w.text, cx - tw / 2, yy);
+        if (hit > 0) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(cx - tw / 2 - 2, yy - wordFont - 4, (tw + 4) * hit, wordFont + 10);
+          ctx.clip();
+          ctx.fillStyle = rgba(col.voice, 1);
+          ctx.fillText(w.text, cx - tw / 2, yy);
+          ctx.restore();
+        }
       }
 
       // ---- one judgement per word, right above it, once the word is final
@@ -430,10 +458,8 @@ function WaveGuide(props: GuideProps) {
         const gold = pop.grade !== "good";
         ctx.font = `800 ${Math.round(Math.min(22, 17 * scale))}px ${latin || font}`;
         const half = ctx.measureText(label).width / 2 + 6;
-        // above the top of the band inside this word
-        let top = Infinity;
-        for (const seg of p.wave.segments) for (const pt of seg) if (pt.t >= w.start && pt.t <= w.end) top = Math.min(top, Y(pt.st) - band / 2);
-        if (!Number.isFinite(top)) top = Y(0) - band / 2;
+        // above the word itself (which rides the band)
+        const top = (wordBox[pop.word]?.y ?? Y(0) - band / 2) - wordFont - 4;
         const lo = half + EDGE;
         const hi = Math.min(W - half - 8, cursorX - half - 10);
         const x = Math.max(lo, Math.min(hi, (X(w.start) + X(w.end)) / 2));
@@ -460,14 +486,8 @@ function WaveGuide(props: GuideProps) {
         ctx.restore();
       }
 
-      // ---- direct labels (no legend): お手本 at the start of the band, あなた next to your line
-      const first = p.wave.segments[0]?.[0];
-      if (first && !following) {
-        ctx.textAlign = "left";
-        ctx.font = `600 ${Math.round(12 * Math.min(scale, 1.3))}px ${font}`;
-        ctx.fillStyle = rgba(col.guide, 1);
-        ctx.fillText("お手本", Math.max(EDGE, X(first.t) - 4), Math.max(14, Y(first.st) - band / 2 - 8));
-      }
+      // ---- a direct label for your line after the take (no legend)
+      // (the band needs no label of its own now: the sentence rides on it)
       if (settled && tp) {
         ctx.textAlign = "left";
         ctx.font = `600 ${Math.round(12 * Math.min(scale, 1.3))}px ${font}`;

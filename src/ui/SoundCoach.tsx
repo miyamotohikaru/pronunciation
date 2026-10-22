@@ -88,7 +88,7 @@ export default function SoundCoach(p: SoundCoachProps) {
   const grip = useRef<SVGGElement | null>(null);
   const fader = useRef<Crossfader | null>(null);
   const dragging = useRef(false);
-  const gi = target ? gripIndex(target, heard) : 0;
+  const gi = gripIndex();
   const ridge = target === "r" || target === "t" || target === "s" || target === "sh" ? tipOf(outline("t")) : null;
   const touching = (x: number) => {
     if (!target || !heard || !ridge) return false;

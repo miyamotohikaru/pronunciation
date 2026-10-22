@@ -1,5 +1,5 @@
 import type { Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, M_PLUS_Rounded_1c } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, Gentium_Plus, M_PLUS_Rounded_1c } from "next/font/google";
 import "@/ui/tokens.css";
 
 // Japanese font: no subsets (the CSS is split by unicode-range), not preloaded.
@@ -19,6 +19,17 @@ const latin = Atkinson_Hyperlegible_Next({
   variable: "--font-latin",
 });
 
+// Sounds (IPA): Gentium Plus (SIL, OFL) — made for phonetic text: every IPA letter (ɚ ɪ ʊ ð θ ŋ ː …)
+// in one upright face, a serif l that never reads as I or |. Self-hosted by next/font, not preloaded;
+// the latin-ext / greek files load only when a page shows those letters (unicode-range).
+const ipa = Gentium_Plus({
+  weight: ["400", "700"],
+  subsets: ["latin", "latin-ext", "greek"],
+  display: "swap",
+  preload: false,
+  variable: "--font-ipa",
+});
+
 export const viewport: Viewport = {
   themeColor: "#2d5bff",
   colorScheme: "light",
@@ -26,5 +37,5 @@ export const viewport: Viewport = {
 
 /** Game routes (/home, /play, /check, /learn): own fonts and tokens; each page sets its field colour. */
 export default function GameLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className={`${rounded.variable} ${latin.variable}`}>{children}</div>;
+  return <div className={`${rounded.variable} ${latin.variable} ${ipa.variable}`}>{children}</div>;
 }

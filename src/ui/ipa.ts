@@ -14,8 +14,25 @@ export function wordIpa(phones: readonly string[], data?: string): string {
   return data ? data.replace(/^\/|\/$/g, "") : ipaSegments(phones).join("");
 }
 
-/** the whole line: /ðə ráɪs iz rédi/ — the item's own ipa first */
-export function lineIpa(item: { words: { phones: string[] }[]; ipa?: string }): string {
+/** weak function words: in a line their stress marks go (a dictionary marks each word, a sentence does not) */
+const WEAK = new Set([
+  "a", "an", "the", "to", "of", "and", "or", "but", "in", "on", "at", "for", "with", "from", "by", "as", "than",
+  "is", "are", "am", "was", "were", "be", "been", "do", "does", "did", "have", "has", "had", "can", "could",
+  "will", "would", "shall", "should", "may", "might", "must", "i", "you", "he", "she", "it", "we", "they",
+  "me", "him", "her", "us", "them", "my", "your", "his", "its", "our", "their", "that", "there", "some", "so",
+  "i'm", "you're", "it's", "i'll", "we're", "they're", "let's", "i've", "i'd",
+]);
+const unmark = (s: string) => s.replace(/[\u0301\u0300]/g, "");
+
+/** the whole line: /ðə ráɪs iz rédi/ — the words' own ipa first; weak function words without marks */
+export function lineIpa(item: { words: { text?: string; phones: string[]; ipa?: string }[]; ipa?: string }): string {
+  if (item.words.every((w) => w.ipa && w.text !== undefined)) {
+    const parts = item.words.map((w) => {
+      const body = (w.ipa ?? "").replace(/^\/|\/$/g, "");
+      return WEAK.has((w.text ?? "").toLowerCase()) ? unmark(body) : body;
+    });
+    return `/${parts.join(" ")}/`;
+  }
   if (item.ipa) return item.ipa.startsWith("/") ? item.ipa : `/${item.ipa}/`;
   return ipaLine(item.words.map((w) => w.phones));
 }
