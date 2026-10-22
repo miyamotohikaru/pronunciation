@@ -119,40 +119,76 @@ export function buildGuideWave(
   const top = Math.max(...dbs);
   const width = (r: number) => Math.min(1, Math.max(0.3, 0.3 + (0.7 * (db(r) - (top - 24))) / 24));
 
-  // 声の出ている区間ごとにまとめ、短い切れ目は前後の高さを直線でつなぐ
+  // 1. 音程の読み取りの外れを掃除する。前後 70ms の中央値から 5 半音以上離れた点は、
+  //    1オクターブ（12半音）の取り違えなら折り返し、それでも離れていれば捨てる。±10 半音で頭打ち。
+  const voicedIdx: number[] = [];
+  frames.forEach((f, i) => {
+    if (f.f0 !== null) voicedIdx.push(i);
+  });
+  const rawSt = voicedIdx.map((i) => st(frames[i].f0 as number, medianHz));
+  const cleanSt: (number | null)[] = rawSt.map((x, k) => {
+    const lo = Math.max(0, k - 7);
+    const hi = Math.min(rawSt.length - 1, k + 7);
+    const local = median(rawSt.slice(lo, hi + 1));
+    let v = x;
+    if (Math.abs(v - local) > 5) {
+      const folded = v > local ? v - 12 : v + 12;
+      if (Math.abs(folded - local) <= 3) v = folded;
+      else return null;
+    }
+    return Math.max(-10, Math.min(10, v));
+  });
+  // 2. 前後から 60ms 以上離れた、40ms 未満の小さな声のかけら（浮いた点に見える）は捨てる
+  const keep = cleanSt.map((v) => v !== null);
+  {
+    let k = 0;
+    while (k < voicedIdx.length) {
+      let j = k;
+      while (j + 1 < voicedIdx.length && frames[voicedIdx[j + 1]].t - frames[voicedIdx[j]].t <= 0.015) j++;
+      const len = frames[voicedIdx[j]].t - frames[voicedIdx[k]].t;
+      const gapBefore = k > 0 ? frames[voicedIdx[k]].t - frames[voicedIdx[k - 1]].t : Infinity;
+      const gapAfter = j + 1 < voicedIdx.length ? frames[voicedIdx[j + 1]].t - frames[voicedIdx[j]].t : Infinity;
+      if (len < 0.04 && gapBefore > 0.06 && gapAfter > 0.06) for (let m = k; m <= j; m++) keep[m] = false;
+      k = j + 1;
+    }
+  }
+
+  // 3. 声の出ている区間ごとにまとめ、短い切れ目は前後の高さを直線でつなぐ
   const segments: WavePoint[][] = [];
   let cur: WavePoint[] = [];
   let lastVoiced: WavePoint | null = null;
-  for (const f of frames) {
-    if (f.f0 === null) continue;
-    const p: WavePoint = { t: f.t, st: st(f.f0, medianHz), w: width(f.rms) };
+  voicedIdx.forEach((fi, k) => {
+    if (!keep[k]) return;
+    const f = frames[fi];
+    const p: WavePoint = { t: f.t, st: cleanSt[k] as number, w: width(f.rms) };
     if (lastVoiced && p.t - lastVoiced.t > bridge) {
       segments.push(cur);
       cur = [];
     } else if (lastVoiced && p.t - lastVoiced.t > 0.015) {
       const steps = Math.round((p.t - lastVoiced.t) / 0.01);
-      for (let k = 1; k < steps; k++) {
-        const a = k / steps;
+      for (let q = 1; q < steps; q++) {
+        const a = q / steps;
         cur.push({ t: lastVoiced.t + a * (p.t - lastVoiced.t), st: lastVoiced.st + a * (p.st - lastVoiced.st), w: 0.3, b: true });
       }
     }
     cur.push(p);
     lastVoiced = p;
-  }
+  });
   if (cur.length) segments.push(cur);
 
-  // なめらかにする（移動平均）。端は短い窓で
-  const half = Math.floor(smooth / 2);
+  // 4. なめらかにする: 5点の中央値で小さな跳ねを消してから、7点の移動平均。端は短い窓で
+  void smooth;
   for (const seg of segments) {
     const raw = seg.map((p) => p.st);
+    const med = raw.map((_, i) => median(raw.slice(Math.max(0, i - 2), Math.min(raw.length, i + 3))));
     for (let i = 0; i < seg.length; i++) {
-      let s = 0;
+      let sum = 0;
       let n = 0;
-      for (let k = Math.max(0, i - half); k <= Math.min(seg.length - 1, i + half); k++) {
-        s += raw[k];
+      for (let k = Math.max(0, i - 3); k <= Math.min(seg.length - 1, i + 3); k++) {
+        sum += med[k];
         n++;
       }
-      seg[i].st = s / n;
+      seg[i].st = sum / n;
     }
   }
   return { segments: segments.filter((g) => g.length >= 3), medianHz };
