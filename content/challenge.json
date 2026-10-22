@@ -120,15 +120,6 @@
           ],
           "tip_ja": "love の v は歯を下くちびるに当てたまま it へ。",
           "ipa": "/lʌ́v/"
-        },
-        {
-          "word": "could",
-          "phone": "UH",
-          "watch_for": [
-            "UW"
-          ],
-          "tip_ja": "could は短くゆるい「ウ」。",
-          "ipa": "/kúd/"
         }
       ],
       "difficulty": 3
@@ -324,15 +315,6 @@
           ],
           "tip_ja": "doc は縦に大きく開けて。",
           "ipa": "/dɑ́ktɚ/"
-        },
-        {
-          "word": "should",
-          "phone": "UH",
-          "watch_for": [
-            "UW"
-          ],
-          "tip_ja": "should は短くゆるい「ウ」。",
-          "ipa": "/ʃúd/"
         },
         {
           "word": "sleep",
@@ -1944,15 +1926,6 @@
           "speaker": "you",
           "focus": [
             {
-              "word": "could",
-              "phone": "UH",
-              "watch_for": [
-                "UW"
-              ],
-              "tip_ja": "could は短くゆるい「ウ」。",
-              "ipa": "/kúd/"
-            },
-            {
               "word": "tell",
               "phone": "L",
               "watch_for": [
@@ -2914,15 +2887,6 @@
           "ja": "わかりました。\n仕事は休んだほうがいいですか？",
           "speaker": "you",
           "focus": [
-            {
-              "word": "should",
-              "phone": "UH",
-              "watch_for": [
-                "UW"
-              ],
-              "tip_ja": "should は短くゆるい「ウ」。",
-              "ipa": "/ʃúd/"
-            },
             {
               "word": "home",
               "phone": "OW",

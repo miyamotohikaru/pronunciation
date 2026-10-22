@@ -349,6 +349,9 @@ def build_one(syn: Synth, item: dict, voice: str, speed: float, suffix: str, arg
     t_synth = time.perf_counter() - t0
 
     words = [t for t in tokens if any(ch.isalnum() for ch in t['text'])]
+    for w in words:  # spaCy keeps a sentence-final period on a single letter ("B.", "A.")
+        if re.fullmatch(r'[A-Za-z]\.', w['text']):
+            w['text'] = w['text'][0]
     silent = [w['text'] for w in words if not w['phonemes']]
     if silent:  # misaki gives '' for words it could not pronounce -> they would be skipped
         raise ValueError(f'{stem}: no phonemes for {silent} (spell out / add an override)')
@@ -433,6 +436,8 @@ def main(argv=None):
     ap.add_argument('--lufs', type=float, default=DEFAULT_LUFS, help='integrated loudness target')
     ap.add_argument('--ceiling', type=float, default=DEFAULT_CEILING_DBTP, help='true-peak ceiling, dBTP')
     ap.add_argument('--device', default='cpu')
+    ap.add_argument('--threads', type=int, default=0, help='torch CPU threads (0 = torch default)')
+    ap.add_argument('--shard', default='', help='i/n: only items whose index %% n == i, to run n processes')
     args = ap.parse_args(argv)
     args.out, args.work = args.out.resolve(), args.work.resolve()
 
@@ -440,7 +445,13 @@ def main(argv=None):
     if args.only:
         wanted = set(args.only.split(','))
         items = [it for it in items if it['id'] in wanted]
+    if args.shard:
+        i, n = (int(x) for x in args.shard.split('/'))
+        items = [it for k, it in enumerate(items) if k % n == i]
     default_voices = [v for v in args.voices.split(',') if v]
+    if args.threads:
+        import torch
+        torch.set_num_threads(args.threads)
 
     t0 = time.perf_counter()
     syn = Synth(args.model_dir, args.device)

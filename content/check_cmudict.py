@@ -35,6 +35,22 @@ VOWELS = {"AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", "IH", "IY", "OW"
 TAGS = ["rhythm-stress", "epenthesis", "final-consonants", "r-l", "er",
         "vowels-ae-ah-aa", "vowels-tense-lax", "th", "s-sh", "v-b", "f-h",
         "linking-flap-reduction", "intonation"]
+# function words that are weak in running speech (a = /ə/): a vowel focus on them is
+# only right in weak-form, intonation (deliberately stressed) or letter-name contexts.
+FUNC = {"a", "an", "the", "to", "of", "for", "and", "can", "at", "from", "some", "as", "than", "or",
+        "but", "do", "does", "you", "your", "are", "was", "were", "her", "him", "them", "us", "me",
+        "we", "could", "would", "should"}
+KEEPS = {("her", "ER"), ("were", "ER"), ("for", "ER"), ("your", "ER"), ("are", "ER"), ("or", "ER"),
+         ("him", "IH")}  # weak forms that keep the vowel quality
+DROPPED = {("and", "D"), ("of", "V")}
+WEAK_OK = {"rhythm-stress", "linking-flap-reduction", "intonation"}
+
+
+def weak_focus(f):
+    w, ph = f.get("word", "").lower(), f.get("phone", "")
+    return (w in FUNC and ph in VOWELS and (w, ph) not in KEEPS) or (w, ph) in DROPPED
+
+
 KATA = re.compile(r"[ァ-ヺー]{2,}")
 # Japanese sound descriptions are fine; katakana readings of English words are not.
 KATA_OK = {"アー", "イー", "ウー", "エー", "オー", "エイ", "オウ", "アイ", "アウ", "オイ",
@@ -74,7 +90,7 @@ def check_ja(s, where):
             errors.append(f"{where}: katakana {k!r} in Japanese text")
 
 
-def check_focus(fl, pool, where, need_focus=True):
+def check_focus(fl, pool, where, need_focus=True, allow=lambda f: "弱" in f.get("tip_ja", "")):
     if need_focus and not fl:
         errors.append(f"{where}: no focus")
     for f in fl or []:
@@ -96,9 +112,11 @@ def check_focus(fl, pool, where, need_focus=True):
             errors.append(f"{where}: bad tag {f['tag']!r}")
         if not f.get("ipa"):
             warns.append(f"{where}: focus {w!r} has no ipa")
+        if weak_focus(f) and not allow(f):
+            errors.append(f"{where}: focus on weak function word {w!r} ({ph})")
 
 
-def check_line(it, where, need_focus=True):
+def check_line(it, where, need_focus=True, allow=lambda f: "弱" in f.get("tip_ja", "")):
     """A spoken line: id, text, ja, focus, difficulty, optional tts_text."""
     for k in ("id", "text", "ja"):
         if not it.get(k):
@@ -109,7 +127,7 @@ def check_line(it, where, need_focus=True):
         need(w, where)
     if "difficulty" in it and not 1 <= it["difficulty"] <= 5:
         errors.append(f"{where}: bad difficulty")
-    check_focus(it.get("focus"), set(pool), where, need_focus)
+    check_focus(it.get("focus"), set(pool), where, need_focus, allow)
     return nwords(it.get("text", ""))
 
 
@@ -148,7 +166,7 @@ def uid(i, where):
 def check_curriculum(d):
     for p in d.get("placement", []):
         uid(p.get("id"), p.get("id"))
-        check_line(p, f"placement {p.get('id')}")
+        check_line(p, f"placement {p.get('id')}", allow=lambda f: f.get("tag") in WEAK_OK)
         for t in p.get("diagnoses", []):
             if t not in TAGS:
                 errors.append(f"placement {p['id']}: bad tag {t}")
@@ -182,7 +200,8 @@ def check_curriculum(d):
                 n += 1
                 if it.get("type") not in ("sentence", "phrase"):
                     errors.append(f"{where}: type {it.get('type')!r} (v2 allows sentence / phrase only)")
-                k = check_line(it, where)
+                k = check_line(it, where, allow=lambda f, ft=l.get("feature", u["feature"]):
+                               ft in WEAK_OK or "弱" in f.get("tip_ja", ""))
                 if not lo <= k <= hi:
                     errors.append(f"{where}: {k} words (lesson allows {lo}-{hi})")
                 if it.get("pair"):
@@ -310,11 +329,16 @@ def check_phonemes(d, legend):
         for it in pr_:
             w2 = f"{where} {it.get('id')}"
             uid(it.get("id"), w2)
-            if check_line(it, w2) < 3:
+            weak_ok = e["id"] in ("AH0", "ER0")
+            if check_line(it, w2, allow=lambda f: weak_ok) < 3:
                 errors.append(f"{w2}: practice must be a sentence (3+ words)")
-            hits = sum(1 for w in words(it.get("text", "")) if any(has_target(p, e) for p in ipa.prons(w)))
-            if hits < 2:
-                errors.append(f"{w2}: only {hits} word(s) with the sound (need 2+)")
+            ws = [w for w in words(it.get("text", "")) if any(has_target(p, e) for p in ipa.prons(w))]
+            ph = ipa.base(e["arpabet"])
+            strong = [w for w in ws if weak_ok or not ((w in FUNC and ph in VOWELS) or (w, ph) in DROPPED)]
+            if len(ws) < 2:
+                errors.append(f"{w2}: only {len(ws)} word(s) with the sound (need 2+)")
+            elif len(strong) < 2:
+                warns.append(f"{w2}: only {len(strong)} non-weak word(s) with the sound (text already rendered)")
     return f"phonemes: {len(ents)}"
 
 
@@ -356,7 +380,7 @@ def check_alphabet(d):
             where = f"alphabet {it.get('id')}"
             uid(it.get("id"), where)
             n += 1
-            if check_line(it, where) < 3:
+            if check_line(it, where, allow=lambda f, sp=it.get("spell", []): f["word"].upper() in sp) < 3:
                 errors.append(f"{where}: practice must be a sentence")
             for tok in re.findall(r"[A-Za-z']+", it.get("text", "")):
                 if len(tok) >= 2 and tok.isupper():

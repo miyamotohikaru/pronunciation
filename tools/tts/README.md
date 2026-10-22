@@ -21,38 +21,63 @@
 ## 使い方
 
 ```sh
-# 教材から作る（全項目 + プレースメント8文 + 対の相手の単語、2声 × 普通/ゆっくり）
-.venv-tts/bin/python tools/tts/jobs_from_curriculum.py                  # -> .work/tts/jobs.json
+# content/ の全ファイルから作る（2声 × ネイティブ/ゆっくり/もっとゆっくり）
+.venv-tts/bin/python tools/tts/jobs_from_curriculum.py                  # -> .work/tts/jobs.json, jobs-map.json
+.venv-tts/bin/python tools/tts/check_focus.py --g2p                     # 合成の前に発音を確認（数十秒）
 .venv-tts/bin/python tools/tts/synth.py .work/tts/jobs.json             # 既定: af_heart, am_michael
+#   並列にするなら: --shard 0/3 --threads 3 / --shard 1/3 ... / --shard 2/3 ... を同時に
 .venv-tts/bin/python tools/tts/check.py                                 # 検品（聞かずに確認できる項目）
-.venv-tts/bin/python tools/tts/check_focus.py                           # 教材の狙いの音が発音に入っているか
+.venv-tts/bin/python tools/tts/check_focus.py                           # 実際に読ませた発音で確認
 
 .venv-tts/bin/python tools/tts/synth.py tools/tts/samples.json          # 試験用の13文
 .venv-tts/bin/python tools/tts/synth.py items.json --voices af_heart --only t01_rice --force
 ```
 
 - 出力が揃っていて入力も変わっていなければ飛ばす（`source_hash`）。
-  `--force` で作り直す。
+  文が変わった行だけ作り直す。
+  `--force` で全部作り直す。
   処理を変えたら `synth.py` の `PIPELINE_VERSION` を上げる。
 - 1件ごとに秒数・合成時間・RTF・mp3 サイズ・音量・タイミング検品・OOV を表示する。
 - 速さは3種類: ネイティブ（1.0）、`.slow`（0.8）、`.slower`（0.65）。
   項目ごとに `speed` / `slow_speed` / `slower_speed` で変えられる。
 - 主なオプション: `--no-slow` `--slow-speed 0.8` `--no-slower` `--slower-speed 0.65` `--kbps 48` `--pad-ms 80`
-  `--lufs -18` `--ceiling -1` `--out public/audio` `--work .work/tts` `--device cpu` `--seed 0`。
-- `jobs_from_curriculum.py` は `content/curriculum.json` の
-  `units[].lessons[].items[]` と `placement[]` をそのままの id で並べる。
-  `tts_text` は**ただの綴り替え**として渡す（アプリは言い方の方を表示するので、
+  `--lufs -18` `--ceiling -1` `--out public/audio` `--work .work/tts` `--device cpu` `--seed 0`
+  `--threads N` `--shard i/n`。
+
+### ジョブ一覧（jobs_from_curriculum.py）
+
+`content/` の4ファイルから、アプリが鳴らす行を全部集める。
+
+| ファイル | 集めるもの | クリップ id |
+| --- | --- | --- |
+| curriculum.json | 項目・プレースメント・`pair` の相手の単語 | 項目 id、`<項目id>-pair` |
+| challenge.json | 長文・自己紹介・会話（partner と you の両方） | 行の id |
+| phonemes.json | 練習文、聞くだけの例の単語、対の単語 | 練習文の id、単語は `w-<単語>`（同じ単語・同じ発音記号は1つにまとめる） |
+| alphabet.json | 26文字の名前、練習文 | `abc-letter-<文字>`、行の id |
+
+- 内容にある id はそのまま使う。
+  全ファイルを通して重なったら、その id だけファイルごとの頭（`cur-` `chl-` `ph-` `abc-`）を付けて知らせる。
+- `.work/tts/jobs-map.json`: クリップ id → 元のファイルと場所（例: `IY/examples/0`、`placement/p1`、
+  会話は speaker も）。
+  アプリ側の組み立てはこれを見る。
+- `tts_text` は**ただの綴り替え**として渡す（アプリは言い方の方を表示するので、
   タイミングの単語も綴り替えた単語になる）。
   `[` `]` が入っていたら、発音記号の指定と取り違えないようにエラーで止める。
-- `pair` のある項目は、相手の単語も `<項目id>-pair` として作る（聞き分け用）。
+- 文字の名前は `A.` のように句点を付けて読ませる
+  （`A` だけだと misaki が冠詞 /ə/ と読むため）。
+  タイミングの単語は `A` のまま。
 - 発音の直しは `content/` ではなく `tools/tts/overrides.json` に書く
-  （項目 id → `[for](/fəɹ/) you` のような指定）。
+  （クリップ id → `[for](/fəɹ/) you` のような指定）。
   括弧を外すと画面の文と同じになることを確かめてから使うので、
   タイミングの単語は画面の単語のまま。
-  今入っているのは弱形の for / can / and、`live`（/lɪv/）、`catch`（/kæʧ/）。
-- `check_focus.py`: 教材の focus（単語と ARPAbet の音）が、
-  実際に読ませた misaki の発音記号に入っているかを照合する。
-  coffee /kɔfi/、chocolate /ɑ/、really /iᵊ/ は方言の差として残している。
+  今入っているのは、弱形の for / can / and、
+  強く言わせたい the /ði/・to /tu/、/ɑ/ の on と caught、
+  live /lɪv/、catch /kæʧ/、弱形の例 to /tə/、文字で読む ASAP。
+- `check_focus.py`: 各行の focus（単語と ARPAbet の音）が misaki の発音記号に入っているか。
+  あわせて、綴りを言う文字・大文字1文字・略語（BBC、I.D.、ASAP）が
+  文字の名前で読まれているか。
+  `--g2p` なら合成前に misaki だけで確かめられる。
+  coffee /kɔfi/、really /iᵊ/ は方言の差として残している。
 - `check.py` の印: 単語に入る割合（coverage）が 0.9 未満、
   最初の単語の開始のずれが 60 ms 超、
   misaki の辞書に無く espeak に回った単語（OOV）。

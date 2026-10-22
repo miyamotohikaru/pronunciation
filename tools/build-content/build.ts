@@ -203,7 +203,12 @@ async function analyze(scorer: Scorer, take: Take, words: TargetWord[], scoring:
 type WordLog = { item: string; voice: string; speed: Speed; word: string; score: number; variant: string };
 
 /** Targets + both voices (normal, slow, slower) of one recorded id. */
-async function buildRefs(scorer: Scorer, id: string, protect: string[], log: WordLog[], learnedLog: { id: string; learned: LearnedVariant[] }[]) {
+/**
+ * listenOnly (a dialogue's partner lines): the takes are aligned for the lyric wipe, the pitch lane
+ * and the IPA, but nothing is learned or calibrated for scoring (no `scoring`, plain targets) and
+ * their words stay out of the reference report.
+ */
+async function buildRefs(scorer: Scorer, id: string, protect: string[], log: WordLog[], learnedLog: { id: string; learned: LearnedVariant[] }[], listenOnly = false) {
   const takes = VOICES.map((v) => ({ voice: v, normal: loadTake(v, id, ""), slow: loadTake(v, id, ".slow"), slower: loadTake(v, id, ".slower") }));
   const all = takes.flatMap((t) => [t.normal, t.slow, t.slower]);
   const wordList = takes[0].normal.clip.words.map((w) => w.text).join(" ");
@@ -211,27 +216,33 @@ async function buildRefs(scorer: Scorer, id: string, protect: string[], log: Wor
     all.map((t) => t.clip).filter((c) => c.words.map((w) => w.text).join(" ") === wordList),
     cmu,
   );
-  const derived = await deriveVariants(
-    scorer,
-    addConnectedSpeech(base),
-    takes.flatMap((t) => [t.normal, t.slow, t.slower].map((x) => ({ name: `${t.voice}/${id}${x.speed}`, audio: x.audio }))),
-    { protect },
-  );
+  const derived = listenOnly
+    ? { words: addConnectedSpeech(base), learned: [] }
+    : await deriveVariants(
+        scorer,
+        addConnectedSpeech(base),
+        takes.flatMap((t) => [t.normal, t.slow, t.slower].map((x) => ({ name: `${t.voice}/${id}${x.speed}`, audio: x.audio }))),
+        { protect },
+      );
   const words = derived.words;
   if (derived.learned.length) learnedLog.push({ id, learned: derived.learned });
   // before the per-item calibration: what the model defaults make of the references
-  for (const t of all) {
-    const r0 = await scorer.score({ audio: t.audio, words });
-    for (const w of r0.words) uncalibrated[t.speed].push(w.score);
-  }
-  const scoring = await calibrateScoring(scorer, words, all);
+  if (!listenOnly)
+    for (const t of all) {
+      const r0 = await scorer.score({ audio: t.audio, words });
+      for (const w of r0.words) uncalibrated[t.speed].push(w.score);
+    }
+  const scoring: ItemScoring = listenOnly
+    ? { diagnosis: { pairPenalty: {}, deletionPenaltyFor: {}, insertionPenaltyAfter: {} }, baseline: {} }
+    : await calibrateScoring(scorer, words, all);
   const analyzed = [];
   for (const t of takes) {
     const normal = await analyze(scorer, t.normal, words, scoring);
     const slow = await analyze(scorer, t.slow, words, scoring);
     const slower = await analyze(scorer, t.slower, words, scoring);
-    for (const [r, speed] of [[normal.r, ""], [slow.r, ".slow"], [slower.r, ".slower"]] as const)
-      for (const w of r.words) log.push({ item: id, voice: t.voice, speed, word: w.text, score: w.score, variant: String(words[r.words.indexOf(w)].variants[w.variant]) });
+    if (!listenOnly)
+      for (const [r, speed] of [[normal.r, ""], [slow.r, ".slow"], [slower.r, ".slower"]] as const)
+        for (const w of r.words) log.push({ item: id, voice: t.voice, speed, word: w.text, score: w.score, variant: String(words[r.words.indexOf(w)].variants[w.variant]) });
     analyzed.push({ t, normal, slow, slower });
   }
   const refs: RefVoice[] = [];
@@ -434,7 +445,7 @@ for (const it of lines) {
   if (plan) continue;
   // the contrast this item trains is never learned away (win / wing: N, NG)
   const protect = [...new Set(it.focus.flatMap((f) => [f.phone, ...f.watch_for]).filter((p) => p !== "EPEN").map(baseOf))];
-  const main = await buildRefs(scorer, it.id, protect, wordLog, learnedLog);
+  const main = await buildRefs(scorer, it.id, protect, wordLog, learnedLog, it.role === "partner");
   const pair = it.type === "pair" && it.pair ? await buildRefs(scorer, `${it.id}-pair`, protect, wordLog, learnedLog) : undefined;
   const data: ItemData = {
     id: it.id,

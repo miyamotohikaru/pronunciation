@@ -38,10 +38,26 @@ def has_target(pr, pid, arpa):
     return any(ipa.base(p) == arpa for p in pr)
 
 
+# function words that are weak in running speech: their vowel is not the target
+# vowel (a = /ə/, not /éɪ/), so they only carry focus in the schwa / ɚ entries
+FUNC = {"a", "an", "the", "to", "of", "for", "and", "can", "at", "from", "some", "as", "than", "or",
+        "but", "do", "does", "you", "your", "are", "was", "were", "her", "him", "them", "us", "me",
+        "we", "could", "would", "should"}
+DROPPED = {("and", "D"), ("of", "V")}  # consonants that weak forms usually lose
+
+
+def weak_skip(word, phone, pid):
+    if pid in ("AH0", "ER0"):
+        return False
+    return (word in FUNC and phone in ipa.VOW) or (word, phone) in DROPPED
+
+
 def focus_for(text, e):
     out = []
     for w in re.findall(r"[A-Za-z']+", text):
         wl = w.lower()
+        if weak_skip(wl, ipa.base(e["arpabet"]), e["id"]):
+            continue
         for pr in ipa.prons(wl):
             if not has_target(pr, e["id"], e["arpabet"]):
                 continue

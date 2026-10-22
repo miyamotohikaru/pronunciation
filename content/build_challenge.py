@@ -62,7 +62,7 @@ LONG = [
     ("We're having a small party this weekend, and we'd love it if you could come.",
      "今週末に小さな集まりを開くので、来てもらえたらうれしいです。",
      [F("party", "T", [], "party の t はラ行のように軽く。"), F("this", "DH", ["Z", "D"], "this は舌先を前歯に。"),
-      F("love", "V", ["B", "EPEN"], "love の v は歯を下くちびるに当てたまま it へ。"), F("could", "UH", ["UW"], "could は短くゆるい「ウ」。")], 3),
+      F("love", "V", ["B", "EPEN"], "love の v は歯を下くちびるに当てたまま it へ。")], 3),
     ("I'm sorry I'm late; the traffic was terrible and I couldn't find a place to park.",
      "遅れてすみません。渋滞がひどくて、車を止める場所が見つかりませんでした。",
      [F("sorry", "R", ["L"], "sorry の r は舌を付けずに。"), F("late", "L", ["R"], "late は舌先を付けて。"),
@@ -81,7 +81,7 @@ LONG = [
       F("movie", "V", ["B"], "movie の v は歯を下くちびるに。"), F("beach", "IY", ["IH"], "beach は口を横に引いた長い「イー」。")], 4),
     ("The doctor said I should get more sleep and drink less coffee during the week.",
      "医者に、平日はもっと睡眠をとって、珈琲を減らすように言われました。",
-     [F("doctor", "AA", ["AO", "OW"], "doc は縦に大きく開けて。"), F("should", "UH", ["UW"], "should は短くゆるい「ウ」。"),
+     [F("doctor", "AA", ["AO", "OW"], "doc は縦に大きく開けて。"),
       F("sleep", "S", ["EPEN"], "sl を母音なしで。"), F("coffee", "F", ["HH"], "coffee の f は歯を下くちびるに。")], 4),
     ("I've been learning English for three years, and I still find the pronunciation hard.",
      "英語を3年間勉強していますが、まだ発音が難しいと感じます。",
@@ -267,7 +267,7 @@ dialogue("dlg-cafe", "喫茶店で注文する", "店員に飲み物と食べ物
 
 dialogue("dlg-directions", "道をたずねる", "駅への行き方を、通りがかりの人に聞きます。", [
     (Y, "Excuse me, could you tell me how to get to the station?", "すみません、駅への行き方を教えてもらえますか？",
-     [F("could", "UH", ["UW"], "could は短くゆるい「ウ」。"), F("tell", "L", ["R"], "tell の l は舌先を付けて。"),
+     [F("tell", "L", ["R"], "tell の l は舌先を付けて。"),
       F("get", "T", ["EPEN"], "get to は t を一つにつなげます。")], 2),
     (P, "Sure. Go straight and turn left at the second light.", "いいですよ。まっすぐ行って、2つ目の信号を左です。",
      [F("left", "L", ["R"], "左（left）か右（right）か、l と r をよく聞きます。")], 2),
@@ -369,7 +369,7 @@ dialogue("dlg-doctor", "病院で症状を伝える", "医者に、のどの痛�
     (P, "Let me check your throat. Please open your mouth.", "のどを見ますね。口を開けてください。",
      [F("mouth", "TH", ["S"], "相手の mouth の th を聞き取ります。")], 1),
     (Y, "Okay. Should I stay home from work?", "わかりました。仕事は休んだほうがいいですか？",
-     [F("should", "UH", ["UW"], "should は短くゆるい「ウ」。"), F("home", "OW", ["AO"], "home は「オウ」と動かします。"),
+     [F("home", "OW", ["AO"], "home は「オウ」と動かします。"),
       F("work", "ER", ["AA", "AO"], "work は ER の音。walk にしません。")], 2),
 ])
 

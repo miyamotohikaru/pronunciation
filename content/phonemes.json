@@ -114,15 +114,6 @@
           "ja": "席が3つ必要です。",
           "focus": [
             {
-              "word": "we",
-              "phone": "IY",
-              "watch_for": [
-                "IH"
-              ],
-              "tip_ja": "口を横にしっかり引いて、\n長く。",
-              "ipa": "/wíː/"
-            },
-            {
               "word": "need",
               "phone": "IY",
               "watch_for": [
@@ -167,15 +158,6 @@
               "ipa": "/kíːp/"
             },
             {
-              "word": "the",
-              "phone": "IY",
-              "watch_for": [
-                "IH"
-              ],
-              "tip_ja": "口を横にしっかり引いて、\n長く。",
-              "ipa": "/ði/"
-            },
-            {
               "word": "key",
               "phone": "IY",
               "watch_for": [
@@ -200,24 +182,6 @@
               ],
               "tip_ja": "口を横にしっかり引いて、\n長く。",
               "ipa": "/míːt/"
-            },
-            {
-              "word": "me",
-              "phone": "IY",
-              "watch_for": [
-                "IH"
-              ],
-              "tip_ja": "口を横にしっかり引いて、\n長く。",
-              "ipa": "/míː/"
-            },
-            {
-              "word": "the",
-              "phone": "IY",
-              "watch_for": [
-                "IH"
-              ],
-              "tip_ja": "口を横にしっかり引いて、\n長く。",
-              "ipa": "/ði/"
             },
             {
               "word": "beach",
@@ -484,15 +448,6 @@
               ],
               "tip_ja": "口の力を抜いた、\n短くゆるい音。",
               "ipa": "/wíð/"
-            },
-            {
-              "word": "him",
-              "phone": "IH",
-              "watch_for": [
-                "IY"
-              ],
-              "tip_ja": "口の力を抜いた、\n短くゆるい音。",
-              "ipa": "/hím/"
             }
           ],
           "difficulty": 1
@@ -1155,17 +1110,6 @@
           "text": "Can I have a snack?",
           "ja": "軽く何か食べてもいいですか？",
           "focus": [
-            {
-              "word": "can",
-              "phone": "AE",
-              "watch_for": [
-                "AA",
-                "AH",
-                "EH"
-              ],
-              "tip_ja": "「エ」の口のまま「ア」。",
-              "ipa": "/kǽn/"
-            },
             {
               "word": "have",
               "phone": "AE",
@@ -1845,15 +1789,6 @@
           "ja": "ここに置いてもらえますか？",
           "focus": [
             {
-              "word": "could",
-              "phone": "UH",
-              "watch_for": [
-                "UW"
-              ],
-              "tip_ja": "くちびるを軽く丸めるだけの、\n短い音。",
-              "ipa": "/kúd/"
-            },
-            {
               "word": "put",
               "phone": "UH",
               "watch_for": [
@@ -1870,15 +1805,6 @@
           "text": "You should cook more.",
           "ja": "もっと料理をしたほうがいいですよ。",
           "focus": [
-            {
-              "word": "should",
-              "phone": "UH",
-              "watch_for": [
-                "UW"
-              ],
-              "tip_ja": "くちびるを軽く丸めるだけの、\n短い音。",
-              "ipa": "/ʃúd/"
-            },
             {
               "word": "cook",
               "phone": "UH",
@@ -2025,24 +1951,6 @@
           "ja": "温かい汁物はいかがですか？",
           "focus": [
             {
-              "word": "do",
-              "phone": "UW",
-              "watch_for": [
-                "UH"
-              ],
-              "tip_ja": "くちびるを小さく丸めて突き出した、\n長い音。",
-              "ipa": "/dúː/"
-            },
-            {
-              "word": "you",
-              "phone": "UW",
-              "watch_for": [
-                "UH"
-              ],
-              "tip_ja": "くちびるを小さく丸めて突き出した、\n長い音。",
-              "ipa": "/júː/"
-            },
-            {
               "word": "soup",
               "phone": "UW",
               "watch_for": [
@@ -2102,15 +2010,6 @@
               ],
               "tip_ja": "くちびるを小さく丸めて突き出した、\n長い音。",
               "ipa": "/múːvd/"
-            },
-            {
-              "word": "to",
-              "phone": "UW",
-              "watch_for": [
-                "UH"
-              ],
-              "tip_ja": "くちびるを小さく丸めて突き出した、\n長い音。",
-              "ipa": "/túː/"
             },
             {
               "word": "new",
@@ -2173,15 +2072,6 @@
           "text": "See you soon at school.",
           "ja": "またすぐ学校で会おうね。",
           "focus": [
-            {
-              "word": "you",
-              "phone": "UW",
-              "watch_for": [
-                "UH"
-              ],
-              "tip_ja": "くちびるを小さく丸めて突き出した、\n長い音。",
-              "ipa": "/júː/"
-            },
             {
               "word": "soon",
               "phone": "UW",
@@ -2419,17 +2309,6 @@
               ],
               "tip_ja": "口を小さく、\n短く軽い「ア」。",
               "ipa": "/kʌ́p/"
-            },
-            {
-              "word": "of",
-              "phone": "AH",
-              "watch_for": [
-                "AA",
-                "AE",
-                "AO"
-              ],
-              "tip_ja": "口を小さく、\n短く軽い「ア」。",
-              "ipa": "/ʌ́v/"
             }
           ],
           "difficulty": 1
@@ -2449,17 +2328,6 @@
               ],
               "tip_ja": "口を小さく、\n短く軽い「ア」。",
               "ipa": "/fʌ́n/"
-            },
-            {
-              "word": "the",
-              "phone": "AH",
-              "watch_for": [
-                "AA",
-                "AE",
-                "AO"
-              ],
-              "tip_ja": "口を小さく、\n短く軽い「ア」。",
-              "ipa": "/ðʌ́/"
             },
             {
               "word": "sun",
@@ -2909,17 +2777,6 @@
           "ja": "彼女の最初の言葉ははっきりしていました。",
           "focus": [
             {
-              "word": "her",
-              "phone": "ER",
-              "watch_for": [
-                "AA",
-                "AH",
-                "AO"
-              ],
-              "tip_ja": "舌を奥へ引いたまま、\nこもった音を響かせます。",
-              "ipa": "/hɚ́ː/"
-            },
-            {
               "word": "first",
               "phone": "ER",
               "watch_for": [
@@ -3069,17 +2926,6 @@
           "text": "Were you first in line?",
           "ja": "あなたが列の先頭でしたか？",
           "focus": [
-            {
-              "word": "were",
-              "phone": "ER",
-              "watch_for": [
-                "AA",
-                "AH",
-                "AO"
-              ],
-              "tip_ja": "舌を奥へ引いたまま、\nこもった音を響かせます。",
-              "ipa": "/wɚ́ː/"
-            },
             {
               "word": "first",
               "phone": "ER",
@@ -3493,15 +3339,6 @@
               ],
               "tip_ja": "「エー」ではなく、\n「エイ」と動かします。",
               "ipa": "/méɪd/"
-            },
-            {
-              "word": "a",
-              "phone": "EY",
-              "watch_for": [
-                "EH"
-              ],
-              "tip_ja": "「エー」ではなく、\n「エイ」と動かします。",
-              "ipa": "/éɪ/"
             },
             {
               "word": "cake",
@@ -7227,15 +7064,6 @@
               ],
               "tip_ja": "上の歯を下くちびるに乗せて、\n声を出します。",
               "ipa": "/sévən/"
-            },
-            {
-              "word": "of",
-              "phone": "V",
-              "watch_for": [
-                "B"
-              ],
-              "tip_ja": "上の歯を下くちびるに乗せて、\n声を出します。",
-              "ipa": "/ʌ́v/"
             },
             {
               "word": "voted",
