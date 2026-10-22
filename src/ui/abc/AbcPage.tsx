@@ -55,7 +55,7 @@ export default function AbcPage({ letters, confusions, sets }: { letters: Letter
               {L.letter}
             </span>
             <span className="pb-3">
-              <IpaTip ipa={L.ipa} of={L.letter} className="ipa-dict text-[28px]" />
+              <IpaTip ipa={L.ipa} of={L.letter} className="text-[28px]" />
             </span>
             <button
               type="button"
@@ -103,7 +103,7 @@ export default function AbcPage({ letters, confusions, sets }: { letters: Letter
                   style={i === sel ? { background: "var(--ink)", color: "var(--paper)" } : { background: "var(--paper)" }}
                 >
                   <span className="en text-[28px] font-bold leading-none">{l.letter}</span>
-                  <span className="ipa ipa-dict mt-1 text-[12px] leading-none" style={{ opacity: playing ? 1 : 0.7 }}>
+                  <span className="ipa mt-1 text-[12px] leading-none" style={{ opacity: playing ? 1 : 0.7 }}>
                     {l.ipa}
                   </span>
                 </button>
@@ -222,7 +222,7 @@ function MixSet({ c, url, ipaOf }: { c: Confusion; url: (L: string) => string | 
         }
       >
         <span className="en text-[24px] font-bold leading-none">{L}</span>
-        {many ? null : <span className="ipa ipa-dict mt-[3px] text-[12px] leading-none opacity-75">{ipaOf(L)}</span>}
+        {many ? null : <span className="ipa mt-[3px] text-[12px] leading-none opacity-75">{ipaOf(L)}</span>}
         {right || wrong ? (
           <span className="absolute right-[6px] top-[5px]" aria-hidden>
             {right ? <IconCheck size={12} /> : <IconClose size={12} />}

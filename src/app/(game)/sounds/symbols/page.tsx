@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Legend from "@/ui/sounds/Legend";
 import { STYLE_JA, legendGroups } from "@/ui/sounds/data.server";
-import "@/ui/sounds/dict.css";
 
 export const metadata: Metadata = { title: "記号の読み方｜発音カラオケ" };
 export const viewport: Viewport = { themeColor: "#f4f5fa" };

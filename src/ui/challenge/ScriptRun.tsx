@@ -28,7 +28,7 @@ import RoundButton from "../RoundButton";
 import TelopText from "../TelopText";
 import { IconRetry, IconSpeaker } from "../icons";
 import { buzz, sfx } from "../sfx";
-import { BestMark, PlayGlyph } from "./common/bits";
+import { BestMark, PlayGlyph, captionSize } from "./common/bits";
 import { myVoice, play, stopListening, useNowPlaying } from "./common/listen";
 import RunCaption from "./RunCaption";
 import { SwapText, type Swap } from "./Swap";
@@ -343,8 +343,8 @@ export default function ScriptRun({ field, script, backHref }: ScriptRunProps) {
   const item = items?.[cur] ?? null;
   const next = script.lines[cur + 1];
   const len = line.text.length;
-  const size = len > 40 ? "clamp(28px,7.4vw,76px)" : len > 26 ? "clamp(32px,8.6vw,88px)" : "clamp(38px,10.4vw,96px)";
   const fold = busy || phase === "scoring";
+  const size = captionSize(len, busy);
 
   return (
     <div className={`kara ${field} flex min-h-dvh flex-col`}>
@@ -356,10 +356,12 @@ export default function ScriptRun({ field, script, backHref }: ScriptRunProps) {
               通しで言う<span className="num ml-2 font-medium">{`${cur + 1}/${script.lines.length}`}</span>
             </p>
             <div style={{ fontSize: size }}>{g ? <RunCaption key={cur} text={line.text} words={g.words} swap={swaps?.[cur] ?? new Set()} clock={clock} /> : <p className="en font-bold leading-[1.14]">{line.text}</p>}</div>
-            <p className="jp mt-2 text-[15px] font-medium leading-snug md:text-[18px]">
-              <BreakText text={line.ja.replace(/\n/g, "◆")} />
-            </p>
-            {item ? <p className="ipa mt-1 text-[14px] leading-snug opacity-70 md:text-[16px]">{lineIpa(item)}</p> : null}
+            {item ? <p className="ipa mt-1 text-[15px] leading-snug opacity-90 md:text-[17px]">{lineIpa(item)}</p> : null}
+            {busy ? null : (
+              <p className="jp mt-2 text-[15px] font-medium leading-snug md:text-[18px]">
+                <BreakText text={line.ja.replace(/\n/g, "◆")} />
+              </p>
+            )}
             {next ? (
               <p className="mt-3 flex items-baseline gap-2 text-[14px] font-medium opacity-70">
                 <span className="shrink-0 font-bold">次</span>

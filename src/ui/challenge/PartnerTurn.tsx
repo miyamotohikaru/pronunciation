@@ -18,6 +18,7 @@ import TopBar from "../TopBar";
 import RoundButton from "../RoundButton";
 import { IconNext, IconRetry, IconSpeaker, IconTurtle } from "../icons";
 import { otherVoice, play, stopListening, myVoice } from "./common/listen";
+import { captionSize } from "./common/bits";
 import RoleChip from "./RoleChip";
 
 const RING_MS = 1800; // after the line ends, your turn comes by itself
@@ -134,8 +135,7 @@ export default function PartnerTurn({ field, turn, index, total, backHref, last,
   };
 
   const len = turn.text.length;
-  // the practice screen's own sizes, so their line and yours sit the same on the stage
-  const size = len > 26 ? "clamp(32px,8.8vw,88px)" : len > 15 ? "clamp(38px,10.6vw,96px)" : "clamp(42px,12.4vw,104px)";
+  const size = captionSize(len);
   const label = `${turn.text} 相手の声の高さの波`;
 
   return (
@@ -151,11 +151,11 @@ export default function PartnerTurn({ field, turn, index, total, backHref, last,
             <div style={{ fontSize: size }}>
               {guide ? <Telop text={turn.text} words={guide.words} mode="karaoke" clock={clock} /> : <p className="en font-bold leading-[1.14]">{turn.text}</p>}
             </div>
-            {/* the same order as your turn: sentence > meaning > sounds */}
-            <p className="jp mt-2 text-[16px] font-medium leading-snug md:mt-3 md:text-[19px]">
+            {/* the same order as your turn: the sentence, its sounds right under it, the meaning */}
+            {item ? <p className="ipa mt-1 text-[15px] leading-snug opacity-90 md:text-[17px]">{lineIpa(item)}</p> : null}
+            <p className="jp mt-2 text-[15px] font-medium leading-snug md:mt-3 md:text-[18px]">
               <BreakText text={turn.ja.replace(/\n/g, "◆")} />
             </p>
-            {item ? <p className="ipa mt-1 text-[14px] leading-snug opacity-70 md:text-[16px]">{lineIpa(item)}</p> : null}
             {reply ? (
               <p className="mt-3 flex items-center gap-2 text-[14px] font-medium">
                 <RoleChip role="you" />

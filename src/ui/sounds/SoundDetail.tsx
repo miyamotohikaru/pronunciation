@@ -2,12 +2,12 @@
 
 /**
  * /sounds/[id] — one sound: the symbol large with its name and the one thing to do; words that
- * have it (listen only); how to make it (with the mouth for r and l); where Japanese gets in
+ * have it (listen only); how to make it (with the mouth section); where Japanese gets in
  * the way; minimal pairs to hear side by side (A, B, or both in turn); and its six sentences on
  * the karaoke practice screen. Listen buttons play your お手本 voice (the practice settings').
  */
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BreakText from "@/components/BreakText";
 import { BestMark, IconAlternate, IconChevron, Marked, PageHeader, PlayGlyph, flow } from "../challenge/common/bits";
 import { clipUrl, myVoice, play, useNowPlaying, warmClips } from "../challenge/common/listen";
@@ -16,16 +16,28 @@ import type { VoiceId } from "../practice/content";
 import type { FieldClass } from "../practice/fields";
 import { IconMic } from "../icons";
 import IpaTip from "./IpaTip";
-import SoundMouth from "./SoundMouth";
+import SoundSection from "./SoundSection";
+import type { ShapeKey } from "../mouth/geometry";
 import type { SoundView } from "./data.server";
 
 export default function SoundDetail({ s, field }: { s: SoundView; field: FieldClass }) {
   const best = useBest();
   const now = useNowPlaying();
   const [voice, setVoice] = useState<VoiceId>("af_heart");
-  // the mouth follows the pair word that is playing: 0 = this sound, 1 = the other
-  const [mouthPos, setMouthPos] = useState(0);
+  // the mouth follows what is playing: a pair's other word moves it to that sound (pos 1), a diphthong glides
+  const [mouth, setMouth] = useState<{ other: ShapeKey | null; pos: number; note: string | null }>({ other: s.mouth?.glideTo ?? null, pos: 0, note: null });
+  const glideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => setVoice(myVoice()), []);
+  useEffect(() => () => {
+    if (glideTimer.current) clearTimeout(glideTimer.current);
+  }, []);
+  // a diphthong: start → end, then back
+  const glide = () => {
+    if (!s.mouth?.glideTo) return;
+    if (glideTimer.current) clearTimeout(glideTimer.current);
+    setMouth({ other: s.mouth.glideTo, pos: 1, note: null });
+    glideTimer.current = setTimeout(() => setMouth({ other: s.mouth!.glideTo, pos: 0, note: null }), 900);
+  };
 
   const url = (clip: string) => clipUrl(clip, voice);
   // decode the words on this page while it is idle, so a tap starts at once
@@ -39,11 +51,25 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
     const p = s.pairs[i];
     if (!p.aClip || !p.bClip) return;
     const seq = which === "a" ? [p.aClip] : which === "b" ? [p.bClip] : [p.aClip, p.bClip, p.aClip, p.bClip];
+    const o = p.other;
+    const moves = !!(s.mouth && o?.shape && o.shape !== s.mouth.target);
+    // a pair the drawing cannot show (p / b: the same mouth, only the voice differs) says so
+    const note = s.mouth && o && !moves ? `/${s.ipa}/ と /${o.ipa}/ は、口の形が同じ。のどの声の有無が違います。` : null;
     void play(seq.map(url), {
       key: `pair-${i}-${which}`,
       gap: 0.55,
-      onPlayhead: (e) => s.mouth && setMouthPos(seq[e.item] === p.bClip ? 1 : 0),
-      onEnd: () => setMouthPos(0),
+      onPlayhead: (e) => {
+        const onB = seq[e.item] === p.bClip;
+        setMouth((m) => {
+          const next = { other: moves ? o!.shape : m.other, pos: onB && moves ? 1 : 0, note: onB ? (moves ? `いま聞こえているのは /${o!.ipa}/ の舌` : note) : null };
+          return m.other === next.other && m.pos === next.pos && m.note === next.note ? m : next;
+        });
+      },
+      // hold the last shape a moment, so it can be seen, then back to this sound
+      onEnd: () => {
+        if (glideTimer.current) clearTimeout(glideTimer.current);
+        glideTimer.current = setTimeout(() => setMouth((m) => ({ ...m, pos: 0, note: null })), 1200);
+      },
     });
   };
 
@@ -51,7 +77,6 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
   const ready = s.practice.some((x) => x.ready);
   const first = Math.max(0, s.practice.findIndex((x) => x.ready && best?.[x.id] === undefined));
   const practiceHref = `/sounds/${s.slug}/practice`;
-  const mouthWord = useMemo(() => (s.mouth ? (s.mouth === "r" ? ["r", "l"] : ["l", "r"]) : null), [s.mouth]);
 
   return (
     <div className="kara field-calm flex min-h-dvh flex-col">
@@ -64,13 +89,13 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
             {s.manner && s.manner !== s.group ? <span className="opacity-90">{s.manner}</span> : null}
           </p>
           <div className="mt-1 flex items-end gap-4">
-            <span className="ipa ipa-dict text-[112px] leading-[1.05]" aria-hidden>
+            <span className="ipa text-[112px] leading-[1.05]" aria-hidden>
               {s.ipa}
             </span>
           </div>
           <h2 id="sound-name" className="text-[19px] font-bold leading-snug">
             {s.name.text}
-            {s.name.symbol ? <span className="ipa ipa-dict text-[21px]"> {s.name.symbol}</span> : null}
+            {s.name.symbol ? <span className="ipa text-[21px]"> {s.name.symbol}</span> : null}
           </h2>
           <p className="jp mt-2 text-[15px] font-medium leading-relaxed">
             <BreakText text={flow(s.tipJa)} />
@@ -87,7 +112,11 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
                   <button
                     type="button"
                     disabled={!e.clip}
-                    onClick={() => e.clip && void play([url(e.clip)], { key })}
+                    onClick={() => {
+                      if (!e.clip) return;
+                      void play([url(e.clip)], { key });
+                      glide();
+                    }}
                     aria-label={`${e.word} を聞く`}
                     className="flex min-h-12 min-w-0 flex-1 items-center gap-3 text-left disabled:opacity-50"
                   >
@@ -98,7 +127,7 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
                       <Marked word={e.word} marked={e.marked} />
                     </span>
                   </button>
-                  <IpaTip ipa={e.ipa} of={e.word} className="ipa-dict text-[18px]" />
+                  <IpaTip ipa={e.ipa} of={e.word} className="text-[18px]" />
                   <span className="w-12 shrink-0 text-right text-[12px] font-medium opacity-60">{e.position}</span>
                 </li>
               );
@@ -106,17 +135,23 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
           </ul>
         </Block>
 
-        {/* how to make it; the mouth for r and l */}
+        {/* how to make it, with the mouth (the section drawing; a pair moves it, a diphthong glides) */}
         <Block title="どう言う？">
           <p className="jp text-[15px] font-medium leading-relaxed">
             <BreakText text={flow(s.howJa)} />
           </p>
-          {s.mouth && mouthWord ? (
+          {s.mouth ? (
             <figure className="mt-4 rounded-[18px] bg-[#f6f7fb] px-3 pb-3 pt-2">
-              <SoundMouth target={s.mouth} pos={mouthPos} className="mx-auto block w-full max-w-[300px]" />
-              <figcaption className="jp text-center text-[13px] font-medium leading-snug">
-                {(mouthPos > 0.5 ? mouthWord[1] : mouthWord[0]) === "l" ? "l：舌先を歯ぐきに付ける" : "r：舌先はどこにも付けない"}
-                <span className="mt-1 block opacity-70">聞きくらべを押すと、舌が動きます。</span>
+              <SoundSection target={s.mouth.target} other={mouth.other} pos={mouth.pos} label={`/${s.ipa}/ の口の断面図${s.mouth.doJa ? `。${s.mouth.doJa}` : ""}`} className="mx-auto block w-full max-w-[280px]" />
+              <figcaption className="jp text-center text-[13px] font-medium leading-snug" aria-live="polite">
+                {mouth.note ?? (s.mouth.glideTo ? `/${s.ipa}/ は、舌が動く音です。` : s.mouth.doJa ? `/${s.ipa}/：${s.mouth.doJa}` : `/${s.ipa}/ の舌の形`)}
+                {s.mouth.glideTo ? (
+                  <button type="button" onClick={glide} className="mx-auto mt-2 flex h-11 items-center rounded-full bg-(--paper) px-4 text-[14px] font-bold shadow-[inset_0_0_0_1.5px_#dfe2ee]">
+                    動きを見る
+                  </button>
+                ) : s.pairs.some((p) => p.other?.shape && p.other.shape !== s.mouth!.target) ? (
+                  <span className="mt-1 block opacity-70">聞きくらべを押すと、舌が動きます。</span>
+                ) : null}
               </figcaption>
             </figure>
           ) : null}
@@ -177,14 +212,14 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
                 <IconChevron />
               </span>
               <span className="text-[13px] font-medium opacity-70">前の音</span>
-              <span className="ipa ipa-dict text-[24px]">{s.prev.ipa}</span>
+              <span className="ipa text-[24px]">{s.prev.ipa}</span>
             </Link>
           ) : (
             <span />
           )}
           {s.next ? (
             <Link href={`/sounds/${s.next.slug}`} className="flex min-h-14 items-center justify-end gap-2 rounded-[16px] bg-(--paper) px-4">
-              <span className="ipa ipa-dict text-[24px]">{s.next.ipa}</span>
+              <span className="ipa text-[24px]">{s.next.ipa}</span>
               <span className="text-[13px] font-medium opacity-70">次の音</span>
               <IconChevron />
             </Link>
@@ -241,7 +276,7 @@ function PairWord({ word, ipa, diff, playing, disabled, onPlay }: { word: string
           <span className="font-bold underline decoration-[0.09em] underline-offset-[0.18em]">{word.slice(a, b)}</span>
           {word.slice(b)}
         </span>
-        <span className="ipa ipa-dict block text-[14px] leading-tight opacity-75">{ipa}</span>
+        <span className="ipa block text-[14px] leading-tight opacity-75">{ipa}</span>
       </span>
     </button>
   );

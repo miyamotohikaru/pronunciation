@@ -82,8 +82,7 @@ export default function IpaTip({ ipa, className, of }: IpaTipProps) {
   const info = tok?.symbol && d ? (d.symbols.find((s) => s.symbol === tok.symbol) ?? null) : null;
   const mark = tok?.stress === 1 ? d?.primary : tok?.stress === 2 ? d?.secondary : null;
   const firstSym = tokens.findIndex((t) => t.symbol);
-  // the tip sets its symbols in the same face as the transcription that opened it
-  const face = className?.includes("ipa-dict") ? "ipa ipa-dict" : "ipa";
+  const face = "ipa";
 
   return (
     <>

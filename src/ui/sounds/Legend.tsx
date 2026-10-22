@@ -34,7 +34,7 @@ export default function Legend({ groups, styleJa }: { groups: LegendGroup[]; sty
             <ul className="mt-3 overflow-hidden rounded-[22px] bg-(--paper)">
               {g.symbols.map((s) => (
                 <li key={s.symbol} id={`sym-${encodeURIComponent(s.symbol)}`} className="flex gap-3 border-b border-[#eceef5] px-4 py-3 last:border-b-0">
-                  <span aria-hidden className="ipa ipa-dict w-[64px] shrink-0 pt-[2px] text-[34px] leading-[1.05]">
+                  <span aria-hidden className="ipa w-[64px] shrink-0 pt-[2px] text-[34px] leading-[1.05]">
                     {s.symbol}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -61,12 +61,12 @@ export default function Legend({ groups, styleJa }: { groups: LegendGroup[]; sty
                               <PlayGlyph playing={now.key === key} size={11} />
                             </span>
                             <span className="en text-[16px] font-medium">{e.word}</span>
-                            <span className="ipa ipa-dict text-[14px] opacity-75">{e.ipa}</span>
+                            <span className="ipa text-[14px] opacity-75">{e.ipa}</span>
                           </button>
                         ) : (
                           <span key={e.word} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#f1f2f8] px-3">
                             <span className="en text-[16px] font-medium">{e.word}</span>
-                            <span className="ipa ipa-dict text-[14px] opacity-75">{e.ipa}</span>
+                            <span className="ipa text-[14px] opacity-75">{e.ipa}</span>
                           </span>
                         );
                       })}

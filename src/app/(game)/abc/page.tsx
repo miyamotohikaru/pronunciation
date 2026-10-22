@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import AbcPage from "@/ui/abc/AbcPage";
 import { abcSets, confusions, letters } from "@/ui/abc/data.server";
-import "@/ui/sounds/dict.css";
 
 export const metadata: Metadata = { title: "アルファベット｜発音カラオケ" };
 export const viewport: Viewport = { themeColor: "#f4f5fa" };

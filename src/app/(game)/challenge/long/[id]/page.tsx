@@ -5,7 +5,6 @@ import PracticeChain from "@/ui/challenge/common/PracticeChain";
 import FieldBlank from "@/ui/challenge/common/FieldBlank";
 import { FIELD, allLongIds, longLevels, longOf, pairsFor } from "@/ui/challenge/data.server";
 import { FIELD_HEX } from "@/ui/practice/fields";
-import "@/ui/challenge/long.css";
 
 type Params = { id: string };
 
@@ -25,7 +24,6 @@ export default async function Page({ params }: { params: Promise<Params> }) {
   const levels = longLevels();
   const next = levels[levels.findIndex((l) => l.id === v.level.id) + 1];
   return (
-    <div className="kz-long">
     <Suspense fallback={<FieldBlank field={FIELD.long} />}>
       <PracticeChain
         field={FIELD.long}
@@ -38,6 +36,5 @@ export default async function Page({ params }: { params: Promise<Params> }) {
         next={next ? { href: `/challenge/long/${next.items[0].id}`, label: `次は「${next.titleJa}」` } : { href: "/challenge#intro", label: "自己紹介へ" }}
       />
     </Suspense>
-    </div>
   );
 }

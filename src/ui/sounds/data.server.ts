@@ -6,6 +6,8 @@ import phonemesRaw from "../../../content/phonemes.json";
 import legendRaw from "../../../content/ipa-legend.json";
 import { clipsReady, itemReady } from "../challenge/common/ready.server";
 import { wordClip } from "./clips.server";
+import { shapeFor, type ShapeKey } from "../mouth/geometry";
+import { ipaTokens } from "./ipaTokens";
 
 type CExample = { word: string; position?: string; marked?: string; ipa: string };
 type CPair = { a: string; b: string; a_ipa: string; b_ipa: string };
@@ -93,7 +95,8 @@ export const allSoundSlugs = () => phonemes.map((p) => slugOf(p.id));
 // ---------------------------------------------------------------- one sound
 
 export type SoundExample = { word: string; marked?: string; ipa: string; position: string; clip: string | null };
-export type SoundPair = { a: string; b: string; aIpa: string; bIpa: string; aClip: string | null; bClip: string | null; diff: [[number, number], [number, number]] };
+/** other: the sound b has where a has this one (sheep / ship → /i/), with its mouth shape */
+export type SoundPair = { a: string; b: string; aIpa: string; bIpa: string; aClip: string | null; bClip: string | null; diff: [[number, number], [number, number]]; other: { ipa: string; shape: ShapeKey | null } | null };
 export type SoundView = {
   slug: string;
   arpabet: string;
@@ -107,8 +110,11 @@ export type SoundView = {
   examples: SoundExample[];
   pairs: SoundPair[];
   practice: { id: string; text: string; ja: string; ready: boolean }[];
-  /** the mouth section exists for r and l only */
-  mouth: "r" | "l" | null;
+  /**
+   * the mouth section (src/ui/mouth's drawings): this sound's shape, and what it moves to — a
+   * diphthong's end (glide) or the sound its minimal pairs are confused with; null for h (no shape)
+   */
+  mouth: { target: ShapeKey; glideTo: ShapeKey | null; doJa: string | null } | null;
   prev: { slug: string; ipa: string } | null;
   next: { slug: string; ipa: string } | null;
 };
@@ -146,12 +152,51 @@ export function soundOf(slug: string): SoundView | null {
     trapJa: p.jp_trap_ja,
     tipJa: p.tip_ja,
     examples: p.examples.map((e) => ({ word: e.word, marked: e.marked, ipa: e.ipa, position: POSITION[e.position ?? ""] ?? "", clip: clipOrNull(e.word, e.ipa) })),
-    pairs: p.pairs.map((pr) => ({ a: pr.a, b: pr.b, aIpa: pr.a_ipa, bIpa: pr.b_ipa, aClip: clipOrNull(pr.a, pr.a_ipa), bClip: clipOrNull(pr.b, pr.b_ipa), diff: diffOf(pr.a, pr.b) })),
+    pairs: p.pairs.map((pr) => ({ a: pr.a, b: pr.b, aIpa: pr.a_ipa, bIpa: pr.b_ipa, aClip: clipOrNull(pr.a, pr.a_ipa), bClip: clipOrNull(pr.b, pr.b_ipa), diff: diffOf(pr.a, pr.b), other: contrastOf(pr) })),
     practice: p.practice.map((x) => ({ id: x.id, text: x.text, ja: x.ja, ready: itemReady(x.id) })),
-    mouth: p.id === "R" ? "r" : p.id === "L" ? "l" : null,
+    mouth: mouthOf(p),
     prev: nb(phonemes[i - 1]),
     next: nb(phonemes[i + 1]),
   };
+}
+
+/** a diphthong's end (the tongue glides to it) */
+const GLIDE_TO: Record<string, string> = { EY: "IY", AY: "IY", OY: "IY", AW: "UW", OW: "UW" };
+/** what the tongue does, in one plain line, by drawing */
+const DO_JA: Partial<Record<ShapeKey, string>> = {
+  r: "舌先は、どこにも付けない",
+  t: "舌先を、歯ぐきに付ける",
+  th: "舌先を、上下の歯の間に",
+  s: "舌先は付けずに、細い息を",
+  sh: "舌先は付けず、くちびるを前へ",
+  f: "上の歯を、下くちびるに",
+  b: "くちびるを閉じる",
+  k: "舌の奥を、上あごに付ける",
+};
+
+function mouthOf(p: CPhoneme): SoundView["mouth"] {
+  const target = shapeFor(p.arpabet);
+  if (!target || p.arpabet === "HH") return null;
+  const glide = GLIDE_TO[p.arpabet];
+  return { target, glideTo: glide ? shapeFor(glide) : null, doJa: DO_JA[target] ?? null };
+}
+
+/** the 42 by their symbol (/ʌ/ is AH, /ə/ AH0) */
+const bySymbol = new Map(phonemes.map((q) => [q.ipa, q]));
+
+/** the one sound where b differs from a (sheep /ʃíːp/ – ship /ʃíp/ → /i/); null if more than one differs */
+function contrastOf(pr: CPair): SoundPair["other"] {
+  const syms = (x: string) => ipaTokens(x).flatMap((t) => (t.symbol ? [t.symbol] : []));
+  const a = syms(pr.a_ipa);
+  const b = syms(pr.b_ipa);
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  let j = 0;
+  while (j < a.length - i && j < b.length - i && a[a.length - 1 - j] === b[b.length - 1 - j]) j++;
+  const d = b.slice(i, b.length - j);
+  if (d.length !== 1) return null;
+  const q = bySymbol.get(d[0]);
+  return q ? { ipa: q.ipa, shape: shapeFor(q.arpabet) } : null;
 }
 
 // ---------------------------------------------------------------- the legend

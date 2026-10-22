@@ -1,9 +1,0 @@
-/*
- * 発音記号・アルファベット: the transcriptions set the way an English–Japanese dictionary prints
- * them — a serif IPA face, where l has its foot and never reads as I or |. The SIL faces first
- * (as .ipa has them), then serifs that phones and computers carry, all with the IPA letters.
- */
-.kara .ipa.ipa-dict {
-  font-family: "Charis SIL", "Doulos SIL", "Gentium Plus", "Iowan Old Style", "Times New Roman", "Noto Serif", serif;
-  font-weight: 400;
-}

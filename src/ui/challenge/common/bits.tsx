@@ -120,3 +120,13 @@ export const flow = (s: string) =>
  */
 export const softBreaks = (s: string) => s.replace(/([をにでて])(?=[\u3040-\u30ff\u4e00-\u9fff])/g, "$1\u200b");
 
+/**
+ * The karaoke caption's size from the line's length — the practice screen's own steps, so a line of
+ * theirs and a line of yours sit the same on the stage; while you speak it steps back to about 60 %.
+ */
+export function captionSize(len: number, speaking = false): string {
+  const [vw, min, max] = len <= 15 ? [12.4, 40, 104] : len <= 26 ? [10.6, 36, 96] : len <= 40 ? [8.4, 30, 80] : len <= 64 ? [6.4, 24, 60] : len <= 96 ? [5.2, 20, 48] : [4.4, 17, 40];
+  const k = speaking ? 0.6 : 1;
+  return `clamp(${Math.round(Math.max(15, min * k))}px, ${(vw * k).toFixed(2)}vw, ${Math.round(max * k)}px)`;
+}
+

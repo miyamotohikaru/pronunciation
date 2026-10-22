@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import SoundDetail from "@/ui/sounds/SoundDetail";
 import { allSoundSlugs, soundOf } from "@/ui/sounds/data.server";
 import { SOUNDS_FIELD } from "@/ui/sounds/field";
-import "@/ui/sounds/dict.css";
 
 type Params = { id: string };
 

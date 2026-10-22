@@ -23,6 +23,7 @@ import { loadClip, myVoice, otherVoice, play, useNowPlaying } from "./common/lis
 import { useBest } from "./common/useBest";
 import { NotReady } from "./common/PracticeChain";
 import PartnerTurn from "./PartnerTurn";
+import PartnerEcho from "./PartnerEcho";
 import RoleChip from "./RoleChip";
 
 export type DuetTurn = { id: string; text: string; ja: string; ready: boolean; role: "partner" | "you" };
@@ -102,6 +103,8 @@ export default function DuetScene({ field, scene, next, pairs }: DuetSceneProps)
   if (!t.ready) return <NotReady key={t.id} field={field} index={k} total={turns.length} backHref={BACK} item={t} onNext={advance} />;
 
   const nextYou = turns.slice(k + 1).find((x) => x.role === "you" && x.ready)?.id ?? null;
+  // the line you are answering stays above yours
+  const prev = turns[k - 1]?.role === "partner" ? turns[k - 1] : null;
   return (
     <Practice
       key={t.id}
@@ -113,6 +116,7 @@ export default function DuetScene({ field, scene, next, pairs }: DuetSceneProps)
       combo={combo}
       backHref={BACK}
       pairs={pairs}
+      context={prev ? <PartnerEcho turn={prev} /> : null}
       onResult={(id, s) => {
         setScores((m) => ({ ...m, [id]: Math.max(m[id] ?? 0, s) }));
         setCombo((c) => (s >= 75 ? c + 1 : 0));

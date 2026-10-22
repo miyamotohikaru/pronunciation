@@ -23,7 +23,7 @@ export default function SoundsGrid({ groups }: { groups: SoundGroup[] }) {
           <BreakText text={`アメリカ英語の${total}の音です。◇記号を押すと、言い方と練習が出ます。`} />
         </p>
         <Link href="/sounds/symbols" className="mt-4 flex min-h-[56px] items-center gap-3 rounded-[18px] bg-(--paper) px-4 py-3">
-          <span aria-hidden className="ipa ipa-dict w-[76px] shrink-0 text-[22px] leading-none">
+          <span aria-hidden className="ipa w-[76px] shrink-0 text-[22px] leading-none">
             /ráɪs/
           </span>
           <span className="min-w-0 flex-1">
@@ -57,7 +57,7 @@ export default function SoundsGrid({ groups }: { groups: SoundGroup[] }) {
                       aria-label={`${t.name.text} ${t.name.symbol}。例：${t.example?.word ?? ""}${said ? `。${said}文練習済み` : ""}`}
                       className="flex min-h-[132px] flex-col rounded-[18px] bg-(--paper) px-3 pb-3 pt-2 active:scale-[0.98]"
                     >
-                      <span className="ipa ipa-dict block text-[46px] leading-[1.1]">{t.ipa}</span>
+                      <span className="ipa block text-[46px] leading-[1.1]">{t.ipa}</span>
                       <span className="jp mt-1 text-[13px] font-medium leading-snug opacity-80">{softBreaks(t.name.text)}</span>
                       <span className="mt-auto flex items-end justify-between gap-1 pt-2">
                         <span className="en text-[15px] font-medium leading-none">{t.example ? <Marked word={t.example.word} marked={t.example.marked} /> : null}</span>
