@@ -110,3 +110,23 @@ test("波の目印: 男性の声が目印どおりに話すと波の大半が塗
   assert.ok(nat / n >= 0.7, `native ${nat / n}`);
   assert.ok(mono / n < nat / n - 0.05, `monotone ${mono / n} vs ${nat / n}`);
 });
+
+// 波と比べると見た目と判定が一致する。お手本（Kokoro）の抑揚は穏やかで帯（±2.5半音）に収まりやすいので、
+// 棒読みは話している最中にはあまり減らない。棒読みは話し終わった後の抑揚の点（compareProsody）で下げる（上のテスト）。
+test("波と比べる判定でも、目印どおりのネイティブはほとんど当たる", async () => {
+  const { buildGuideWave } = await import("../../src/engine/karaoke/judge.ts");
+  const nat: number[] = [];
+  const mono: number[] = [];
+  for (const it of sentences) {
+    const wave = buildGuideWave(it.refs[0].pitch);
+    const fr = follow(it.refs[0].syllables, it.refs[1]);
+    const v = fr.filter((f) => f.f0 !== null).map((f) => f.f0 as number).sort((a, b) => a - b);
+    const mid = v[v.length >> 1];
+    const run = (x: LiveFrame[]) => { const j = new KaraokeJudge(it.refs[0].syllables, { wave }); for (const f of x) j.push(f); return j.finish().hitRate; };
+    nat.push(run(fr));
+    mono.push(run(fr.map((f) => ({ ...f, f0: f.f0 === null ? null : mid }))));
+  }
+  const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
+  console.log("wave-judged hitRate: native", med(nat).toFixed(2), "monotone", med(mono).toFixed(2));
+  assert.ok(med(nat) >= 0.7, `native ${med(nat)}`);
+});

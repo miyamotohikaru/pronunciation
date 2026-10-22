@@ -261,7 +261,9 @@ export class KaraokeJudge {
         a.onPitch++;
         continue;
       }
-      const d = userSt - g.pitchSt;
+      // 波を渡されていれば、その時刻の帯の高さと比べる（帯に重なった＝当たり、を見た目と一致させる）。
+      // 無ければ音節の代表の高さと比べる。
+      const d = userSt - (guideSt ?? g.pitchSt);
       a.diffs.push(d);
       if (Math.abs(d) <= this.o.pitchTolSt) a.onPitch++;
       if (Math.abs(d) <= this.o.pitchPerfectSt) a.perfectPitch++;
