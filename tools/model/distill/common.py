@@ -101,14 +101,29 @@ class Teacher:
         self.blank = self.model.config.pad_token_id
 
     @torch.no_grad()
-    def logprobs(self, audio):
-        """audio: float32 16 kHz numpy -> [M, 392] float32 log-probs (M = student frame count)."""
+    def logprobs(self, audio, ctx_pad_sec=None, short_sec=4.0, quantum=16000):
+        """audio: float32 16 kHz numpy -> [M, 392] float32 log-probs (M = student frame count).
+
+        * 200-sample zero pad on both sides centres teacher frame i on sample 320*i.
+        * Clips shorter than `short_sec` get `ctx_pad_sec` (default 0.5 s = 25 frames) of silence on both
+          sides (helps lv-60 on isolated words); the extra frames are dropped again.
+        * The input is zero-padded to a multiple of `quantum` samples with an attention mask, so MPS sees a
+          small set of shapes (graph cache) - identical outputs, ~3x faster than a new shape per clip.
+        """
         a = np.asarray(audio, dtype=np.float32)
         a = (a - a.mean()) / np.sqrt(a.var() + 1e-7)          # Wav2Vec2FeatureExtractor normalisation
-        a = np.pad(a, (200, 200))                              # centre teacher frames on 320*i
-        x = torch.from_numpy(a)[None].to(self.device, self.dtype)
-        lg = self.model(x).logits[0].float()
-        lp = torch.log_softmax(lg, dim=-1)
+        if ctx_pad_sec is None:
+            ctx_pad_sec = 0.5 if len(a) < short_sec * SR else 0.0
+        cf = int(round(ctx_pad_sec * FPS))                    # context frames (whole frames keep alignment)
+        a = np.pad(a, (200 + cf * 320, 200 + cf * 320))       # centre teacher frames on 320*i
+        L = int(np.ceil(len(a) / quantum) * quantum) if quantum else len(a)
+        x = np.zeros((1, L), np.float32)
+        x[0, :len(a)] = a
+        mask = np.zeros((1, L), np.int64)
+        mask[0, :len(a)] = 1
+        lg = self.model(torch.from_numpy(x).to(self.device, self.dtype),
+                        attention_mask=torch.from_numpy(mask).to(self.device)).logits[0].float()
+        lp = torch.log_softmax(lg, dim=-1)[cf:]
         m = n_student_frames(len(audio))
         if lp.shape[0] >= m:
             lp = lp[:m]

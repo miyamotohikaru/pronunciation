@@ -72,6 +72,8 @@ class OnnxRunner:
         import onnxruntime as ort
         so = ort.SessionOptions()
         so.intra_op_num_threads = 4
+        if "int8w" in str(path) or "q4" in str(path):
+            so.add_session_config_entry("session.disable_quant_qdq", "1")   # as the app loads it
         self.s = ort.InferenceSession(str(path), so, providers=["CPUExecutionProvider"])
         meta = json.loads((Path(path).parent / "metadata.json").read_text())
         self.vocab = meta["vocab"]
@@ -184,12 +186,12 @@ def score_item(it, hyp):
             else:
                 res.append(("epen", "faithful" if nv > n_vowels(intended) else "autocorrect"))
             return res
-        diff = [k for k, (a, b) in enumerate(zip(intended, produced)) if a != b] if len(intended) == len(produced) else []
+        contrast = it.get("contrast", "").split()
+        diff = [k for k, (a, b) in enumerate(zip(produced, contrast)) if a != b] if len(contrast) == len(produced) else []
         al = aligned_at(produced, hyp)
         for k in diff:
             h = al[k]
-            want = produced[k] if it["kind"] == "native_err" else intended[k]
-            other = intended[k] if it["kind"] == "native_err" else produced[k]
+            want, other = produced[k], contrast[k]   # the phone actually said vs. the minimal-pair alternative
             if h is not None and h in accept(want):
                 res.append((it["cat"], "faithful"))
             elif h is not None and h in accept(other):
@@ -309,8 +311,48 @@ def run_mdd(runners, n_utts=1000, split="test"):
     return report
 
 
+def summarize_say(items, hyps_by_model):
+    """hyps_by_model: {model: {path: hyp list}} -> {model: {"kind|check": Counter}} and printed table."""
+    out = {}
+    for name, hyps in hyps_by_model.items():
+        agg = collections.defaultdict(collections.Counter)
+        for it in items:
+            if it["path"] not in hyps:
+                continue
+            for check, res in score_item(it, hyps[it["path"]]):
+                agg[(it["kind"], check)][res] += 1
+        out[name] = agg
+        print(f"\n== {name}")
+        for (kind, check), c in sorted(agg.items()):
+            n = sum(c.values())
+            print(f"  {kind:10s} {check:12s} n={n:3d} faithful={c['faithful'] / n:.2f} autocorrect={c['autocorrect'] / n:.2f} other={c['other'] / n:.2f}")
+        tot = collections.Counter()
+        for (kind, check), c in agg.items():
+            tot[kind + "_f"] += c["faithful"]
+            tot[kind + "_a"] += c["autocorrect"]
+            tot[kind + "_n"] += sum(c.values())
+        print("  overall faithful: " + "  ".join(f"{k}={tot[k + '_f'] / max(tot[k + '_n'], 1):.3f}" for k in ["native_ok", "native_err", "ja_kana"])
+              + " | autocorrect: " + "  ".join(f"{k}={tot[k + '_a'] / max(tot[k + '_n'], 1):.3f}" for k in ["native_err", "ja_kana"]))
+    return out
+
+
+def rescore(report_path):
+    items = json.loads((WORK / "eval" / "say" / "items.json").read_text())
+    rep = json.loads(Path(report_path).read_text())
+    hyps = collections.defaultdict(dict)
+    for path, d in rep["detail"].items():
+        for name, h in d.items():
+            hyps[name][path] = h.split()
+    agg = summarize_say(items, hyps)
+    rep["summary"] = {n: {f"{k[0]}|{k[1]}": dict(v) for k, v in sorted(a.items())} for n, a in agg.items()}
+    Path(report_path).write_text(json.dumps(rep, ensure_ascii=False, indent=1))
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1]
+    if cmd == "rescore":
+        rescore(sys.argv[2])
+        sys.exit(0)
     if cmd == "say":
         run_say(make_runners(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else None,
                 tag=sys.argv[4] if len(sys.argv) > 4 else "say")

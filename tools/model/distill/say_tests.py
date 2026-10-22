@@ -128,11 +128,11 @@ def make():
     items = []
     for v in EN_VOICES:
         for k, (cat, good, bad, ipa_good, ipa_bad) in enumerate(PAIRS):
-            for kind, text, produced in [("native_ok", good, ipa_good), ("native_err", bad, ipa_bad)]:
+            for kind, text, produced, contrast in [("native_ok", good, ipa_good, ipa_bad), ("native_err", bad, ipa_bad, ipa_good)]:
                 p = OUT / vslug(v) / f"{kind}_{k:02d}_{text.replace(' ', '_')}.wav"
                 if synth(v, text, p):
                     items.append(dict(kind=kind, cat=cat, voice=vslug(v), text=text, intended=ipa_good,
-                                      produced=produced, path=str(p.relative_to(WORK))))
+                                      produced=produced, contrast=contrast, path=str(p.relative_to(WORK))))
     for v in JA_VOICES:
         for k, (cat, eng, kana, produced, checks) in enumerate(KANA):
             p = OUT / vslug(v) / f"ja_kana_{k:02d}_{eng.replace(' ', '_')}.wav"

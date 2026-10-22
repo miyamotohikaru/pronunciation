@@ -38,7 +38,11 @@ class MHA(nn.Module):
         q = self.query(x).view(b, t, self.n_head, -1).transpose(1, 2)
         k = self.key(x).view(b, t, self.n_head, -1).transpose(1, 2)
         v = self.value(x).view(b, t, self.n_head, -1).transpose(1, 2)
-        if attn_mask is None:
+        if torch.onnx.is_in_onnx_export():
+            # plain MatMul/Softmax graph (no SDPA decomposition casts; fp16-convertible, ORT-web friendly)
+            w = torch.softmax((q @ k.transpose(-1, -2)) * (1.0 / math.sqrt(q.shape[-1])), dim=-1)
+            a = w @ v
+        elif attn_mask is None:
             a = F.scaled_dot_product_attention(q, k, v)
         else:  # attn_mask: [B,1,1,T] additive (0 keep / -inf pad)
             a = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask)
@@ -86,7 +90,8 @@ class Student(nn.Module):
             x = x * keep[:, None, :].to(x.dtype)
         x = F.gelu(self.conv2(x)).transpose(1, 2)
         t = x.shape[1]
-        x = x + self.positional_embedding[:t].to(x.dtype)
+        pe = self.positional_embedding[:t]
+        x = x + (pe if pe.dtype == x.dtype else pe.to(x.dtype))   # no Cast node in the exported graph
         mask = None
         if mel_lens is not None:
             olen = self.out_lengths(mel_lens)

@@ -76,7 +76,9 @@ def src_globe(path, args):
 
 def src_wavdir(path, args):
     """Directory of .wav (any sr) with optional same-stem .json holding 'text'/'voice'/'phonemes'."""
-    for w in sorted(Path(path).rglob("*.wav")):
+    dirs = Path(path[1:]).read_text().split() if str(path).startswith("@") else str(path).split(",")
+    wavs = [w for d in dirs for w in sorted(Path(d).rglob("*.wav"))]
+    for w in wavs:
         meta = {}
         j = w.with_suffix(".json")
         if j.exists():
@@ -86,7 +88,9 @@ def src_wavdir(path, args):
                 meta = {}
         spk = meta.get("voice", w.parent.name)
         yield dict(id=f"{w.parent.name}_{w.stem}", speaker=spk, dataset=args.dataset or "wavdir", text=meta.get("text", ""),
-                   meta={k: meta[k] for k in ("phonemes", "voice", "speed", "kind", "target", "produced") if k in meta},
+                   meta={k: meta[k] for k in ("phonemes", "voice", "speed", "kind", "target", "produced", "site", "sub",
+                                              "intended", "produced_phone", "context", "word", "lang", "sites",
+                                              "site_info", "sub_type", "cid", "feature") if k in meta},
                    audio=lambda w=w: decode_audio(str(w)))
 
 
@@ -177,12 +181,33 @@ def main():
             fh.flush()
         rec = dict(id=item["id"], speaker=item["speaker"], dataset=item["dataset"], text=item["text"], speed=s,
                    a_off=a_off, a_len=len(a), f_off=f_off, f_len=m, greedy=greedy, **({"meta": item["meta"]} if item.get("meta") else {}))
+        meta = item.get("meta") or {}
+        if meta.get("produced") and str(meta.get("kind", "")).startswith("cur_"):
+            # round-5 curriculum clips: every focus phone position is known by construction
+            toks = P.kokoro_to_student(meta["produced"])
+            sites = [int(x) for x in meta.get("sites", []) if int(x) < len(toks)]
+            if toks and all(t in P.SID for t in toks) and sites:
+                rec["truth"] = [P.SID[t] for t in toks]
+                rec["sites"] = sites
+        elif meta.get("produced") and str(meta.get("kind", "")).startswith("mp_"):
+            # round-4 minimal pairs: the tested phone is known by construction (explicit site)
+            toks = P.kokoro_to_student(meta["produced"])
+            if toks and all(t in P.SID for t in toks) and meta.get("site") is not None and meta["site"] < len(toks):
+                rec["truth"] = [P.SID[t] for t in toks]
+                rec["sites"] = [int(meta["site"])]
+        elif meta.get("produced") and meta.get("kind") in ("clean", "light", "medium"):
+            # synthetic speech: we know what was actually synthesised -> truth labels (student ids)
+            toks = P.kokoro_to_student(meta["produced"])
+            if toks and all(t in P.SID for t in toks):
+                rec["truth"] = [P.SID[t] for t in toks]
         idx_f.write(json.dumps(rec, ensure_ascii=False) + "\n")
         idx_f.flush()
         a_off += len(a)
         f_off += m
         n_new += 1
         sec += len(a) / SR
+        if n_new % 100 == 0 and torch.backends.mps.is_available():
+            torch.mps.empty_cache()
         if n_new % 200 == 0:
             el = time.time() - t0
             print(f"{args.part}: {n_new} utts, {sec / 3600:.2f} h audio, {el:.0f}s, x{sec / el:.1f} realtime", flush=True)

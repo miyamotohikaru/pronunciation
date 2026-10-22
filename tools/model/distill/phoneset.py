@@ -166,3 +166,89 @@ COARSE = {
 
 def coarse(p):
     return COARSE.get(p, p)
+
+
+# ----------------------------------------------------------------------------- Kokoro / misaki phonemes
+
+KOKORO_MAP = {"A": "eɪ", "I": "aɪ", "O": "oʊ", "W": "aʊ", "Y": "ɔɪ", "Q": "oʊ", "ᵊ": "ə", "ʤ": "dʒ", "ʧ": "tʃ", "T": "ɾ",
+              "ʨ": "tɕ", "ʥ": "dʑ", "ʦ": "ts", "g": "ɡ", "ɑ": "ɑː", "ɔ": "ɔː", "u": "uː", "ɜ": "ɜː"}
+KOKORO_VOWEL_CHARS = set("AIOWYQᵊæɑɔəɚɛɪiʊuʌɜɒaeoɯᵻɐ")
+KOKORO_SKIP = set(" .,!?;:\"“”()—…→↓↗↘'-")
+_R_MERGE = {"ɑː": "ɑːɹ", "ɔː": "ɔːɹ", "ɛ": "ɛɹ", "ɪ": "ɪɹ", "ʊ": "ʊɹ", "oʊ": "oːɹ", "ɜː": "ɜː", "ɚ": "ɚ"}
+
+
+def kokoro_to_student(ps):
+    """misaki/Kokoro phoneme string (as synthesised) -> student tokens, following the teacher's
+    espeak en-us conventions (stressed i -> iː, coda r merged into r-coloured vowel tokens)."""
+    toks, stressed = [], False
+    for c in ps:
+        if c in KOKORO_SKIP:
+            continue
+        if c in "ˈˌ":
+            stressed = True
+            continue
+        if c == "ː":
+            if toks and toks[-1] + "ː" in SID:
+                toks[-1] += "ː"
+            continue
+        if c == "i":
+            t = "iː" if stressed else "i"
+        else:
+            t = KOKORO_MAP.get(c, c)
+        if c in KOKORO_VOWEL_CHARS:
+            stressed = False
+        toks.append(t)
+    out = []
+    for k, t in enumerate(toks):
+        nxt = toks[k + 1] if k + 1 < len(toks) else None
+        if t == "ɹ" and out and out[-1] in _R_MERGE and (nxt is None or nxt not in VOWELS_SET):
+            out[-1] = _R_MERGE[out[-1]]
+            continue
+        if t == "ɚ" and out and out[-1] == "aɪ":
+            out[-1] = "aɪɚ"
+            continue
+        if t == "ə" and out and out[-1] == "ɪ":       # British NEAR
+            out[-1] = "iə"
+            continue
+        if t == "ɹ" and out and out[-1] == "ə" and (nxt is None or nxt not in VOWELS_SET):
+            out[-1] = "ɚ"                             # 'əɹ' coda = teacher's ɚ
+            continue
+        out.append(t)
+    return out
+
+
+# Injected errors that Kokoro renders reliably (the teacher hears most of them, see LOG.md);
+# only these sites override the teacher in truth_target().
+RELIABLE_SUBS = {("ɹ", "l"), ("l", "ɹ"), ("v", "b"), ("θ", "s"), ("θ", "t"), ("θ", "f"), ("ð", "z"), ("ð", "d"),
+                 ("s", "ʃ"), ("s", "ɕ"), ("f", "h")}
+EPENTHETIC = {"u", "uː", "ɯ", "o", "oʊ", "i", "iː", "ə"}
+
+
+def injected_sites(canonical_ps, produced_ps):
+    """Indices (into kokoro_to_student(produced_ps)) of reliably rendered injected errors."""
+    import numpy as np
+    c = kokoro_to_student(canonical_ps)
+    p = kokoro_to_student(produced_ps)
+    n, m = len(c), len(p)
+    D = np.zeros((n + 1, m + 1), dtype=np.int32)
+    D[:, 0] = np.arange(n + 1)
+    D[0, :] = np.arange(m + 1)
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            D[i, j] = min(D[i - 1, j] + 1, D[i, j - 1] + 1, D[i - 1, j - 1] + (c[i - 1] != p[j - 1]))
+    i, j, sites = n, m, []
+    while i > 0 or j > 0:
+        if i > 0 and j > 0 and D[i, j] == D[i - 1, j - 1] + (c[i - 1] != p[j - 1]):
+            if c[i - 1] != p[j - 1] and (c[i - 1], p[j - 1]) in RELIABLE_SUBS:
+                sites.append(j - 1)
+            i, j = i - 1, j - 1
+        elif j > 0 and D[i, j] == D[i, j - 1] + 1:
+            if p[j - 1] in EPENTHETIC and j >= 2 and p[j - 2] in CONSONANTS:
+                sites.append(j - 1)
+            j -= 1
+        else:
+            i -= 1
+    return sorted(sites)
+
+
+VOWELS_SET = set(VOWELS)
