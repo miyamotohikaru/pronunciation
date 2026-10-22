@@ -1,0 +1,746 @@
+{
+  "version": 1,
+  "note_ja": "同じつづりで読み方が2つある単語の一覧です。\nipa と misaki が、\nこの教材で意図した読み方です。\ntts_risk が high のものは、\n音声がもう一方の読みになっていないか確認してください。",
+  "entries": [
+    {
+      "id": "u01-l3-02",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "I'll be back in a minute.",
+      "word": "minute",
+      "sense_ja": "名詞「分」",
+      "ipa": "/mínət/",
+      "misaki": "mˈɪnət",
+      "markup": "[minute](/mˈɪnət/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/maɪnúːt/",
+        "/maɪnjúːt/"
+      ],
+      "avoid_misaki": [
+        "mInˈut",
+        "mInjˈut"
+      ]
+    },
+    {
+      "id": "u02-l1-02",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "I read a good book.",
+      "word": "read",
+      "sense_ja": "過去形「読んだ」（訳: いい本を読みました）",
+      "ipa": "/réd/",
+      "misaki": "ɹˈɛd",
+      "markup": "[read](/ɹˈɛd/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/ríːd/"
+      ],
+      "avoid_misaki": [
+        "ɹˈid"
+      ]
+    },
+    {
+      "id": "u02-l6-01",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "She walked six blocks in the cold wind and stopped at the best street stand for lunch.",
+      "word": "wind",
+      "sense_ja": "名詞「風」",
+      "ipa": "/wínd/",
+      "misaki": "wˈɪnd",
+      "markup": "[wind](/wˈɪnd/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/wáɪnd/"
+      ],
+      "avoid_misaki": [
+        "wˈInd"
+      ]
+    },
+    {
+      "id": "u03-l1-04",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "I read every night.",
+      "word": "read",
+      "sense_ja": "現在形「読む」",
+      "ipa": "/ríːd/",
+      "misaki": "ɹˈid",
+      "markup": "[read](/ɹˈid/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/réd/"
+      ],
+      "avoid_misaki": [
+        "ɹˈɛd"
+      ]
+    },
+    {
+      "id": "u03-l2-07",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "We live near a lake.",
+      "word": "live",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lív/",
+      "misaki": "lˈɪv",
+      "markup": "[live](/lˈɪv/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/láɪv/"
+      ],
+      "avoid_misaki": [
+        "lˈIv"
+      ]
+    },
+    {
+      "id": "u03-l5-02",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Let me read it later.",
+      "word": "read",
+      "sense_ja": "現在形「読む」",
+      "ipa": "/ríːd/",
+      "misaki": "ɹˈid",
+      "markup": "[read](/ɹˈid/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/réd/"
+      ],
+      "avoid_misaki": [
+        "ɹˈɛd"
+      ]
+    },
+    {
+      "id": "u05-l3-02",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "When does the movie start?",
+      "word": "does",
+      "sense_ja": "動詞 do",
+      "ipa": "/dʌ́z/",
+      "misaki": "dˈʌz",
+      "markup": "[does](/dˈʌz/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/diz/"
+      ],
+      "avoid_misaki": [
+        "dɪz"
+      ]
+    },
+    {
+      "id": "u05-l3-04",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Please close the door.",
+      "word": "close",
+      "sense_ja": "動詞「閉める」",
+      "ipa": "/klóʊz/",
+      "misaki": "klˈOz",
+      "markup": "[close](/klˈOz/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/klóʊs/"
+      ],
+      "avoid_misaki": [
+        "klˈOs"
+      ]
+    },
+    {
+      "id": "u05-l5-05",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "I learned a new word at work today.",
+      "word": "learned",
+      "sense_ja": "過去形「学んだ」",
+      "ipa": "/lɚ́ːnd/",
+      "misaki": "lˈɜɹnd",
+      "markup": "[learned](/lˈɜɹnd/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/lɚ́ːnid/"
+      ],
+      "avoid_misaki": [
+        "lˈɜɹnɪd"
+      ]
+    },
+    {
+      "id": "u06-l4-06",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Give me a minute.",
+      "word": "minute",
+      "sense_ja": "名詞「分」",
+      "ipa": "/mínət/",
+      "misaki": "mˈɪnət",
+      "markup": "[minute](/mˈɪnət/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/maɪnúːt/",
+        "/maɪnjúːt/"
+      ],
+      "avoid_misaki": [
+        "mInˈut",
+        "mInjˈut"
+      ]
+    },
+    {
+      "id": "u07-l2-03",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "They live nearby.",
+      "word": "live",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lív/",
+      "misaki": "lˈɪv",
+      "markup": "[live](/lˈɪv/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/láɪv/"
+      ],
+      "avoid_misaki": [
+        "lˈIv"
+      ]
+    },
+    {
+      "id": "u07-l3-03",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Excuse me, can I pass? This path is narrow.",
+      "word": "excuse",
+      "sense_ja": "動詞（Excuse me）",
+      "ipa": "/ikskjúːz/",
+      "misaki": "ɪkskjˈuz",
+      "markup": "[excuse](/ɪkskjˈuz/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/ikskjúːs/"
+      ],
+      "avoid_misaki": [
+        "ɪkskjˈus"
+      ]
+    },
+    {
+      "id": "u07-l4-02",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "She lives by the sea.",
+      "word": "lives",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lívz/",
+      "misaki": "lˈɪvz",
+      "markup": "[lives](/lˈɪvz/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/láɪvz/"
+      ],
+      "avoid_misaki": [
+        "lˈIvz"
+      ]
+    },
+    {
+      "id": "u08-l1-07",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Give me five minutes.",
+      "word": "minutes",
+      "sense_ja": "名詞「分」",
+      "ipa": "/mínəts/",
+      "misaki": "mˈɪnəts",
+      "markup": "[minutes](/mˈɪnəts/)",
+      "tts_risk": "low"
+    },
+    {
+      "id": "u08-l3-02",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Can I use your phone?",
+      "word": "use",
+      "sense_ja": "動詞「使う」",
+      "ipa": "/júːz/",
+      "misaki": "jˈuz",
+      "markup": "[use](/jˈuz/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/júːs/"
+      ],
+      "avoid_misaki": [
+        "jˈus"
+      ]
+    },
+    {
+      "id": "u09-l1-06",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "I'll leave in a minute.",
+      "word": "minute",
+      "sense_ja": "名詞「分」",
+      "ipa": "/mínət/",
+      "misaki": "mˈɪnət",
+      "markup": "[minute](/mˈɪnət/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/maɪnúːt/",
+        "/maɪnjúːt/"
+      ],
+      "avoid_misaki": [
+        "mInˈut",
+        "mInjˈut"
+      ]
+    },
+    {
+      "id": "u09-l1-06",
+      "file": "curriculum.json",
+      "where": "pair",
+      "text": "live",
+      "word": "live",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lív/",
+      "misaki": "lˈɪv",
+      "markup": "[live](/lˈɪv/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/láɪv/"
+      ],
+      "avoid_misaki": [
+        "lˈIv"
+      ]
+    },
+    {
+      "id": "u09-l4-01",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Where do you live now?",
+      "word": "live",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lív/",
+      "misaki": "lˈɪv",
+      "markup": "[live](/lˈɪv/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/láɪv/"
+      ],
+      "avoid_misaki": [
+        "lˈIv"
+      ]
+    },
+    {
+      "id": "u09-l4-04",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "I don't know where she lives.",
+      "word": "lives",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lívz/",
+      "misaki": "lˈɪvz",
+      "markup": "[lives](/lˈɪvz/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/láɪvz/"
+      ],
+      "avoid_misaki": [
+        "lˈIvz"
+      ]
+    },
+    {
+      "id": "u09-l4-07",
+      "file": "curriculum.json",
+      "where": "text",
+      "text": "Please wait a minute; I'll be right back.",
+      "word": "minute",
+      "sense_ja": "名詞「分」",
+      "ipa": "/mínət/",
+      "misaki": "mˈɪnət",
+      "markup": "[minute](/mˈɪnət/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/maɪnúːt/",
+        "/maɪnjúːt/"
+      ],
+      "avoid_misaki": [
+        "mInˈut",
+        "mInjˈut"
+      ]
+    },
+    {
+      "id": "long-06",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "My brother lives in a big city, but he visits our parents every summer.",
+      "word": "lives",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lívz/",
+      "misaki": "lˈɪvz",
+      "markup": "[lives](/lˈɪvz/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/láɪvz/"
+      ],
+      "avoid_misaki": [
+        "lˈIvz"
+      ]
+    },
+    {
+      "id": "intro-1-02",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "I'm from Osaka, but I live in Tokyo now.",
+      "word": "live",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lív/",
+      "misaki": "lˈɪv",
+      "markup": "[live](/lˈɪv/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/láɪv/"
+      ],
+      "avoid_misaki": [
+        "lˈIv"
+      ]
+    },
+    {
+      "id": "intro-3-03",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "I'll be sharing the results of last month's survey today.",
+      "word": "survey",
+      "sense_ja": "名詞「調査」",
+      "ipa": "/sɚ́ːveɪ/",
+      "misaki": "sˈɜɹvA",
+      "markup": "[survey](/sˈɜɹvA/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/sɚvéɪ/",
+        "/sɚ́ːvèɪ/"
+      ],
+      "avoid_misaki": [
+        "səɹvˈA",
+        "sˈɜɹvˌA"
+      ]
+    },
+    {
+      "id": "intro-4-03",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "In my current job, I lead a team of four people.",
+      "word": "lead",
+      "sense_ja": "動詞「率いる」",
+      "ipa": "/líːd/",
+      "misaki": "lˈid",
+      "markup": "[lead](/lˈid/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/léd/"
+      ],
+      "avoid_misaki": [
+        "lˈɛd"
+      ]
+    },
+    {
+      "id": "dlg-directions-01",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "Excuse me, could you tell me how to get to the station?",
+      "word": "excuse",
+      "sense_ja": "動詞（Excuse me）",
+      "ipa": "/ikskjúːz/",
+      "misaki": "ɪkskjˈuz",
+      "markup": "[excuse](/ɪkskjˈuz/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/ikskjúːs/"
+      ],
+      "avoid_misaki": [
+        "ɪkskjˈus"
+      ]
+    },
+    {
+      "id": "dlg-directions-04",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "Not really. It's about a five-minute walk.",
+      "word": "minute",
+      "sense_ja": "名詞「分」",
+      "ipa": "/mínət/",
+      "misaki": "mˈɪnət",
+      "markup": "[minute](/mˈɪnət/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/maɪnúːt/",
+        "/maɪnjúːt/"
+      ],
+      "avoid_misaki": [
+        "mInˈut",
+        "mInjˈut"
+      ]
+    },
+    {
+      "id": "dlg-work-06",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "Yes, it was perfect. A little cold in the morning, though.",
+      "word": "perfect",
+      "sense_ja": "形容詞「完璧な」",
+      "ipa": "/pɚ́ːfikt/",
+      "misaki": "pˈɜɹfɪkt",
+      "markup": "[perfect](/pˈɜɹfɪkt/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/pɚfékt/",
+        "/pɚ́ːfìkt/"
+      ],
+      "avoid_misaki": [
+        "pəɹfˈɛkt",
+        "pˈɜɹfˌɪkt"
+      ]
+    },
+    {
+      "id": "dlg-hotel-08",
+      "file": "challenge.json",
+      "where": "text",
+      "text": "Perfect. Thanks for your help.",
+      "word": "perfect",
+      "sense_ja": "形容詞「完璧な」",
+      "ipa": "/pɚ́ːfikt/",
+      "misaki": "pˈɜɹfɪkt",
+      "markup": "[perfect](/pˈɜɹfɪkt/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/pɚfékt/",
+        "/pɚ́ːfìkt/"
+      ],
+      "avoid_misaki": [
+        "pəɹfˈɛkt",
+        "pˈɜɹfˌɪkt"
+      ]
+    },
+    {
+      "id": "ph-IY-pair3",
+      "file": "phonemes.json",
+      "where": "pair",
+      "text": "leave / live",
+      "word": "live",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lív/",
+      "misaki": "lˈɪv",
+      "markup": "[live](/lˈɪv/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/láɪv/"
+      ],
+      "avoid_misaki": [
+        "lˈIv"
+      ]
+    },
+    {
+      "id": "ph-IH-pair3",
+      "file": "phonemes.json",
+      "where": "pair",
+      "text": "live / leave",
+      "word": "live",
+      "sense_ja": "動詞「住む」",
+      "ipa": "/lív/",
+      "misaki": "lˈɪv",
+      "markup": "[live](/lˈɪv/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/láɪv/"
+      ],
+      "avoid_misaki": [
+        "lˈIv"
+      ]
+    },
+    {
+      "id": "ph-AH0-pair2",
+      "file": "phonemes.json",
+      "where": "pair",
+      "text": "desert / dessert",
+      "word": "desert",
+      "sense_ja": "名詞「砂漠」",
+      "ipa": "/dézɚt/",
+      "misaki": "dˈɛzəɹt",
+      "markup": "[desert](/dˈɛzəɹt/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/dizɚ́ːt/"
+      ],
+      "avoid_misaki": [
+        "dɪzˈɜɹt"
+      ]
+    },
+    {
+      "id": "ph-AH0-01",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "Wait a minute.",
+      "word": "minute",
+      "sense_ja": "名詞「分」",
+      "ipa": "/mínət/",
+      "misaki": "mˈɪnət",
+      "markup": "[minute](/mˈɪnət/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/maɪnúːt/",
+        "/maɪnjúːt/"
+      ],
+      "avoid_misaki": [
+        "mInˈut",
+        "mInjˈut"
+      ]
+    },
+    {
+      "id": "ph-ER-04",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "I learned a new word.",
+      "word": "learned",
+      "sense_ja": "過去形「学んだ」",
+      "ipa": "/lɚ́ːnd/",
+      "misaki": "lˈɜɹnd",
+      "markup": "[learned](/lˈɜɹnd/)",
+      "tts_risk": "low",
+      "avoid_ipa": [
+        "/lɚ́ːnid/"
+      ],
+      "avoid_misaki": [
+        "lˈɜɹnɪd"
+      ]
+    },
+    {
+      "id": "ph-AW",
+      "file": "phonemes.json",
+      "where": "example",
+      "text": "house",
+      "word": "house",
+      "sense_ja": "名詞「家」",
+      "ipa": "/háʊs/",
+      "misaki": "hˈWs",
+      "markup": "[house](/hˈWs/)",
+      "tts_risk": "low"
+    },
+    {
+      "id": "ph-AW-03",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "Our house is downtown.",
+      "word": "house",
+      "sense_ja": "名詞「家」",
+      "ipa": "/háʊs/",
+      "misaki": "hˈWs",
+      "markup": "[house](/hˈWs/)",
+      "tts_risk": "low"
+    },
+    {
+      "id": "ph-P-05",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "The plan is perfect.",
+      "word": "perfect",
+      "sense_ja": "形容詞「完璧な」",
+      "ipa": "/pɚ́ːfikt/",
+      "misaki": "pˈɜɹfɪkt",
+      "markup": "[perfect](/pˈɜɹfɪkt/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/pɚfékt/",
+        "/pɚ́ːfìkt/"
+      ],
+      "avoid_misaki": [
+        "pəɹfˈɛkt",
+        "pˈɜɹfˌɪkt"
+      ]
+    },
+    {
+      "id": "ph-DH-01",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "This is their house.",
+      "word": "house",
+      "sense_ja": "名詞「家」",
+      "ipa": "/háʊs/",
+      "misaki": "hˈWs",
+      "markup": "[house](/hˈWs/)",
+      "tts_risk": "low"
+    },
+    {
+      "id": "ph-Z-03",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "Close your eyes.",
+      "word": "close",
+      "sense_ja": "動詞「閉める」",
+      "ipa": "/klóʊz/",
+      "misaki": "klˈOz",
+      "markup": "[close](/klˈOz/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/klóʊs/"
+      ],
+      "avoid_misaki": [
+        "klˈOs"
+      ]
+    },
+    {
+      "id": "ph-R-02",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "Read it right now.",
+      "word": "read",
+      "sense_ja": "現在形「読む」",
+      "ipa": "/ríːd/",
+      "misaki": "ɹˈid",
+      "markup": "[read](/ɹˈid/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/réd/"
+      ],
+      "avoid_misaki": [
+        "ɹˈɛd"
+      ]
+    },
+    {
+      "id": "ph-Y-05",
+      "file": "phonemes.json",
+      "where": "text",
+      "text": "Young people use it.",
+      "word": "use",
+      "sense_ja": "動詞「使う」",
+      "ipa": "/júːz/",
+      "misaki": "jˈuz",
+      "markup": "[use](/jˈuz/)",
+      "tts_risk": "high",
+      "avoid_ipa": [
+        "/júːs/"
+      ],
+      "avoid_misaki": [
+        "jˈus"
+      ]
+    },
+    {
+      "id": "legend aʊ",
+      "file": "ipa-legend.json",
+      "where": "example",
+      "text": "house",
+      "word": "house",
+      "sense_ja": "名詞「家」",
+      "ipa": "/háʊs/",
+      "misaki": "hˈWs",
+      "markup": "[house](/hˈWs/)",
+      "tts_risk": "low"
+    },
+    {
+      "id": "abc-b-v-02",
+      "file": "alphabet.json",
+      "where": "text",
+      "text": "We sat in row B.",
+      "word": "row",
+      "sense_ja": "名詞「列」",
+      "ipa": "/róʊ/",
+      "misaki": "ɹˈO",
+      "markup": "[row](/ɹˈO/)",
+      "tts_risk": "low"
+    }
+  ]
+}

@@ -63,7 +63,7 @@
           "a": "leave",
           "b": "live",
           "a_ipa": "/líːv/",
-          "b_ipa": "/láɪv/"
+          "b_ipa": "/lív/"
         },
         {
           "a": "feel",
@@ -327,7 +327,7 @@
         {
           "a": "live",
           "b": "leave",
-          "a_ipa": "/láɪv/",
+          "a_ipa": "/lív/",
           "b_ipa": "/líːv/"
         },
         {
@@ -4703,7 +4703,7 @@
                 "EPEN"
               ],
               "tip_ja": "息を強く出して破裂させます。",
-              "ipa": "/pɚfékt/"
+              "ipa": "/pɚ́ːfikt/"
             }
           ],
           "difficulty": 2
@@ -10264,7 +10264,7 @@
                 "L"
               ],
               "tip_ja": "舌をどこにも付けず、\nくちびるを丸めて。",
-              "ipa": "/réd/"
+              "ipa": "/ríːd/"
             },
             {
               "word": "right",
@@ -10805,7 +10805,7 @@
               "phone": "Y",
               "watch_for": [],
               "tip_ja": "舌を上あごに近づけてから、\n次の母音へすべらせます。",
-              "ipa": "/júːs/"
+              "ipa": "/júːz/"
             }
           ],
           "difficulty": 2

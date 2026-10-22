@@ -395,14 +395,6 @@
      "tag": "f-h"
     },
     {
-     "word": "would",
-     "phone": "UH",
-     "watchFor": [
-      "UW"
-     ],
-     "tag": "vowels-tense-lax"
-    },
-    {
      "word": "food",
      "phone": "UW",
      "watchFor": [
@@ -4067,7 +4059,6 @@
        "ja": "あなたも来るべきですよ。",
        "difficulty": 2,
        "focus": [
-        "UH",
         "UW"
        ]
       },
@@ -4301,8 +4292,8 @@
        "ja": "この魚の料理の仕方を教えてもらえますか？ 家で作ってみたいんです。",
        "difficulty": 5,
        "focus": [
-        "UH",
         "OW",
+        "UH",
         "EY"
        ]
       }
@@ -4697,8 +4688,7 @@
      "focus": [
       "T",
       "DH",
-      "V",
-      "UH"
+      "V"
      ]
     },
     {
@@ -4759,7 +4749,6 @@
      "difficulty": 4,
      "focus": [
       "AA",
-      "UH",
       "S",
       "F"
      ]
@@ -5358,7 +5347,6 @@
      "ja": "すみません、\n駅への行き方を教えてもらえますか？",
      "difficulty": 2,
      "focus": [
-      "UH",
       "L",
       "T"
      ],
@@ -5839,7 +5827,6 @@
      "ja": "わかりました。\n仕事は休んだほうがいいですか？",
      "difficulty": 2,
      "focus": [
-      "UH",
       "OW",
       "ER"
      ],

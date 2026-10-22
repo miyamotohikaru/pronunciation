@@ -53,7 +53,32 @@ def cmu():
     return _cmu
 
 
+# Heteronyms: the reading this content intends (CMUdict's first entry is often the
+# other one, e.g. live = /láɪv/). Every use of these words in content/ has this
+# meaning; the one exception (past-tense "read" in u02-l1-02) is listed in
+# heteronyms.json for the voice engineer. Keep this table and heteronyms.json in sync.
+INTENDED = {
+    "live": ("L IH1 V", "動詞「住む」"), "lives": ("L IH1 V Z", "動詞「住む」"),
+    "read": ("R IY1 D", "現在形「読む」"), "lead": ("L IY1 D", "動詞「率いる」"),
+    "close": ("K L OW1 Z", "動詞「閉める」"), "use": ("Y UW1 Z", "動詞「使う」"),
+    "excuse": ("IH0 K S K Y UW1 Z", "動詞（Excuse me）"), "wind": ("W IH1 N D", "名詞「風」"),
+    "perfect": ("P ER1 F IH0 K T", "形容詞「完璧な」"), "survey": ("S ER1 V EY0", "名詞「調査」"),
+    "desert": ("D EH1 Z ER0 T", "名詞「砂漠」"), "minute": ("M IH1 N AH0 T", "名詞「分」"),
+    "minutes": ("M IH1 N AH0 T S", "名詞「分」"), "learned": ("L ER1 N D", "過去形「学んだ」"),
+    "does": ("D AH1 Z", "動詞 do"), "house": ("HH AW1 S", "名詞「家」"), "row": ("R OW1", "名詞「列」"),
+}
+
+
 def prons(word):
+    d = cmu()
+    w = word.lower().strip()
+    if w in INTENDED:
+        return [INTENDED[w][0].split()]
+    return d.get(w) or d.get(w.strip("'")) or []
+
+
+def all_prons(word):
+    """Every CMUdict pronunciation, ignoring INTENDED (for listing alternatives)."""
     d = cmu()
     w = word.lower().strip()
     return d.get(w) or d.get(w.strip("'")) or []
@@ -148,3 +173,26 @@ FLAP_NOTE = "米国英語では、この t は舌先で軽くはじく音（ラ�
 def flap_note(word):
     p = pick(word)
     return FLAP_NOTE if p and any(base(p[i]) == "T" for i in flap_index(p)) else None
+
+
+# ------------------------------------------------------------------ misaki
+# misaki (Kokoro G2P) style for the voice engineer: stress mark before the vowel,
+# r = ɹ, diphthongs as single letters (A = eɪ, I = aɪ, W = aʊ, Y = ɔɪ, O = oʊ).
+MK_CONS = {**CONS, "CH": "ʧ", "JH": "ʤ", "G": "ɡ", "R": "ɹ"}
+MK_VOW = {"AA": "ɑ", "AE": "æ", "AH": "ʌ", "AO": "ɔ", "AW": "W", "AY": "I", "EH": "ɛ", "ER": "ɜɹ",
+          "EY": "A", "IH": "ɪ", "IY": "i", "OW": "O", "OY": "Y", "UH": "ʊ", "UW": "u"}
+
+
+def to_misaki(phones):
+    flaps = set(flap_index(phones))
+    out = []
+    for i, p in enumerate(phones):
+        b, st = base(p), (p[-1] if p[-1].isdigit() else "")
+        if b in VOW:
+            v = MK_VOW[b]
+            if st == "0":
+                v = {"AH": "ə", "ER": "əɹ"}.get(b, v)
+            out.append({"1": "ˈ", "2": "ˌ"}.get(st, "") + v)
+        else:
+            out.append("ɾ" if i in flaps else MK_CONS[b])
+    return "".join(out)
