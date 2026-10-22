@@ -12,7 +12,7 @@ export const FIELD_HEX: Record<FieldClass, string> = {
   "field-rhythm": "#ff7a2e",
   "field-teal": "#19c3b5",
   "field-rl": "#2d5bff",
-  "field-berry": "#c92d70",
+  "field-berry": "#a02a5c",
   "field-amber": "#ffb300",
   "field-th": "#16b06a",
   "field-shell": "#ffd338",

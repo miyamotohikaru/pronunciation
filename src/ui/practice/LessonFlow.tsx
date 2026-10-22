@@ -16,7 +16,7 @@ import type { FieldClass } from "./fields";
 export type LessonFlowProps = {
   field: FieldClass;
   unit: { id: string; titleJa: string; subtitleJa: string; whyJa: string; howJa: string };
-  lesson: { id: string; titleJa: string; goalJa: string; items: { id: string; type: string; text: string; ja: string; pair?: string }[] };
+  lesson: { id: string; titleJa: string; goalJa: string; boss?: boolean; items: { id: string; type: string; text: string; ja: string; pair?: string }[] };
   next: { href: string; titleJa: string } | null;
   initialIndex: number | null;
   /** minimal pairs for this lesson's words (the sound card's scrubber plays both) */
@@ -77,11 +77,22 @@ export default function LessonFlow({ field, unit, lesson, next, initialIndex, pa
       </header>
       <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-4 pb-[calc(18px+env(safe-area-inset-bottom))]">
         {/* the heavy rounded face is for the karaoke caption and the score only */}
+        {lesson.boss ? (
+          <p className="mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-(--paper) px-3 py-1 text-[13px] font-bold text-(--ink)">
+            <IconStar size={14} filled />
+            まとめ
+          </p>
+        ) : null}
         <h1 className="jp mt-2 text-[34px] font-black leading-tight md:text-[48px]">{lesson.titleJa}</h1>
         <p className="jp mt-4 text-[17px] font-bold leading-snug md:text-[20px]">
           <BreakText text={br(lesson.goalJa)} />
         </p>
-
+        {lesson.boss ? (
+          // the unit's last stop: a short word on what it is, instead of the unit's lesson again
+          <p className="jp mt-3 text-[15px] font-medium leading-relaxed">
+            <BreakText text="このユニットの音を、◆長い文でまとめて練習します。◇むずかしい所は、◆ゆっくりの声からどうぞ。" />
+          </p>
+        ) : (
         <section className="mt-6 rounded-[24px] bg-(--paper) px-5 py-5 text-(--ink) shadow-[0_6px_0_var(--field-deep)]">
           <h2 className="text-[14px] font-black">なぜ大事？</h2>
           <p className="jp mt-2 text-[15px] font-medium leading-relaxed">
@@ -92,12 +103,14 @@ export default function LessonFlow({ field, unit, lesson, next, initialIndex, pa
             <BreakText text={br(unit.howJa)} />
           </p>
         </section>
+        )}
 
-        <ol className="mt-6 flex flex-wrap gap-2" aria-label="このレッスンの練習">
+        {/* the lines (sentences now): one per row, numbered */}
+        <ol className="mt-6 flex flex-col gap-2" aria-label="このレッスンの練習">
           {items.map((it, i) => (
-            <li key={it.id} className="en inline-flex h-9 items-center rounded-full bg-(--paper) px-3 text-[14px] font-bold text-(--ink)">
-              <span className="sr-only">{i + 1}. </span>
-              {it.text}
+            <li key={it.id} className="flex items-baseline gap-3 rounded-[14px] bg-(--paper) px-4 py-3 text-(--ink)">
+              <span className="num w-5 shrink-0 text-[13px] font-bold opacity-60">{i + 1}</span>
+              <span className="en text-[15px] font-bold leading-snug">{it.text}</span>
             </li>
           ))}
         </ol>

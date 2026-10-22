@@ -28,11 +28,13 @@ export type TelopProps = {
   selected?: number | null;
   onSelect?: (i: number) => void;
   className?: string;
+  /** karaoke: per word 0..1, how far it is painted gold — your voice in the band, left to right */
+  hits?: { current: number[] };
 };
 
 const useIso = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, className }: TelopProps) {
+function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, className, hits }: TelopProps) {
   const display = text.split(/\s+/).filter(Boolean);
   const tokens = words.map((w, i) => display[i] ?? w.text);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -97,12 +99,15 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
       if (mode === "karaoke") {
         const t = clock?.current ?? null;
         const states = words.map((w) => (t === null ? "idle" : t < w.start - 0.03 ? "todo" : t <= w.end + 0.03 ? "now" : "done"));
-        const sig = states.join(",");
+        const gs = words.map((_, i) => Math.min(1, Math.max(0, hits?.current[i] ?? 0)));
+        const sig = `${states.join(",")}|${gs.map((g) => g.toFixed(3)).join(",")}`;
         if (sig !== last) {
           last = sig;
           states.forEach((st, i) => {
             const el = wordRefs.current[i];
-            if (el && el.dataset.state !== st) el.dataset.state = st;
+            if (!el) return;
+            if (el.dataset.state !== st) el.dataset.state = st;
+            el.style.setProperty("--g", String(gs[i]));
           });
         }
       } else {
@@ -118,7 +123,7 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [words, mode, clock, reveal]);
+  }, [words, mode, clock, reveal, hits]);
 
   const groups = lines ?? [tokens.map((_, i) => i)];
   const single = groups.length === 1;
@@ -150,7 +155,7 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
           aria-hidden={mode === "karaoke" ? true : undefined}
           // karaoke: one axis — every line from the same left edge (the IPA and the meaning below follow it)
           className={`flex ${mode === "karaoke" ? (!lines ? "flex-wrap justify-start" : "justify-start") : !lines ? "flex-wrap justify-center" : single ? "justify-center" : li % 2 === 0 ? "justify-start" : "justify-end"}`}
-          style={{ columnGap: mode === "karaoke" ? "0.34em" : "0.24em", marginTop: li ? (mode === "result" ? "0.32em" : "0.06em") : 0 }}
+          style={{ columnGap: mode === "karaoke" ? "0.26em" : "0.24em", marginTop: li ? (mode === "result" ? "0.32em" : "0.06em") : 0 }}
         >
           {g.map((i) => (
             <Word

@@ -19,7 +19,7 @@ import type { GuideProps } from "./types";
 import { WORD_GRADE_LABEL, wordGrade, type WordGrade } from "./grades";
 
 const PAD = { l: 12, r: 12, t: 30, b: 40 };
-const NOW_X = 0.36; // room on the left for the judgement of the word just sung
+const NOW_X = 0.5; // the word being sung stays in the middle of the card
 const EDGE = 26; // px of fade at the left and right edges
 
 type RGB = [number, number, number];
@@ -121,8 +121,9 @@ function WaveGuide(props: GuideProps) {
       // the band's own thickness and a little air above and below; a flat line still gets some room
       lo -= tol + 1;
       hi += tol + 1;
-      if (hi - lo < 10) {
-        const add = (10 - (hi - lo)) / 2;
+      // at least 16 semitones tall, so the ±tol ribbon stays a ribbon (not a blob) on a calm line
+      if (hi - lo < 16) {
+        const add = (16 - (hi - lo)) / 2;
         lo -= add;
         hi += add;
       }
@@ -227,7 +228,7 @@ function WaveGuide(props: GuideProps) {
         }
       }
 
-      // ---- お手本: one quiet band; a won syllable a little brighter
+      // ---- お手本: one quiet ribbon of constant width (the band, ±tol); a won syllable a little brighter
       const sylOf = (t: number) => {
         for (let i = 0; i < p.syllables.length; i++) if (t >= p.syllables[i].start && t <= p.syllables[i].end) return i;
         return -1;
@@ -239,7 +240,7 @@ function WaveGuide(props: GuideProps) {
           const si = sylOf(pt.t);
           const g = si >= 0 && bars ? bars[si]?.grade : null;
           const won = !settled && (g === "great" || g === "perfect");
-          const a = (won ? 0.5 : 0.3) * (pt.b ? 0.6 : 1) * fade(pt.t);
+          const a = (won ? 0.42 : 0.26) * (pt.b ? 0.6 : 1) * fade(pt.t);
           return rgba(col.guide, a);
         };
         const xa = X(seg[0].t);
@@ -248,26 +249,24 @@ function WaveGuide(props: GuideProps) {
         const step = Math.max(1, Math.floor(seg.length / 60));
         for (let i = 0; i < seg.length; i += step) grad.addColorStop(Math.min(1, Math.max(0, (X(seg[i].t) - xa) / Math.max(1, xb - xa))), style(i));
         grad.addColorStop(1, style(seg.length - 1));
-        ctx.fillStyle = grad;
+        // one stroke as wide as the band, through the midpoints of a lightly smoothed melody (±3 points):
+        // a calm ribbon with round ends instead of lumps at every sharp turn
+        const ys = seg.map((_, i) => {
+          let sum = 0;
+          let n = 0;
+          for (let k = Math.max(0, i - 3); k <= Math.min(seg.length - 1, i + 3); k++) {
+            sum += seg[k].st;
+            n++;
+          }
+          return Y(sum / n);
+        });
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = band;
         ctx.beginPath();
-        for (let i = 0; i < seg.length; i++) {
-          const x = X(seg[i].t);
-          const y = Y(seg[i].st) - band / 2;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        for (let i = seg.length - 1; i >= 0; i--) ctx.lineTo(X(seg[i].t), Y(seg[i].st) + band / 2);
-        ctx.closePath();
-        ctx.fill();
-        for (const [pt, a0, a1, i] of [
-          [seg[0], Math.PI / 2, (Math.PI * 3) / 2, 0],
-          [seg[seg.length - 1], -Math.PI / 2, Math.PI / 2, seg.length - 1],
-        ] as const) {
-          ctx.fillStyle = style(i);
-          ctx.beginPath();
-          ctx.ellipse(X(pt.t), Y(pt.st), Math.min(band / 2, 12), band / 2, 0, a0, a1);
-          ctx.fill();
-        }
+        ctx.moveTo(X(seg[0].t), ys[0]);
+        for (let i = 1; i < seg.length - 1; i++) ctx.quadraticCurveTo(X(seg[i].t), ys[i], (X(seg[i].t) + X(seg[i + 1].t)) / 2, (ys[i] + ys[i + 1]) / 2);
+        ctx.lineTo(X(seg[seg.length - 1].t), ys[seg.length - 1]);
+        ctx.stroke();
       }
 
       // ---- the playhead (under your line, so the pen tip sits on it)
@@ -358,7 +357,9 @@ function WaveGuide(props: GuideProps) {
         ctx.arc(Math.max(cx, tp.x), tp.y, 5 * scale, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
-        if (!tp.inBand) {
+        // one cue at a time: while a word's judgement is up, no 高い / 低い
+        const popUp = pops.length > 0 && now - pops[0].at < POP_MS;
+        if (!tp.inBand && !popUp) {
           const g = guideAt(p.wave, cursor);
           if (Number.isFinite(g)) {
             const high = tp.st > g;
@@ -382,7 +383,7 @@ function WaveGuide(props: GuideProps) {
         const x1 = Math.max(x0 + 4, X(w.end) - 2);
         if (x1 < 0 || x0 > W) continue;
         const bright = p.focusWord != null ? p.focusWord === i : nowWord < 0 ? !following : nowWord === i;
-        const a = (bright ? 0.95 : 0.32) * (following ? fade(w.end) : 1);
+        const a = (bright ? 0.95 : 0.5) * (following ? fade(w.end) : 1);
         ctx.strokeStyle = `rgba(255,255,255,${a})`;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -394,7 +395,8 @@ function WaveGuide(props: GuideProps) {
         const tw = ctx.measureText(w.text).width;
         const cx = Math.max((x0 + x1) / 2, labelEnd + 6 + tw / 2);
         labelEnd = cx + tw / 2;
-        ctx.fillStyle = bright ? "#ffffff" : rgba(col.muted, 0.6 * (following ? fade(w.end) : 1));
+        // ≥ 4.5:1 on the monitor even when dim; the word at the playhead white
+        ctx.fillStyle = bright ? "#ffffff" : rgba(col.muted, 0.9 * (following ? Math.max(0.75, fade(w.end)) : 1));
         ctx.fillText(w.text, cx, yb + 16 * Math.min(scale, 1.3));
       }
 
@@ -410,6 +412,7 @@ function WaveGuide(props: GuideProps) {
           const g = wordGrade(bars, p.syllables, wi);
           if (!g) continue;
           popped[wi] = true;
+          if (g.grade === "miss") continue; // the caption's gold already says it
           pops.length = 0; // one judgement on screen at a time: the newest word
           pops.push({ word: wi, grade: g.grade, late: g.late, at: now, x0: 0, x1: 0 });
         }
@@ -423,9 +426,9 @@ function WaveGuide(props: GuideProps) {
           continue;
         }
         const w = p.words[pop.word];
-        const label = WORD_GRADE_LABEL[pop.grade];
-        const latinLabel = pop.grade !== "near";
-        ctx.font = latinLabel ? `800 ${Math.round(Math.min(22, 17 * scale))}px ${latin || font}` : `700 ${Math.round(Math.min(19, 15 * scale))}px ${font}`;
+        const label = WORD_GRADE_LABEL[pop.grade] ?? "";
+        const gold = pop.grade !== "good";
+        ctx.font = `800 ${Math.round(Math.min(22, 17 * scale))}px ${latin || font}`;
         const half = ctx.measureText(label).width / 2 + 6;
         // above the top of the band inside this word
         let top = Infinity;
@@ -447,7 +450,7 @@ function WaveGuide(props: GuideProps) {
         ctx.lineWidth = 5;
         ctx.strokeStyle = rgba(col.monitor, 1);
         ctx.strokeText(label, 0, 0);
-        ctx.fillStyle = latinLabel ? rgba(col.voice, 1) : "#ffffff";
+        ctx.fillStyle = gold ? rgba(col.voice, 1) : "#ffffff";
         ctx.fillText(label, 0, 0);
         if (pop.late) {
           ctx.font = `600 ${Math.round(11 * scale)}px ${font}`;

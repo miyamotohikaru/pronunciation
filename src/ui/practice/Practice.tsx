@@ -28,7 +28,7 @@ import RoundButton from "../RoundButton";
 import ScoreHead, { PartsRow, shownTotal } from "../result/ScoreHead";
 import ResultSentence from "../result/ResultSentence";
 import DirectionSlider from "../result/DirectionSlider";
-import SoundSheet, { type RetryState } from "../SoundSheet";
+import type { RetryState } from "../SoundSheet";
 import SoundCoach, { type CoachClips } from "../SoundCoach";
 import type { Clip } from "./crossfade";
 /** what a word-level play button is playing: お手本, your take, or what it was heard as */
@@ -36,10 +36,10 @@ type Voice = "model" | "you" | "heard";
 import TelopText from "../TelopText";
 import { IconMic, IconNext, IconPlay, IconRetry, IconSpeaker } from "../icons";
 import { RETRY_FIRST_BELOW, mark, rangePosition, step7, tempoPosition, total, verdict } from "../score";
-import { chartTipJa, heardShort } from "../copy";
+import { chartTipJa, heardShort, heardWord } from "../copy";
 import { buzz, setMuted, sfx } from "../sfx";
 import type { PhoneScore, ProsodyNote, Scores, WordScore } from "../types";
-import { SPEEDS, VOICES, fetchItem, guideFor, keepItems, speedsFor, type GuideTake, type Speed } from "./content";
+import { SPEEDS, VOICES, fetchItem, guideFor, keepItems, speedsFor, type GuideTake, type Speed, type VoiceId } from "./content";
 import { getPlayer, keepBuffers, loadBuffer, newRecorder, newWordRecorder, onScoringStatus, playableTake, scoringStatus, startScoring, warmRecorder } from "./audio";
 import { alignLetters } from "./letters";
 import { DEFAULT_SETTINGS, bestOf, hintSeen, loadSettings, markHintSeen, saveBest, saveSettings, type Settings } from "./progress";
@@ -71,17 +71,35 @@ export type PracticeResult = {
   off: { start: number; end: number }[];
   /** the word coached on the result (the worst flagged sound), fixed for this take; -1 = none */
   coach: number;
+  /** the words with a wrong sound when the take was scored, in line order (the coach moves between them) */
+  mistakes: number[];
 };
 
+/**
+ * One line to practise. Reusable: a lesson passes an id; another flow (a dialogue) can pass the
+ * item itself, fix the speed and voice, mark a partner's line (listen only), and embed it
+ * without its own top bar.
+ */
 export type PracticeProps = {
   itemId: string;
+  /** the item itself, when the caller already has it (nothing is fetched) */
+  item?: ItemData;
   nextItemId?: string | null;
   field: FieldClass;
-  index: number;
-  total: number;
-  combo: number;
-  backHref: string;
+  index?: number;
+  total?: number;
+  combo?: number;
+  backHref?: string;
+  /** fix the speed / the voice for this line (their chips are then hidden; nothing is saved) */
+  speed?: Speed;
+  voice?: VoiceId;
+  /** a dialogue line: "you" practise it (the default); "partner" only listen — no mic, no score */
+  role?: "you" | "partner";
+  /** inside another flow: no top bar of its own */
+  embedded?: boolean;
   onResult?: (itemId: string, score: number) => void;
+  /** a partner's line has been heard to the end */
+  onListened?: () => void;
   onNext: () => void;
   /** minimal pairs from the catalog: word → the pair item that has both words recorded */
   pairs?: Record<string, { id: string; other: string; side: "main" | "pair" }>;
@@ -94,15 +112,20 @@ declare global {
   }
 }
 
-export default function Practice({ itemId, nextItemId, field, index, total: totalItems, combo, backHref, onResult, onNext, pairs }: PracticeProps) {
-  const [item, setItem] = useState<ItemData | null>(null);
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+export default function Practice({ itemId, item: itemProp, nextItemId, field, index = 0, total: totalItems = 1, combo = 0, backHref = "/home", speed: speedProp, voice: voiceProp, role = "you", embedded, onResult, onListened, onNext, pairs }: PracticeProps) {
+  const [item, setItem] = useState<ItemData | null>(itemProp ?? null);
+  const [stored, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  // what this line uses: the saved settings, unless the caller fixes the speed or the voice
+  const settings = useMemo<Settings>(() => ({ ...stored, ...(speedProp ? { speed: speedProp } : {}), ...(voiceProp ? { voice: voiceProp } : {}) }), [stored, speedProp, voiceProp]);
+  const partner = role === "partner";
   const [phase, setPhase] = useState<Phase>("loading");
   const [count, setCount] = useState(0);
   const [playing, setPlaying] = useState<null | "model" | "replay" | "seg">(null);
   const [segVoice, setSegVoice] = useState<Voice | null>(null);
   const [result, setResult] = useState<PracticeResult | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
+  // the word the result's card is on (null = the worst one); a pair recording arriving re-renders it
+  const [coachSel, setCoachSel] = useState<number | null>(null);
+  const [, setPairVersion] = useState(0);
   const [revealKey, setRevealKey] = useState(0);
   const [skip, setSkip] = useState(false);
   const [revealDone, setRevealDone] = useState(false);
@@ -119,6 +142,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   const level = useRef(0);
   // 0..1 until the take stops by itself (the ring around the stop button)
   const stopAt = useRef(0);
+  // the caption's gold: per word, how far your voice has been inside the band (0..1, left to right)
+  const hits = useRef<number[]>([]);
   // the bottom bar's 「だけ言う」: its mic ring follows your level while the word is recorded
   const barRing = useRef<HTMLSpanElement>(null);
   // the first take on this device gets one hint in the lane
@@ -128,7 +153,6 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   const takeRef = useRef<Take | null>(null);
   const recRef = useRef<MicRecorder | null>(null);
   const raf = useRef(0);
-  const lastFocus = useRef<HTMLElement | null>(null);
   const alive = useRef(true);
   const lastTotal = useRef<number | null>(null);
   // word retries inside the sound card
@@ -170,6 +194,10 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
 
   useEffect(() => {
     let ok = true;
+    if (itemProp) {
+      setItem(itemProp);
+      return;
+    }
     setItem(null);
     setPhase("loading");
     keepItems([itemId, ...(nextItemId ? [nextItemId] : [])]);
@@ -183,7 +211,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     return () => {
       ok = false;
     };
-  }, [itemId, nextItemId]);
+  }, [itemId, nextItemId, itemProp]);
 
   useEffect(() => {
     if (!guide) return;
@@ -250,12 +278,14 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
         l.follow = phase !== "result";
         l.tone = "guide";
       },
-      onEnd: () => {
+      onEnd: (completed) => {
         const l = live.current;
         l.t = null;
         l.follow = false;
         l.version++;
-        if (alive.current) setPlaying(null);
+        if (!alive.current) return;
+        setPlaying(null);
+        if (partner && completed) onListened?.(); // a partner's line: heard to the end
       },
     };
     void player.play(buf); // synchronous unlock inside the tap
@@ -293,6 +323,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     let stopping = false;
     let loudAt = 0; // last time the input was clearly above the noise floor (performance.now)
     const buzzedWords = g.words.map(() => false); // words already given their haptic tick
+    hits.current = g.words.map(() => 0);
+    let lineAt = 0; // judge.line points already turned into gold
     let digit = 4;
     let startedModel = false;
     const together = settings.together;
@@ -315,13 +347,28 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
         void getPlayer().play(buf); // allowed without a gesture while capturing
       }
       judge.advance(gt);
-      // one light tick per word judged GREAT or better (the lane pops the word's judgement)
+      // real karaoke: while your line is inside the band, the word at that moment paints gold from the left
+      const line = judge.line;
+      for (; lineAt < line.length; lineAt++) {
+        const q = line[lineAt];
+        if (!q.inBand) continue;
+        for (let w = 0; w < g.words.length; w++) {
+          const W = g.words[w];
+          if (q.t < W.start - 0.04 || q.t > W.end + 0.04) continue;
+          const at = Math.min(1, (q.t + 0.06 - W.start) / Math.max(0.05, W.end - W.start));
+          if (at > hits.current[w]) hits.current[w] = at;
+          break;
+        }
+      }
+      // one light tick per judged word (the lane pops its judgement right above it)
       for (let w = 0; w < buzzedWords.length; w++) {
         if (buzzedWords[w]) continue;
         const wg = wordGrade(judge.bars, g.syllables, w);
         if (!wg) continue;
         buzzedWords[w] = true;
-        if (wg.grade !== "near") buzz(8);
+        if (wg.grade === "perfect" || wg.grade === "great") hits.current[w] = 1; // a won word ends fully gold
+        if (wg.grade === "perfect" || wg.grade === "great") buzz(10);
+        else if (wg.grade === "good") buzz(5);
       }
       stopAt.current = Math.min(1, Math.max(0, (gt + COUNT_IN) / (COUNT_IN + g.duration + TAIL)));
       // stop after the guide; if you are still talking (a little behind the cursor), wait for you
@@ -372,7 +419,6 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     const showHint = !hintSeen();
     startTransition(() => {
       setPlaying(null);
-      setSelected(null);
       setPhase("starting");
       setAttempt(n);
       setHint(showHint);
@@ -426,6 +472,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
         setRevealDone(false);
         setStage(0);
         setDetails(false);
+        setCoachSel(null);
         setResult(r);
         setRevealKey((k) => k + 1);
         setPhase("result");
@@ -512,6 +559,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
       previous: lastTotal.current,
       off: prosody ? offStretches(prosody.userOnRefTime, g.wave, 2.5) : [],
       coach: worstFlagged(words),
+      mistakes: words.map((w, i) => (w.phones.some((ph) => mark(ph) === "miss") ? i : -1)).filter((i) => i >= 0),
     };
   };
 
@@ -599,24 +647,66 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
    * heard (rice → "lice"), both come from that pair's recordings (same voice, same speed); else
    * お手本's word ↔ your own take of it. Clips are made only when pressed (no work on render).
    */
+  /**
+   * The sound card's two words: お手本's word and the word it was heard as. In order of preference:
+   *  1. the listen-only word clips (/audio/<voice>/w-<word>[.slow|.slower].mp3): the target word and
+   *     the heard word (spelled from what the AI heard; else the item's `pair`, else the focus's
+   *     watchFor) — isolated words, the same voice and speed, so they blend cleanly;
+   *  2. both words inside this very line ("Turn right at the light.");
+   *  3. the catalog's old pair item (content v1).
+   */
   const loadPair = (i: number) => {
-    if (!item || !result || !pairs || i < 0 || i in pairClips.current) return;
+    if (!item || !result || i < 0 || i in pairClips.current) return;
     const w = result.words[i];
-    const end = (heardEnd.current[i] ?? heardEndFor(w))?.toLowerCase();
-    const ref = pairs[w.text.toLowerCase()];
-    if (!ref || !end || ref.other.toLowerCase() !== end) return;
-    pairClips.current[i] = null;
-    const voice = settings.voice;
-    fetchItem(ref.id)
-      .then(async (pi) => {
-        const a = ref.side === "main" ? pi : pi.pairItem;
-        const b = ref.side === "main" ? pi.pairItem : pi;
-        if (!a || !b) return;
-        const ga = guideFor(a, voice, "native");
-        const gb = guideFor(b, voice, "native");
-        const [ba, bb] = await Promise.all([loadBuffer(ga.audio), loadBuffer(gb.audio)]);
-        const clip = (g: GuideTake, buffer: AudioBuffer): Clip => ({ buffer, t0: Math.max(0, (g.words[0]?.start ?? g.speech[0]) - 0.04), t1: (g.words[0]?.end ?? g.speech[1]) + 0.06 });
-        if (alive.current) pairClips.current[i] = { model: clip(ga, ba), other: clip(gb, bb) };
+    const g = guide;
+    const b0 = bufferRef.current;
+    const spoken = (x: string) => x.toLowerCase().replace(/[^a-z']/g, "");
+    const target = spoken(item.words[i]?.text ?? w.text);
+    // the heard word: spelled from the AI's heard sound, else the line's pair word, else the focus's watchFor
+    const worst = [...w.phones].filter((ph) => mark(ph) === "miss").sort((a, b) => a.score - b.score)[0];
+    const fromFocus = (() => {
+      const f = item.focus.find((x) => !x.inPair && x.word === i && x.watchFor.length && x.watchFor[0] !== "EPEN");
+      if (!f) return null;
+      const ph = w.phones.find((x) => x.phone.replace(/\d/g, "") === f.phone);
+      return ph ? heardWord(w, { ...ph, heardAs: f.watchFor[0] }) : null;
+    })();
+    const pairWord = item.pair && spoken(item.pair) !== target ? spoken(item.pair) : null;
+    const end = [(heardEnd.current[i] ?? heardEndFor(w)) ?? null, worst?.heardAs ? null : pairWord, fromFocus]
+      .map((x) => (x ? spoken(x) : ""))
+      .find((x) => /^[a-z']{2,}$/.test(x) && x !== target);
+    if (!end || !g) return;
+    pairClips.current[i] = null; // loading
+    const sfx = g.speed === "slow" ? ".slow" : g.speed === "slower" ? ".slower" : "";
+    const url = (word: string) => `/audio/${settings.voice}/w-${word}${sfx}.mp3`;
+    const whole = (buffer: AudioBuffer): Clip => ({ buffer, t0: 0, t1: buffer.duration });
+    const done = (pc: { model: Clip; other: Clip }) => {
+      if (!alive.current) return;
+      pairClips.current[i] = pc;
+      setPairVersion((v) => v + 1); // the card can now offer 「聞こえた音」
+    };
+    Promise.all([loadBuffer(url(target)), loadBuffer(url(end))])
+      .then(([a, b]) => done({ model: whole(a), other: whole(b) }))
+      .catch(() => {
+        // 2. both words in this very line
+        const j = item.words.findIndex((x, k) => k !== i && spoken(x.text) === end);
+        if (j >= 0 && b0 && g.words[i] && g.words[j]) {
+          const seg = (k: number): Clip => ({ buffer: b0, t0: Math.max(0, g.words[k].start - 0.04), t1: g.words[k].end + 0.06 });
+          return done({ model: seg(i), other: seg(j) });
+        }
+        // 3. the catalog's old pair item, when it has its own recording of the other word
+        const ref = pairs?.[target];
+        if (!ref || spoken(ref.other) !== end) return;
+        const voice = settings.voice;
+        return fetchItem(ref.id).then(async (pi) => {
+          const a = ref.side === "main" ? pi : pi.pairItem;
+          const b = ref.side === "main" ? pi.pairItem : pi;
+          if (!a || !b) return;
+          const ga = guideFor(a, voice, "native");
+          const gb = guideFor(b, voice, "native");
+          const [ba, bb] = await Promise.all([loadBuffer(ga.audio), loadBuffer(gb.audio)]);
+          const clip = (gt: GuideTake, buffer: AudioBuffer): Clip => ({ buffer, t0: Math.max(0, (gt.words[0]?.start ?? gt.speech[0]) - 0.04), t1: (gt.words[0]?.end ?? gt.speech[1]) + 0.06 });
+          done({ model: clip(ga, ba), other: clip(gb, bb) });
+        });
       })
       .catch(() => undefined);
   };
@@ -667,17 +757,6 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     setPlaying("seg");
   };
 
-  const openWord = useCallback(
-    (i: number) => {
-      stopPlayback();
-      lastFocus.current = document.activeElement as HTMLElement | null;
-      setSheetBefore(null);
-      setRetry({ state: "idle" });
-      setSelected(i);
-    },
-    [stopPlayback],
-  );
-
   // say one word again from the sound card: record (VAD stop), score it alone, update in place
   const retryWord = (i: number) => {
     if (retry.state === "recording") {
@@ -726,12 +805,14 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
         setRetry(name === "AbortError" ? { state: "idle" } : { state: "error", message: "マイクが使えません。◇もう一度、◆押してください。" });
       });
   };
-  const closeWord = useCallback(() => {
+  /** move the result's card to another mistake */
+  const pickCoach = (i: number) => {
     stopPlayback();
-    setSelected(null);
-    requestAnimationFrame(() => lastFocus.current?.focus());
-  }, [stopPlayback]);
-
+    setSheetBefore(null);
+    setRetry({ state: "idle" });
+    setCoachSel(i);
+    loadPair(i);
+  };
   useEffect(() => {
     if (retry.state !== "recording") return;
     let raf = 0;
@@ -773,7 +854,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   const words = item?.words.map((w) => w.text) ?? [];
   const reading = result ? chartTipJa(result.notes, words) : "";
   // the sound coached on the result: the worst flagged word of this take
-  const coachIdx = result ? result.coach : -1;
+  const coachIdx = result ? (coachSel ?? result.coach) : -1;
   const passed = score >= RETRY_FIRST_BELOW;
   // one main action per state: first the worst word (its 「だけ言う」); once that sound is fixed —
   // or when there was none — 次へ; a weak line with nothing to fix asks for the line again
@@ -791,7 +872,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
 
   return (
     <div className={`kara ${field} flex min-h-dvh flex-col`}>
-      <TopBar backHref={backHref} index={index + 1} total={totalItems} combo={busyTake ? 0 : combo} />
+      {embedded ? null : <TopBar backHref={backHref} index={index + 1} total={totalItems} combo={busyTake ? 0 : combo} />}
 
       {/* fetch the font subsets the result uses while the learner is still on the guide */}
       <span aria-hidden className="pointer-events-none absolute -left-[9999px] top-0 select-none whitespace-nowrap font-bold opacity-0">
@@ -819,13 +900,10 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                   text={item.text}
                   words={result.words}
                   onOpen={(i) => {
-                    if (i === coachIdx) document.getElementById("coach")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    else {
-                      loadPair(i);
-                      openWord(i);
-                    }
+                    if (i !== coachIdx) pickCoach(i);
+                    document.getElementById("coach")?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
-                  selected={selected}
+                  selected={coachIdx}
                 />
               </div>
             ) : null}
@@ -840,15 +918,22 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                   primary={main === "word"}
                   word={result.words[coachIdx]}
                   token={item.words[coachIdx]?.text ?? result.words[coachIdx].text}
-                  before={selected === null ? sheetBefore : null}
+                  ipa={item.words[coachIdx]?.ipa}
+                  before={sheetBefore}
                   heardEnd={heardEnd.current[coachIdx] ?? heardEndFor(result.words[coachIdx])}
+                  heardClip={!!pairClips.current[coachIdx]}
+                  nav={{
+                    items: result.mistakes.map((i) => ({ label: (item.words[i]?.text ?? result.words[i].text).replace(/[.,!?]/g, ""), done: !result.words[i].phones.some((ph) => mark(ph) === "miss") })),
+                    index: Math.max(0, result.mistakes.indexOf(coachIdx)),
+                    onPick: (k) => pickCoach(result.mistakes[k]),
+                  }}
                   tipFor={tipFor(coachIdx)}
                   clips={clipsFor(coachIdx)}
                   onPlayModel={() => playEnd("model", coachIdx)}
                   onPlayHeard={() => playEnd("heard", coachIdx)}
                   onPlayMine={() => playSeq(["you"], coachIdx)}
-                  playing={selected === null ? segVoice : null}
-                  retry={selected === null ? retry : { state: "idle" }}
+                  playing={segVoice}
+                  retry={retry}
                   level={level}
                   onRetry={() => retryWord(coachIdx)}
                 />
@@ -914,16 +999,16 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                 className="mx-auto w-full max-w-[1040px] px-1"
                 style={{ fontSize: (item?.text.length ?? 0) > 26 ? "clamp(32px,8.8vw,88px)" : (item?.text.length ?? 0) > 15 ? "clamp(38px,10.6vw,96px)" : "clamp(42px,12.4vw,104px)" }}
               >
-                {item && guide ? <Telop text={item.text} words={guide.words} mode="karaoke" clock={clock} reveal={reveal} selected={null} onSelect={openWord} /> : <div className="h-[1.3em]" aria-hidden />}
+                {item && guide ? <Telop text={item.text} words={guide.words} mode="karaoke" clock={clock} reveal={reveal} selected={null} hits={hits} /> : <div className="h-[1.3em]" aria-hidden />}
               </div>
               {item ? (
                 <div className="mx-auto w-full max-w-[1040px] px-1">
-                  {/* the sounds, dictionary-style; then the meaning */}
-                  <p className="ipa mt-2 text-[16px] leading-snug opacity-90 md:text-[19px]">{lineIpa(item)}</p>
-                  <p className="jp mt-2 text-[15px] font-medium leading-snug md:mt-3 md:text-[18px]">
+                  {/* sentence > meaning > sounds: the meaning, then the IPA smaller and quieter */}
+                  <p className="jp mt-2 text-[16px] font-medium leading-snug md:mt-3 md:text-[19px]">
                     <BreakText text={item.ja.replace(/\n/g, "◆")} />
                     {item.note ? <span className="mt-1 block text-[13px]">もとの形：{item.note}</span> : null}
                   </p>
+                  <p className="ipa mt-1 text-[14px] leading-snug opacity-70 md:text-[16px]">{lineIpa(item)}</p>
                 </div>
               ) : null}
 
@@ -961,6 +1046,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
               {fold ? null : (
                 <>
               <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="練習の設定">
+                {speedProp ? null : (
                 <Chip
                   label="速さ"
                   value={speedLabel}
@@ -970,7 +1056,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                     changeSettings({ speed: speeds[(i + 1) % speeds.length] });
                   }}
                 />
-                <Chip label="声" value={voiceLabel} disabled={busyTake} onClick={() => changeSettings({ voice: settings.voice === "af_heart" ? "am_michael" : "af_heart" })} />
+                )}
+                {voiceProp ? null : <Chip label="声" value={voiceLabel} disabled={busyTake} onClick={() => changeSettings({ voice: settings.voice === "af_heart" ? "am_michael" : "af_heart" })} />}
                 <Chip label="お手本と一緒に" value={settings.together ? "オン" : "オフ"} pressed={settings.together} disabled={busyTake} onClick={() => changeSettings({ together: !settings.together })} />
               </div>
               <p className="mt-2 h-4 text-center text-[12px] font-bold leading-4" style={{ visibility: settings.together ? "visible" : "hidden" }}>
@@ -979,7 +1066,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                 </>
               )}
               <div className={`${fold ? "" : "mt-3"} flex items-start justify-center gap-5 md:gap-10`}>
-                {fold ? null : (
+                {fold || partner ? null : (
                 <RoundButton
                   icon={<IconSpeaker size={28} />}
                   label="お手本"
@@ -989,6 +1076,17 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                   disabled={!bufferReady}
                 />
                 )}
+                {partner ? (
+                  // a partner's line: only listen (the caption follows お手本)
+                  <RoundButton
+                    icon={<IconSpeaker size={30} />}
+                    label="相手の番：聞く"
+                    ariaLabel={playing === "model" ? "止める" : "相手の文を聞く"}
+                    onPress={playModel}
+                    playingMs={playing === "model" && guide ? guide.duration * 1000 : null}
+                    disabled={!bufferReady}
+                  />
+                ) : (
                 <MicButton
                   state={busyTake ? "recording" : phase === "scoring" ? "thinking" : "idle"}
                   level={level}
@@ -996,7 +1094,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                   label={phase === "starting" || phase === "loading" ? "準備中" : busyTake ? "止める" : phase === "scoring" ? "くらべています" : "押して話す"}
                   progress={stopAt}
                 />
-                {fold ? null : (
+                )}
+                {fold || partner ? null : (
                 <RoundButton
                   icon={<IconPlay size={24} />}
                   label="自分の声"
@@ -1016,28 +1115,12 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
           </>
         )}
 
-        {selected !== null && result && item ? (
-          <SoundSheet
-            key={selected}
-            word={result.words[selected]}
-            token={item.words[selected]?.text ?? result.words[selected].text}
-            before={sheetBefore}
-            heardEnd={heardEnd.current[selected] ?? heardEndFor(result.words[selected])}
-            tipFor={tipFor(selected)}
-            clips={clipsFor(selected)}
-            onClose={closeWord}
-            onPlayModel={() => playEnd("model", selected)}
-            onPlayHeard={() => playEnd("heard", selected)}
-            onPlayMine={() => playSeq(["you"], selected)}
-            playing={segVoice}
-            retry={retry}
-            level={level}
-            onRetry={() => retryWord(selected)}
-          />
-        ) : null}
+
 
         {isResult ? (
-          <div className="sticky bottom-0 z-10 mt-auto bg-(--field) px-4 pt-3 shadow-[0_-1px_0_color-mix(in_srgb,var(--field-ink)_22%,transparent)] [padding-bottom:max(16px,calc(env(safe-area-inset-bottom)+10px))]">
+          <div className="sticky bottom-0 z-10 mt-auto bg-(--field) px-4 pt-3 [padding-bottom:max(16px,calc(env(safe-area-inset-bottom)+10px))]">
+            {/* what scrolls under the bar fades out instead of being cut */}
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 -top-8 h-8" style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--field) 0%, transparent), var(--field))" }} />
             <div className="mx-auto flex max-w-[680px] gap-3">
               {main === "word" && coachWord && item ? (
                 // first: say the worst word again (the coach above shows how)
@@ -1059,8 +1142,9 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
               ) : null}
               {main === "word" ? (
                 // the whole line again stays one tap away, quietly
-                <button type="button" onClick={onMic} aria-label="文をもう一度話す" className="press press-ghost h-14 w-14 shrink-0">
-                  <IconRetry size={20} />
+                <button type="button" onClick={onMic} aria-label="文をもう一度話す" className="press press-ghost h-14 w-16 shrink-0 flex-col gap-0 text-[12px]">
+                  <IconRetry size={18} />
+                  文ごと
                 </button>
               ) : (
               <button type="button" onClick={onMic} className={`press ${main === "again" ? "press-ink" : "press-ghost"} h-14 flex-[1.25] text-[17px]`}>

@@ -4,50 +4,42 @@
  */
 import type { PhoneScore, ProsodyNote, WordScore } from "./types";
 import { heardAsJa, heardLabel, insertedVowelJa } from "@/engine/scoring/heard-labels.ts";
+import { ipaChip } from "@/engine/scoring/ipa.ts";
 
 const base = (p: string) => p.replace(/[0-9]/g, "").toUpperCase();
 
-/** How a sound is written in the UI by default: plain letters a Japanese adult can read. */
-const LETTERS: Record<string, string> = {
-  R: "r", L: "l", AY: "ai", IH: "i", IY: "ii", S: "s", Z: "z", K: "k", T: "t", D: "d", P: "p", B: "b",
-  V: "v", F: "f", HH: "h", TH: "th", DH: "th", SH: "sh", N: "n", M: "m", NG: "ng", W: "w", Y: "y",
-  AE: "a", AH: "a", AA: "a", ER: "er", OW: "ou", UW: "uu", UH: "u", EH: "e", EY: "ei", AO: "o",
-  G: "g", CH: "ch", JH: "j", ZH: "zh", AW: "au", OY: "oi",
-};
-/** IPA, on demand only. */
-const IPA: Record<string, string> = {
-  R: "ɹ", L: "l", AY: "aɪ", IH: "ɪ", IY: "i", S: "s", Z: "z", K: "k", T: "t", D: "d", P: "p", B: "b",
-  V: "v", F: "f", HH: "h", TH: "θ", DH: "ð", SH: "ʃ", N: "n", M: "m", NG: "ŋ", W: "w", Y: "j",
-  AE: "æ", AH: "ʌ", AA: "ɑ", ER: "ɝ", OW: "oʊ", UW: "u", UH: "ʊ", EH: "ɛ", EY: "eɪ", AO: "ɔ",
-  G: "ɡ", CH: "tʃ", JH: "dʒ", ZH: "ʒ", AW: "aʊ", OY: "ɔɪ",
-};
-
-export function soundLabel(phone: string): string {
-  return LETTERS[base(phone)] ?? base(phone).toLowerCase();
-}
-export function soundIpa(phone: string): string {
-  return `/${IPA[base(phone)] ?? base(phone).toLowerCase()}/`;
-}
-
-/** "r が l に聞こえました" */
 /**
- * The one-line diagnosis for a learner, in plain Japanese. `target` is how the sound is spelled in
- * the word ("r", "th"); heard sounds come from the scorer's labels (ARPAbet or the student model's
- * IPA units) through src/engine/scoring/heard-labels.ts.
+ * Spelling only — the letters that usually write a sound, to spell the word it was heard as
+ * (rice with R → L: "lice"). Never shown as a sound: sounds are written in IPA (src/engine/scoring/ipa.ts).
  */
-export function diagnosisJa(p: PhoneScore, target: string): string | null {
-  if (p.heardAs) return heardAsJa(target, p.heardAs);
-  if (p.inserted) return `${target} のあとに${insertedVowelJa(p.inserted)}`;
-  if (p.issue === "deletion") return `${target} が聞こえませんでした`;
-  if (p.score < 60) return `${target} が少しあいまいでした`;
-  return null;
+const SPELLING: Record<string, string> = {
+  R: "r", L: "l", AY: "i", IH: "i", IY: "ee", S: "s", Z: "z", K: "k", T: "t", D: "d", P: "p", B: "b",
+  V: "v", F: "f", HH: "h", TH: "th", DH: "th", SH: "sh", N: "n", M: "m", NG: "ng", W: "w", Y: "y",
+  AE: "a", AH: "u", AA: "o", ER: "er", OW: "o", UW: "oo", UH: "oo", EH: "e", EY: "a", AO: "o",
+  G: "g", CH: "ch", JH: "j", ZH: "s", AW: "ou", OY: "oy",
+};
+
+/** how a sound is spelled (for building a word); for showing a sound use ipaChip */
+export function soundLabel(phone: string): string {
+  return SPELLING[base(phone)] ?? base(phone).toLowerCase();
+}
+/** a sound as shown: dictionary IPA (/ð/) */
+export const soundIpa = ipaChip;
+
+/**
+ * The one-line diagnosis for a learner, in plain Japanese, in the app's one notation: the target
+ * and the heard sound go to heard-labels.ts as ARPAbet (or the student model's units), which
+ * writes them /ð/, /z/, or by a Japanese name for the sounds no dictionary has a symbol for.
+ */
+export function diagnosisJa(p: PhoneScore): string | null {
+  return heardLine(p);
 }
 
-export function heardLine(p: PhoneScore, label: (phone: string) => string = soundLabel): string | null {
-  if (p.heardAs) return heardAsJa(label(p.phone), p.heardAs);
-  if (p.inserted) return `${label(p.phone)} のあとに${insertedVowelJa(p.inserted)}`;
-  if (p.issue === "deletion") return `${label(p.phone)} が聞こえませんでした`;
-  if (p.score < 60) return `${label(p.phone)} が少しあいまいでした`;
+export function heardLine(p: PhoneScore): string | null {
+  if (p.heardAs) return heardAsJa(p.phone, p.heardAs);
+  if (p.inserted) return `${ipaChip(p.phone)} のあとに${insertedVowelJa(p.inserted)}`;
+  if (p.issue === "deletion") return `${ipaChip(p.phone)} が聞こえませんでした`;
+  if (p.score < 60) return `${ipaChip(p.phone)} が少しあいまいでした`;
   return null;
 }
 
@@ -166,16 +158,41 @@ export const STATUS = {
   thinking: "お手本とくらべています",
 };
 
-/** a sound as a chip: /r/, /th/ — always the same shape; the student's Japanese-like sounds by their kana */
-export function soundChip(symbol: string): string {
-  if (/^[A-Z]+[0-2]?$/.test(symbol)) return `/${soundLabel(symbol)}/`;
-  return heardLabel(symbol).replace(/^日本語の/, "").replace(/の音$/, "");
-}
 
 /** the fix line: our own positive-first tip, else the item's */
 export function fixFor(phone: string, own: string | null): string | null {
   const t = TIPS[base(phone)];
   return t ? `${t[0]}${t[1] ? "◇" + t[1] : ""}` : own;
+}
+
+/**
+ * The sound card's two steps, ① ②: what to do, in the same form (each ends on its verb, the verb
+ * in **bold**); what the picture already says (✕ 付けない) is not written again.
+ */
+const STEPS: Record<string, [string, string]> = {
+  R: ["舌先を少し奥へ**引く**", "唇を軽く**丸める**"],
+  L: ["舌先を上の歯ぐきに**付ける**", "付けたまま声を**出す**"],
+  TH: ["舌先を上の前歯に軽く**当てる**", "すき間から息だけを**流す**"],
+  DH: ["舌先を上の前歯に軽く**当てる**", "当てたまま声を**ふるわせる**"],
+  V: ["上の前歯を下唇に軽く**のせる**", "そのまま声を**ふるわせる**"],
+  F: ["上の前歯を下唇に軽く**のせる**", "すき間から息を**流す**"],
+  IH: ["口の力を抜いて短く**言う**", "「イ」と「エ」の間の音に**する**"],
+  IY: ["口を横に**引く**", "長めに**のばす**"],
+  AE: ["口を大きく横に**開く**", "「エ」の口のまま「ア」と**言う**"],
+  AH: ["口の力を**抜く**", "短く軽く「ア」と**言う**"],
+  AA: ["口を縦に大きく**開ける**", "のどの奥から「アー」と**言う**"],
+  ER: ["舌を奥に**引く**", "少し丸めたまま「アー」と**言う**"],
+  AY: ["「ア」から「イ」へなめらかに**動かす**", "「ア」を長めに**言う**"],
+  S: ["舌先を歯ぐきに**近づける**", "すき間から息を**流す**"],
+  SH: ["唇を少し前に**出す**", "「シュ」と息を**流す**"],
+  T: ["舌先を歯ぐきに**付ける**", "息で**放す**"],
+  D: ["舌先を歯ぐきに**付ける**", "声を出して**放す**"],
+  K: ["のどの奥で息を**止める**", "一気に**放す**"],
+};
+export function stepsFor(phone: string, own: string | null): string[] {
+  const t = STEPS[base(phone)];
+  if (t) return [...t];
+  return own ? own.split("◇").map((x) => x.replace(/◆/g, "")) : [];
 }
 
 /** one imperative line for the pitch chart (after the take) */

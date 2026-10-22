@@ -9,9 +9,10 @@
  *   home  — 0.3 s of room tone, then the am_michael reference of "hotel": the home card's own
  *           listen → say loop (the shot is taken while your yellow is painting over お手本's cyan)
  *   sing  — the am_michael reference of a long line at 0.65× (u10-l4-05, 3.4 s) for the mid-take shot
- *   card  — 0.25 s: the am_michael reference of "rice" (heard by the one-word retry, which starts
- *           at 0 and stops by itself), then at 2.05 s macOS `say -v Kyoko` reading
- *           "The rice is ready." in katakana (the sentence take ignores what is said during 3·2·1)
+ *   card  — 0.25 s: "rice" cut from the am_michael reference of u03-l1-07 (heard by the one-word
+ *           retry, which starts at 0 and stops by itself), then at 2.05 s macOS `say -v Kyoko`
+ *           reading "The rice is ready, so let's eat." in katakana (the sentence take ignores
+ *           what is said during 3·2·1)
  */
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -63,11 +64,20 @@ const homeWav = join(WORK, "shots-home.wav");
 writeFileSync(homeWav, encodeWav(compose([[0.3, trim(read16(join(ROOT, ".work/tts/am_michael/u01-l1-01.16k.wav")))]], 6), SR));
 const singWav = join(WORK, "shots-sing.wav");
 writeFileSync(singWav, encodeWav(compose([[1.9, trim(read16(join(ROOT, ".work/tts/am_michael/u10-l4-05.slower.16k.wav")))]], 10), SR));
+// result: Kyoko reading "The rice is ready, so let's eat." in katakana — several mistakes to move between
+const resultWav = join(WORK, "shots-result.wav");
+writeFileSync(resultWav, encodeWav(compose([[2.05, kyoko("ザ ライス イズ レディ、ソウ レッツ イート。")]], 10), SR));
+// the card: an r / l mistake for sure — the am_michael reference of "Turn right at the light." (u03-l3-01)
+// with its "right" replaced by its own "light" ("Turn light at the light."); and, at 0.25 s, the real
+// "right" alone, which is what the one-word retry hears (Chrome restarts the file at each capture)
 const cardWav = join(WORK, "shots-card.wav");
-writeFileSync(
-  cardWav,
-  encodeWav(compose([[0.25, trim(read16(join(ROOT, ".work/tts/am_michael/u03-l1-07.16k.wav")))], [2.05, kyoko("ザ ライス イズ レディ。")]], 9), SR),
-);
+{
+  const x = read16(join(ROOT, ".work/tts/am_michael/u03-l3-01.16k.wav"));
+  const cut = (a, b) => x.slice(Math.round(a * SR), Math.round(b * SR));
+  const right = cut(0.37, 0.65);
+  const swapped = new Float32Array([...cut(0, 0.39), ...cut(0.8, 1.1), ...cut(0.627, x.length / SR)]);
+  writeFileSync(cardWav, encodeWav(compose([[0.25, right], [2.05, swapped]], 10), SR));
+}
 
 async function browserWith(wav) {
   return puppeteer.launch({
@@ -97,7 +107,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const page = await phonePage(b);
   await page.goto(`${BASE}/home`, { waitUntil: "networkidle0" });
   await sleep(800);
-  await page.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("言ってみる"))?.click());
+  await page.evaluate(() => document.querySelector('section[aria-label="次に言う文"] button')?.click());
   const painting = await page
     .waitForFunction(
       () => {
@@ -131,9 +141,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await b.close();
 }
 
-// 3–5. result, the sound card, the card after saying the word again
+// 3. the result of a katakana take
 {
-  const b = await browserWith(cardWav);
+  const b = await browserWith(resultWav);
   const page = await phonePage(b);
   await page.goto(`${BASE}/learn/u03/u03-l5?i=2`, { waitUntil: "networkidle2" });
   await page.waitForFunction(() => window.__practice?.phase === "ready", { timeout: 30000 });
@@ -143,48 +153,77 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await sleep(2400);
   await page.screenshot({ path: join(OUT, "ours-result.png") });
   const r = await page.evaluate(() => window.__practice.result);
-  console.log("take:", r.total.toFixed(3), JSON.stringify(r.words), r.flagged.join(" "));
-  // the worst sound is already open on the result (inline); any other flagged word opens the sheet
-  const inline = r.coach >= 0 && r.words[r.coach][0].toLowerCase() === "rice";
-  console.log("coached on the result:", r.coach >= 0 ? r.words[r.coach][0] : "-", inline ? "(rice: inline)" : "(rice: sheet)");
-  const opened = await page.evaluate(() => {
-    const btn = [...document.querySelectorAll("button")].find((x) => (x.getAttribute("aria-label") || "").startsWith("rice："));
-    btn?.click();
-    return !!btn;
+  console.log("result take:", r.total.toFixed(3), JSON.stringify(r.words), r.flagged.join(" "));
+  await b.close();
+}
+
+// 4–5. the sound card on an r / l mistake, and after saying the word again
+{
+  const b = await browserWith(cardWav);
+  const page = await phonePage(b);
+  await page.goto(`${BASE}/learn/u03/u03-l3?i=0`, { waitUntil: "networkidle2" });
+  await page.waitForFunction(() => window.__practice?.phase === "ready", { timeout: 30000 });
+  await sleep(400);
+  await page.click('button[aria-label="録音して話す"]');
+  await page.waitForFunction(() => window.__practice?.phase === "result", { timeout: 120000 });
+  await sleep(2400);
+  const r = await page.evaluate(() => window.__practice.result);
+  console.log("card take:", r.total.toFixed(3), JSON.stringify(r.words), r.flagged.join(" "));
+  // the card on the result moves between the line's mistakes: pick the r / l one (right, else light)
+  console.log("coached first:", r.coach >= 0 ? r.words[r.coach][0] : "-");
+  const wi = ["right", "light"].map((t) => r.words.findIndex((w) => w[0].toLowerCase() === t)).find((k) => k >= 0 && r.flagged.some((f) => f.startsWith(`${r.words[k][0]}.`) && /\.(R|L):/.test(f)));
+  if (wi === undefined) throw new Error("neither right nor light was heard wrong: no r / l card");
+  const picked = await page.evaluate((t) => {
+    const tab = [...document.querySelectorAll('#coach [role="tab"]')].find((x) => x.textContent?.trim().toLowerCase().endsWith(t));
+    tab?.click();
+    return !!tab || document.querySelector("#coach")?.textContent?.toLowerCase().includes(t);
+  }, r.words[wi][0].toLowerCase());
+  if (!picked) throw new Error("the r / l word is not on the card");
+  await sleep(900); // the pair recording (rice / lice) arrives
+  // drag the tongue itself toward L: the tip springs over and lands on the ridge
+  const pt = await page.evaluate(() => {
+    const coach = document.getElementById("coach");
+    coach?.scrollIntoView({ block: "start" });
+    const svg = document.querySelector("#coach svg[viewBox]");
+    const m = svg?.getScreenCTM();
+    if (!m) return null;
+    const at = (x, y) => {
+      const q = new DOMPoint(x, y).matrixTransform(m);
+      return { x: q.x, y: q.y };
+    };
+    return { a: at(92, 100), b: at(68, 100) };
   });
-  if (!opened) throw new Error("rice was not flagged — no card to open");
-  await sleep(900);
-  if (inline) await page.evaluate(() => document.getElementById("coach")?.scrollIntoView({ block: "start" }));
-  await sleep(200);
-  // drag the slider's handle most of the way to 「聞こえた音」: the filled tongue springs over and its tip lands on the ridge
-  const box = await page.evaluate((sel) => {
-    const el = document.querySelector(`${sel} [role="slider"]`);
-    if (!el) return null;
-    el.scrollIntoView({ block: "center" });
-    const r = el.getBoundingClientRect();
-    return { x: r.left, y: r.top, w: r.width, h: r.height };
-  }, inline ? "#coach" : '[role="dialog"]');
-  if (box) {
-    const y = box.y + box.h * 0.62;
-    await page.mouse.move(box.x + box.w * 0.48, y);
+  if (pt) {
+    await page.mouse.move(pt.a.x, pt.a.y);
     await page.mouse.down();
     for (let k = 1; k <= 10; k++) {
-      await page.mouse.move(box.x + box.w * (0.48 + 0.04 * k), y);
+      await page.mouse.move(pt.a.x + ((pt.b.x - pt.a.x) * k) / 10, pt.a.y);
       await sleep(30);
     }
     await page.mouse.up();
     await sleep(700);
-    await page.evaluate((sel) => document.querySelector(`${sel}`)?.scrollTo?.({ top: 0 }), inline ? "#coach" : '[role="dialog"]');
-    await sleep(150);
   }
+  await page.evaluate(() => document.getElementById("coach")?.scrollIntoView({ block: "start" }));
+  await sleep(150);
   await page.screenshot({ path: join(OUT, "ours-card.png") });
-  const before = r.words[1][1];
-  await page.evaluate((sel) => [...document.querySelectorAll(`${sel} button`)].find((x) => x.textContent?.includes("だけ言う"))?.click(), inline ? "#coach" : '[role="dialog"]');
-  await page.waitForFunction((s) => window.__practice?.result && window.__practice.result.words[1][1] !== s, { timeout: 60000 }, before);
-  await sleep(1100); // the meter slides, the +N lands
+  const before = r.words[wi][1];
+  // the bar's main action now: 「rice だけ言う」
+  await page.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("だけ言う"))?.click());
+  // done when the word has been heard and scored (the score may or may not move)
+  await sleep(1200);
+  await page.waitForFunction(
+    () => {
+      const busy = [...document.querySelectorAll("button")].some((x) => /聞いています|くらべています/.test(x.textContent ?? ""));
+      return !busy && window.__practice?.rec?.()?.state === "idle";
+    },
+    { timeout: 60000 },
+  );
+  await sleep(900);
+  await page.evaluate(() => document.getElementById("coach")?.scrollIntoView({ block: "start" }));
+  await sleep(150);
   await page.screenshot({ path: join(OUT, "ours-card-retry.png") });
-  const after = await page.evaluate(() => window.__practice.result.words[1]);
-  console.log(`retry rice: ${before} → ${after[1]}`);
+  const after = await page.evaluate((k) => window.__practice.result.words[k], wi);
+  console.log(`retry ${after[0]}: ${before} → ${after[1]}`);
   await b.close();
 }
 console.log("shots in", OUT);

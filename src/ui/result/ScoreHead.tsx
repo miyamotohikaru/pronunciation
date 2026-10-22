@@ -115,7 +115,7 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
           {total >= 100 ? <Digit refFn={(el) => (strips.current[0] = el)} big /> : null}
           <Digit refFn={(el) => (strips.current[1] = el)} big hidden={total < 10} />
           <Digit refFn={(el) => (strips.current[2] = el)} big />
-          <span className="num mb-[16px] ml-[6px] text-[18px] font-bold md:mb-[20px] md:text-[21px]">/100</span>
+          <span className="num mb-[16px] ml-[8px] text-[22px] font-black md:mb-[20px] md:text-[26px]">/100</span>
         </div>
         {delta !== null && done ? (
           <span
@@ -161,7 +161,8 @@ function Digit({ refFn, big, hidden }: { refFn: (el: HTMLSpanElement | null) => 
   return (
     <span
       className={`relative inline-block overflow-hidden ${big ? "telop text-[88px] md:text-[116px]" : ""}`}
-      style={{ width: big ? "0.64em" : "0.6em", height: big ? "1.16em" : "1.1em", visibility: hidden ? "hidden" : undefined }}
+      // wide enough that two digits' outlines never touch
+      style={{ width: big ? "0.74em" : "0.6em", height: big ? "1.16em" : "1.1em", visibility: hidden ? "hidden" : undefined }}
     >
       {/* one text block per window (0–9 on ten lines, one line = one window): few layout objects */}
       <span

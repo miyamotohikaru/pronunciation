@@ -11,7 +11,7 @@ export type LessonRef = { unitId: string; lessonId: string; href: string; titleJ
 
 export type LessonView = {
   unit: { id: string; titleJa: string; subtitleJa: string; whyJa: string; howJa: string };
-  lesson: { id: string; titleJa: string; goalJa: string; items: { id: string; type: string; text: string; ja: string; pair?: string }[] };
+  lesson: { id: string; titleJa: string; goalJa: string; boss?: boolean; items: { id: string; type: string; text: string; ja: string; pair?: string }[] };
   next: LessonRef | null;
 };
 
@@ -28,19 +28,19 @@ export function getLesson(unitId: string, lessonId: string): LessonView | null {
   const nl = li + 1 < u.lessons.length ? u.lessons[li + 1] : nu?.lessons[0];
   return {
     unit: { id: u.id, titleJa: u.titleJa, subtitleJa: u.subtitleJa, whyJa: u.whyJa, howJa: u.howJa },
-    lesson: { id: l.id, titleJa: l.titleJa, goalJa: l.goalJa, items: l.items.map((it) => ({ id: it.id, type: it.type, text: it.text, ja: it.ja, pair: it.pair })) },
+    lesson: { id: l.id, titleJa: l.titleJa, goalJa: l.goalJa, boss: !!l.boss, items: l.items.map((it) => ({ id: it.id, type: it.type, text: it.text, ja: it.ja, pair: it.pair })) },
     next: nu && nl ? { unitId: nu.id, lessonId: nl.id, href: lessonHref(nu.id, nl.id), titleJa: nl.titleJa } : null,
   };
 }
 
-export type HomeUnit = { id: string; titleJa: string; subtitleJa: string; lessons: { id: string; titleJa: string; href: string; items: string[] }[] };
+export type HomeUnit = { id: string; titleJa: string; subtitleJa: string; lessons: { id: string; titleJa: string; href: string; items: string[]; boss?: boolean }[] };
 
 export function getHome(): HomeUnit[] {
   return catalog.units.map((u) => ({
     id: u.id,
     titleJa: u.titleJa,
     subtitleJa: u.subtitleJa,
-    lessons: u.lessons.map((l) => ({ id: l.id, titleJa: l.titleJa, href: lessonHref(u.id, l.id), items: l.items.map((it) => it.id) })),
+    lessons: u.lessons.map((l) => ({ id: l.id, titleJa: l.titleJa, href: lessonHref(u.id, l.id), items: l.items.map((it) => it.id), ...(l.boss ? { boss: true } : {}) })),
   }));
 }
 

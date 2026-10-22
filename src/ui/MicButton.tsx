@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * The big mic in the thumb zone. While recording, rings breathe with your input level
- * (read from a ref every frame) so you can see you are being heard, and a thin ring fills up
- * to the moment the take stops by itself (`progress`, also a ref).
+ * The big mic in the thumb zone. While recording it is the stop button, with one thin ring
+ * around it that runs down as the time left before the take stops by itself (`progress`, a ref
+ * read every frame). No glow: the lane shows that you are being heard.
  */
 import { useEffect, useRef } from "react";
 import { IconMic, IconStop } from "./icons";
@@ -12,7 +12,7 @@ export type MicState = "idle" | "recording" | "thinking";
 
 export type MicButtonProps = {
   state: MicState;
-  /** 0..1, updated by the recorder (~60 fps) */
+  /** (no longer drawn: the lane shows your voice) */
   level?: { current: number };
   onPress: () => void;
   label: string;
@@ -24,36 +24,20 @@ export type MicButtonProps = {
 const R = 52; // the progress ring's radius in its 120 × 120 box
 const LEN = 2 * Math.PI * R;
 
-export default function MicButton({ state, level, onPress, label, hint, progress }: MicButtonProps) {
-  const ring1 = useRef<HTMLSpanElement>(null);
-  const ring2 = useRef<HTMLSpanElement>(null);
+export default function MicButton({ state, onPress, label, hint, progress }: MicButtonProps) {
   const arc = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
-    if (state !== "recording") return;
+    if (state !== "recording" || !progress) return;
     let raf = 0;
-    let smooth = 0;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const loop = () => {
-      const v = level?.current ?? 0;
-      smooth += (v - smooth) * 0.35;
-      if (arc.current && progress) arc.current.style.strokeDashoffset = String(LEN * (1 - Math.min(1, Math.max(0, progress.current))));
-      if (ring1.current && ring2.current) {
-        if (reduce) {
-          ring1.current.style.opacity = String(0.25 + smooth * 0.6);
-          ring2.current.style.opacity = "0";
-        } else {
-          ring1.current.style.transform = `scale(${1.05 + smooth * 0.16})`;
-          ring2.current.style.transform = `scale(${1.08 + smooth * 0.26})`;
-          ring1.current.style.opacity = String(0.3 + smooth * 0.5);
-          ring2.current.style.opacity = String(0.08 + smooth * 0.18);
-        }
-      }
+      // the time left: full at the start, empty when it stops by itself
+      if (arc.current) arc.current.style.strokeDashoffset = String(LEN * Math.min(1, Math.max(0, progress.current)));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [state, level]);
+  }, [state, progress]);
 
   // recording is not yellow: yellow means "your voice playing back"
   const face = state === "recording" ? "press-ink" : "";
@@ -62,17 +46,12 @@ export default function MicButton({ state, level, onPress, label, hint, progress
     // fixed width: the label can be wider than the button without pushing the side buttons around
     <div className="flex w-[112px] flex-col items-center md:w-[128px]">
       <div className="relative grid size-[96px] place-items-center md:size-[112px]">
-        {state === "recording" ? (
-          <>
-            <span ref={ring2} aria-hidden className="absolute inset-0 rounded-full bg-(--field-ink) will-change-transform" />
-            <span ref={ring1} aria-hidden className="absolute inset-0 rounded-full border-[5px] border-(--field-ink) will-change-transform" />
-          </>
-        ) : null}
+
         {state === "recording" && progress ? (
           // until it stops by itself
           <svg aria-hidden viewBox="0 0 120 120" className="pointer-events-none absolute -inset-[14px] z-[1] size-[calc(100%+28px)] -rotate-90">
             <circle cx="60" cy="60" r={R} fill="none" stroke="color-mix(in srgb, var(--field-ink) 28%, transparent)" strokeWidth="4" />
-            <circle ref={arc} cx="60" cy="60" r={R} fill="none" stroke="var(--paper)" strokeWidth="4" strokeLinecap="round" strokeDasharray={LEN} strokeDashoffset={LEN} />
+            <circle ref={arc} cx="60" cy="60" r={R} fill="none" stroke="var(--paper)" strokeWidth="4" strokeLinecap="round" strokeDasharray={LEN} strokeDashoffset={0} />
           </svg>
         ) : null}
         {state === "thinking" ? (

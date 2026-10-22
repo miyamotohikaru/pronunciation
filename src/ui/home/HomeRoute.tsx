@@ -15,14 +15,14 @@ import type { ItemData } from "@/data/schema";
 import type { MicRecorder } from "@/engine/audio/mic-recorder.ts";
 import { Player } from "@/engine/audio/player.ts";
 import { audioCore } from "@/engine/audio/context.ts";
-import { IconCheck, IconMic, IconNext, IconPlay } from "../icons";
+import { IconCheck, IconMic, IconNext, IconPlay, IconStar } from "../icons";
 import { allBest, loadSettings, type Best } from "../practice/progress";
 import { fieldFor } from "../practice/fields";
 import { fetchItem, refFor } from "../practice/content";
 import { lineIpa } from "../ipa";
 import { piecesFor } from "./stress";
 
-export type HomeUnitView = { id: string; titleJa: string; subtitleJa: string; lessons: { id: string; titleJa: string; href: string; items: string[] }[] };
+export type HomeUnitView = { id: string; titleJa: string; subtitleJa: string; lessons: { id: string; titleJa: string; href: string; items: string[]; boss?: boolean }[] };
 
 const DAILY_MIN = 5;
 const MIN_PER_ITEM = 0.5; // a line takes about 30 s: listen, say, look
@@ -65,14 +65,15 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
     <div className="kara field-calm flex min-h-dvh flex-col">
       <header className="mx-auto flex h-14 w-full max-w-[720px] items-center justify-between px-4 md:h-16">
         <span className="text-[20px] font-black leading-none md:text-[24px]">発音カラオケ</span>
-        <span className="text-[13px] font-medium" aria-label={`今日 ${todayMin}分 / ${DAILY_MIN}分`}>
-          今日 <span className="num text-[15px] font-bold">{Math.min(todayMin, DAILY_MIN)}</span>
-          <span className="num">/{DAILY_MIN}分</span>
+        <span className="flex items-center gap-2 text-[13px] font-medium" aria-label={`今日の目標 ${todayMin}分 / ${DAILY_MIN}分`}>
+          <GoalRing k={Math.min(1, todayMin / DAILY_MIN)} />
+          今日 <span className="num -ml-1 text-[15px] font-bold">{Math.min(todayMin, DAILY_MIN)}</span>
+          <span className="num -ml-2">/{DAILY_MIN}分</span>
         </span>
       </header>
 
       <main className="mx-auto w-full max-w-[720px] flex-1 px-4 pb-8">
-        <NowCard unitId={unit.id} item={item} index={cur.i} count={lesson.items.length} href={href} lessonMin={minutes(lesson.items.length - cur.i)} />
+        <NowCard unitId={unit.id} lessonTitle={lesson.titleJa} item={item} index={cur.i} count={lesson.items.length} href={href} lessonMin={minutes(lesson.items.length - cur.i)} />
 
         <h2 className="mt-8 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_70%,transparent)]">ルート</h2>
         <ol className="mt-2 flex flex-col">
@@ -85,8 +86,11 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
                 <li key={u.id} className="border-t border-[#e3e5ef]">
                   <Link href={u.lessons[0].href} className="flex min-h-14 items-center gap-4 py-2">
                     <Marker state={state === "done" ? "done" : "next"} n={ui + 1} />
-                    <span className={`min-w-0 flex-1 text-[15px] font-bold leading-tight ${state === "next" ? "text-[color-mix(in_srgb,var(--ink)_72%,transparent)]" : ""}`}>{u.titleJa}</span>
-                    <span className="num shrink-0 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_65%,transparent)]">{state === "done" ? "できた" : `${minutes(items.length)}分`}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block text-[15px] font-bold leading-tight ${state === "next" ? "text-[color-mix(in_srgb,var(--ink)_78%,transparent)]" : ""}`}>{u.titleJa}</span>
+                      <UnitBar k={(items.length - left) / Math.max(1, items.length)} />
+                    </span>
+                    <span className="num shrink-0 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{left === 0 ? "できた" : `のこり ${minutes(left)}分`}</span>
                   </Link>
                 </li>
               );
@@ -94,7 +98,10 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
               <li key={u.id} className="border-t border-[#e3e5ef] pb-2">
                 <div className="flex min-h-14 items-center gap-4 py-2" aria-current="step">
                   <Marker state="now" n={ui + 1} />
-                  <span className="min-w-0 flex-1 text-[16px] font-black leading-tight">{u.titleJa}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[16px] font-black leading-tight">{u.titleJa}</span>
+                    <UnitBar k={(items.length - left) / Math.max(1, items.length)} />
+                  </span>
                   <span className="num shrink-0 text-[13px] font-medium">のこり {minutes(left)}分</span>
                 </div>
                 <ol className="ml-[8px]">
@@ -104,11 +111,14 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
                     return (
                       <li key={l.id} className="relative">
                         {/* the line runs from this step to the next one, and stops at the last */}
-                        {last ? null : <span aria-hidden className="absolute left-[19px] top-6 h-12 w-[2px] bg-[#d6d9e8]" />}
+                        {last ? null : <span aria-hidden className="absolute left-[19px] top-6 h-12 w-[2px] bg-[#a9aec8]" />}
                         <Link href={st === "now" ? href : l.href} className={`relative flex min-h-12 items-center gap-4 rounded-[12px] pl-[10px] pr-2 ${st === "now" ? "bg-(--paper)" : ""}`} aria-current={st === "now" ? "step" : undefined}>
-                          <Step state={st} />
-                          <span className={`min-w-0 flex-1 text-[15px] leading-tight ${st === "now" ? "font-bold" : "font-medium"}`}>{l.titleJa}</span>
-                          <span className="num shrink-0 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_65%,transparent)]">{st === "done" ? "できた" : `${minutes(l.items.length)}分`}</span>
+                          <Step state={st} boss={l.boss} />
+                          <span className={`min-w-0 flex-1 text-[15px] leading-tight ${st === "now" || l.boss ? "font-bold" : "font-medium"}`}>
+                            {l.boss ? <span className="mr-2 rounded-full bg-(--ink) px-2 py-[2px] align-[2px] text-[12px] font-bold text-(--paper)">まとめ</span> : null}
+                            {l.titleJa}
+                          </span>
+                          <span className="num shrink-0 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{st === "done" ? "できた" : `のこり ${minutes(st === "now" ? l.items.length - cur.i : l.items.length)}分`}</span>
                         </Link>
                       </li>
                     );
@@ -118,8 +128,54 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
             );
           })}
         </ol>
+
+        {/* the other corners */}
+        <h2 className="mt-8 text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_70%,transparent)]">ほかの練習</h2>
+        <ul className="mt-2 grid gap-2 sm:grid-cols-3">
+          {CORNERS.map((c) => (
+            <li key={c.href}>
+              <Link href={c.href} className="flex min-h-16 items-center gap-3 rounded-[16px] bg-(--paper) px-4 py-3">
+                <span aria-hidden className="ipa grid size-10 shrink-0 place-items-center rounded-[12px] bg-[#eef0f8] text-[17px] font-bold">
+                  {c.mark}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-bold leading-tight">{c.title}</span>
+                  <span className="mt-1 block text-[13px] font-medium leading-tight text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{c.sub}</span>
+                </span>
+                <IconNext size={16} />
+              </Link>
+            </li>
+          ))}
+        </ul>
       </main>
     </div>
+  );
+}
+
+const CORNERS = [
+  { href: "/challenge", mark: "Go", title: "チャレンジ", sub: "長い文・自己紹介・会話" },
+  { href: "/sounds", mark: "/ð/", title: "発音記号", sub: "42の音を1つずつ" },
+  { href: "/abc", mark: "Aa", title: "アルファベット", sub: "26文字と、つづりの伝え方" },
+];
+
+/** today's goal, as a ring that fills */
+function GoalRing({ k }: { k: number }) {
+  const r = 8;
+  const len = 2 * Math.PI * r;
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="size-5 -rotate-90">
+      <circle cx="10" cy="10" r={r} fill="none" stroke="#d6d9e8" strokeWidth="3" />
+      <circle cx="10" cy="10" r={r} fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - k)} />
+    </svg>
+  );
+}
+
+/** a unit's progress, a thin bar under its name */
+function UnitBar({ k }: { k: number }) {
+  return (
+    <span aria-hidden className="mt-[6px] block h-1 w-full max-w-[200px] overflow-hidden rounded-full bg-[#dfe2ee]">
+      <span className="block h-full origin-left rounded-full bg-(--ink)" style={{ transform: `scaleX(${k})` }} />
+    </span>
   );
 }
 
@@ -135,8 +191,14 @@ function Marker({ state, n }: { state: "done" | "now" | "next"; n: number }) {
   );
 }
 
-/** a lesson step: ✓ done, ▶ the one you are on (not a radio button), a small dot for later */
-function Step({ state }: { state: "done" | "now" | "next" }) {
+/** a lesson step: ✓ done, ▶ the one you are on (not a radio button), a small dot for later, ★ the unit's まとめ */
+function Step({ state, boss }: { state: "done" | "now" | "next"; boss?: boolean }) {
+  if (boss && state === "next")
+    return (
+      <span aria-hidden className="relative z-[1] grid size-5 shrink-0 place-items-center text-(--ink)">
+        <IconStar size={16} />
+      </span>
+    );
   if (state === "done")
     return (
       <span aria-hidden className="relative z-[1] grid size-5 shrink-0 place-items-center rounded-full bg-(--ink) text-(--paper)">
@@ -151,7 +213,7 @@ function Step({ state }: { state: "done" | "now" | "next" }) {
     );
   return (
     <span aria-hidden className="relative z-[1] grid size-5 shrink-0 place-items-center">
-      <span className="size-2 rounded-full bg-[#c3c7da]" />
+      <span className="size-[10px] rounded-full bg-[#8f95b3]" />
     </span>
   );
 }
@@ -163,7 +225,7 @@ type Flow = "idle" | "model" | "turn" | "done";
  * your voice paints them in yellow over the top (the yellow moves only while you are actually
  * speaking), then the button takes you into the lesson.
  */
-function NowCard({ unitId, item, index, count, href, lessonMin }: { unitId: string; item: ItemData | null; index: number; count: number; href: string; lessonMin: number }) {
+function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: { unitId: string; lessonTitle: string; item: ItemData | null; index: number; count: number; href: string; lessonMin: number }) {
   const router = useRouter();
   const field = fieldFor(unitId);
   const voice = useMemo(() => loadSettings().voice, []);
@@ -282,19 +344,31 @@ function NowCard({ unitId, item, index, count, href, lessonMin }: { unitId: stri
     setFlow("model");
   };
 
-  const single = item ? item.words.length === 1 : false;
   // fit the line to the card: the blocks' weighted length decides the size (cqw of the card)
   const weight = flat.reduce((a, s) => a + s.text.length * (s.strong ? 1 : 0.7), 0) + flat.filter((s) => s.dot).length * 0.4 + Math.max(0, (pieces?.length ?? 1) - 1) * 0.3;
   const fit = weight <= 14 ? `min(84px, calc(100cqw / ${(Math.max(4, weight) * 0.66).toFixed(2)}))` : "clamp(30px, 8.4cqw, 44px)";
 
-  const label =
-    flow === "model" ? "お手本を聞いています" : flow === "turn" ? "どうぞ（自動で止まります）" : flow === "done" ? "このまま練習する" : single && item ? `聞いて、${item.text} と言ってみる` : "聞いて、言ってみる";
+  // the button says what it does (a verb); how it works goes small underneath
+  const label = flow === "model" ? "お手本を聞いています" : flow === "turn" ? "話してください" : flow === "done" ? "練習を続ける" : "話す";
+  const note = flow === "idle" ? "お手本のあとに話します・自動で止まります" : flow === "turn" ? "言い終わると、自動で止まります" : flow === "done" ? `このレッスンの のこり ${lessonMin}分` : " ";
+
 
   return (
-    <section aria-label="次に言う文" className={`${field} mt-2 rounded-[24px] bg-(--field) px-6 pb-6 pt-4 text-(--field-ink) [container-type:inline-size]`}>
-      <p className="flex items-center justify-end text-[13px] font-medium">
-        このセット <span className="num ml-1 text-[15px] font-bold">{index + 1}</span>
-        <span className="num">/{count}</span>
+    <section
+      aria-label="次に言う文"
+      onClick={(e) => {
+        // the whole card presses the button (except the button itself, which handles its own tap)
+        if ((e.target as HTMLElement).closest("button, a")) return;
+        void press();
+      }}
+      className={`${field} mt-2 cursor-pointer rounded-[24px] bg-(--field) px-6 pb-6 pt-4 text-(--field-ink) [container-type:inline-size]`}
+    >
+      <p className="flex items-center justify-between gap-4 text-[13px] font-medium">
+        <span className="min-w-0 truncate font-bold">{lessonTitle}</span>
+        <span className="shrink-0">
+          このセット <span className="num ml-1 text-[15px] font-bold">{index + 1}</span>
+          <span className="num">/{count}</span>
+        </span>
       </p>
 
       {/* the syllable blocks: an outline layer under one fill, then the two colours wiping over it */}
@@ -312,7 +386,7 @@ function NowCard({ unitId, item, index, count, href, lessonMin }: { unitId: stri
                         const i = k++;
                         return (
                           // each block keeps the line's own strut: big and small blocks share a baseline
-                          <span key={i} className="relative inline-block">
+                          <span key={i} className="relative inline-block" style={s.dot ? { marginRight: "0.14em" } : undefined}>
                             <span
                               ref={
                                 layer === "guide"
@@ -329,7 +403,6 @@ function NowCard({ unitId, item, index, count, href, lessonMin }: { unitId: stri
                               style={{ fontSize: s.strong ? "1em" : "0.7em", fontWeight: s.strong ? 800 : 700 }}
                             >
                               {s.text}
-                              {s.dot ? <span className="hero-dot">·</span> : null}
                             </span>
                             {layer === "fill" ? (
                               // the stress pattern under its own block: ・ weak, ● strong
@@ -365,14 +438,14 @@ function NowCard({ unitId, item, index, count, href, lessonMin }: { unitId: stri
           <span ref={ringRef} aria-hidden className={`grid size-8 place-items-center rounded-full will-change-transform ${flow === "turn" ? "bg-(--paper) text-(--ink)" : "bg-(--ink) text-(--paper)"}`}>
             {flow === "done" ? <IconNext size={15} /> : flow === "idle" || flow === "model" ? <IconPlay size={13} /> : <IconMic size={16} />}
           </span>
-          <span>
-            {label}
-            <span className="num ml-1 text-[13px] font-medium opacity-70">{flow === "done" ? `・${lessonMin}分` : flow === "idle" ? "・10秒" : ""}</span>
-          </span>
+          <span className="text-[17px]">{label}</span>
         </button>
+        <p className="mt-2 min-h-4 text-center text-[13px] font-medium" style={{ color: "color-mix(in srgb, var(--field-ink) 88%, transparent)" }}>
+          {note}
+        </p>
         {flow === "done" ? (
-          <button type="button" onClick={() => (setFlow("idle"), (clock.current = { g: null, v: null }))} className="mt-2 h-11 w-full text-[14px] font-bold">
-            もう一度、聞いて言う
+          <button type="button" onClick={() => (setFlow("idle"), (clock.current = { g: null, v: null }))} className="mt-1 h-11 w-full text-[14px] font-bold">
+            もう一度、聞いて話す
           </button>
         ) : null}
       </div>

@@ -29,7 +29,8 @@ const LEAD = 2.0;
 const TRAIL = 3.5;
 const NOISE_DB = -66;
 
-const CASE = { unit: "u03", lesson: "u03-l5", index: 0, id: "u03-l5-01", kana: "ザッツ、ライト。" };
+// the line is "That's right, I remember." since the content went sentences-only (2026-10-22)
+const CASE = { unit: "u03", lesson: "u03-l5", index: 0, id: "u03-l5-01", kana: "ザッツ ライト、アイ リメンバー。" };
 
 function prng(seed) {
   let s = seed >>> 0;

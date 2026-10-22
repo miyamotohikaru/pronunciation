@@ -106,9 +106,10 @@
   --wipe: #62cbff;
   --focus-ring: #0c0f33;
 }
+/* a calmer magenta: white type 7:1, the caption's gold 5:1 */
 .field-berry {
-  --field: #c92d70;
-  --field-deep: #8f1a4c;
+  --field: #a02a5c;
+  --field-deep: #73193f;
   --field-ink: #ffffff;
   --field-ink-soft: #ffe3ef;
   --wipe: #62cbff;
@@ -157,7 +158,7 @@ html:has(.field-teal) {
   background: #19c3b5;
 }
 html:has(.field-berry) {
-  background: #c92d70;
+  background: #a02a5c;
 }
 html:has(.field-amber) {
   background: #ffb300;
@@ -232,37 +233,28 @@ html:has(.field-shell) {
   paint-order: stroke fill;
   clip-path: inset(-0.35em calc(100% - var(--p) * (100% + 0.7em) + 0.35em) -0.35em -0.35em);
 }
-/* karaoke caption: white on the field, a thin outline, no colour wipe; the words not reached yet
-   are dim, the word at the playhead is marked underneath (only opacity and one bar change) */
+/* karaoke caption: plain white type (no outline, no shadow); the words not reached yet at 55 %;
+   each word paints gold from the left while your voice is inside the band (--g, 0..1) */
 .telop[data-mode="karaoke"] {
-  --telop-stroke: 0.09em;
+  --telop-stroke: 0;
 }
-.telop[data-mode="karaoke"] .tl-a {
+.telop[data-mode="karaoke"] .tl-a,
+.telop[data-mode="karaoke"] .tl-b {
+  -webkit-text-stroke: 0;
   text-shadow: none;
 }
+.telop[data-mode="karaoke"] .tl-a {
+  color: var(--paper);
+}
 .telop[data-mode="karaoke"] .tl-b {
-  display: none;
+  color: var(--voice);
+  clip-path: inset(-0.3em calc(100% - var(--g, 0) * (100% + 0.3em) + 0.3em) -0.3em -0.3em);
 }
 .telop[data-mode="karaoke"] .telop-word {
   transition: opacity 120ms linear;
 }
 .telop[data-mode="karaoke"] .telop-word[data-state="todo"] {
-  opacity: 0.42;
-}
-.telop[data-mode="karaoke"] .telop-word::after {
-  content: "";
-  position: absolute;
-  left: 0.12em;
-  right: 0.12em;
-  bottom: -0.02em;
-  height: 0.075em;
-  border-radius: 999px;
-  background: var(--paper);
-  opacity: 0;
-  transition: opacity 120ms linear;
-}
-.telop[data-mode="karaoke"] .telop-word[data-state="now"]::after {
-  opacity: 1;
+  opacity: 0.55;
 }
 /* result: every word gets its judgement colour; the outline stays navy */
 .telop[data-mode="result"] .tl-b {
@@ -399,6 +391,24 @@ button.telop-word::before {
     stroke-dashoffset: 0;
   }
 }
+/* the sound card's ✕ on the ridge, while a clip plays */
+@keyframes kara-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+.kara .kara-blink {
+  animation: kara-blink 0.7s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kara .kara-blink {
+    animation: none;
+  }
+}
 @keyframes kara-fade {
   from {
     opacity: 0;
@@ -490,6 +500,8 @@ button.telop-word::before {
   display: inline-block;
   vertical-align: baseline;
   white-space: pre;
+  /* room between the letters, so one letter's outline never runs into the next one's fill */
+  letter-spacing: 0.05em;
   --p: 0;
 }
 .kara .hero-outline .hero-block {

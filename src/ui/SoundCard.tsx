@@ -112,7 +112,7 @@ export default function SoundCard({ word, tipFor, onClose, onPlay, onAlternate, 
 
       {heard ? (
         <div className="mt-5">
-          <p className="jp text-[19px] font-black leading-snug">{heardLine(phone, label)}</p>
+          <p className="jp text-[19px] font-black leading-snug">{heardLine(phone)}</p>
           {other ? (
             <div className="mt-4" aria-label={`どっちに聞こえたか：${other} 寄り`}>
               <p className="text-[12px] font-extrabold leading-none">どっちに聞こえた？</p>
