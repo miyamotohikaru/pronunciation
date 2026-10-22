@@ -1,8 +1,17 @@
 # Curriculum: shortest path to native-like General American for Japanese adults
 
-Data: `curriculum.json` (built by `build_curriculum.py`, checked by `check_cmudict.py`).
-10 units, 47 lessons, 311 items, 8 placement sentences.
-Every word in `text`, `tts_text`, `pair` and `focus.word` is in CMUdict, and every `focus.phone` occurs in a CMUdict pronunciation of its word.
+Data (each built by a script and checked by `check_cmudict.py`):
+
+| file | built by | contents |
+|---|---|---|
+| `curriculum.json` (v2) | `build_curriculum.py` | 10 units, 57 lessons (incl. 10 boss lessons), 341 items, all sentences/phrases; 8 placement sentences |
+| `challenge.json` | `build_challenge.py` | 20 long sentences, 6 self-introduction scripts (25 lines), 8 dialogues (50 turns, 25 scored `you` lines) |
+| `phonemes.json` | `build_phonemes.py` | 42 entries (all GA phonemes, schwa and ɚ as their own entries, flap ɾ as an allophone note), 252 practice sentences |
+| `ipa-legend.json` | `build_phonemes.py` | 53 symbols and marks, with Japanese name and how to read them |
+| `alphabet.json` | `build_alphabet.py` | 26 letter names, 11 confusion sets, 32 practice sentences |
+
+`ipa.py` turns CMUdict ARPAbet into dictionary-style IPA (shared by all build scripts and the checker).
+Every English token (text, tts_text, pair, focus.word, examples, practice) is in CMUdict, and every `focus.phone` occurs in a CMUdict pronunciation of its word. Acronyms are used only when CMUdict reads them as their letters (FBI, BBC, VIP, PR); otherwise they are written with dots (I.D., G.P.S.).
 
 ## 1. Fixed feature tags
 
@@ -22,12 +31,31 @@ Every word in `text`, `tts_text`, `pair` and `focus.word` is in CMUdict, and eve
 | `vowels-tense-lax` | /ɪ/–/iː/, /ʊ/–/uː/, diphthongs /eɪ/ /oʊ/ | length-only contrast; "make" → meeku, "cold" → kōrudo (≈ called) | U9 |
 | `intonation` | pitch range, focus / contrastive stress, question tunes, thought groups | narrow, flat pitch range; rising wh-questions; no de-accenting of given words | U10 |
 
-Two small schema extensions (both optional, ignorable by older code):
+Schema extensions (all optional, ignorable by older code):
 - `lessons[].feature` — the tag that lesson trains (defaults to the unit's `feature`). It lets placement skip one lesson, not only a whole unit.
+- `lessons[].boss: true` — the last lesson of every unit: 3 sentences of 12–20 words that combine the unit's feature with earlier units.
 - `placement[].focus[]` — `{word, phone, watch_for, tag}`, so each scored phone can be added to the right tag.
+- `focus[].ipa` (dictionary-style transcription of the focus word) and `focus[].ipa_note_ja` (only on flapped t).
+- `items[].pair` is now metadata only: the minimal-pair partner of `focus[0].word`, for a listen-only reference. Nothing is recorded as a single word.
 
 Conventions: `phone` / `watch_for` are ARPAbet without stress digits. `"EPEN"` = a vowel inserted after this consonant. An empty `watch_for` means "may be dropped or too weak" (e.g. the r in "car", the w in "woman"), or, in U10, that the target is the pitch movement on that syllable. IDs are positional (`u03-l2-04`); add new items at the end of a lesson.
-Difficulty: 1 = one short word, 2 = longer word / pair / short phrase, 3 = cluster or two targets, 4 = sentence with several targets, 5 = long sentence (≤ 10 words). Sentences are ≤ 6 words in U1–U5 and ≤ 10 words after that (the checker enforces this).
+Curriculum v2 (owner: 「一単語はいらない。文章がいい」): every item is a sentence or phrase.
+- Lessons 1–2 use 3–6 words, later lessons 3–12 words, and the boss lesson 12–20 words (the checker enforces this).
+- Minimal pairs appear inside one natural sentence, e.g. "Turn right at the light.", "There's a bug on my bag.", "I walk to work."
+- IDs kept every v1 lesson's item count, so `u03-l2-04` is still unit 3, lesson 2, item 4.
+
+Difficulty: 1 = 3–4 word sentence with one target, 2 = two targets or a contrast, 3 = cluster-heavy or a longer sentence, 4 = several targets, 5 = boss / long sentence.
+
+Japanese text rules:
+- No katakana readings of English words anywhere: a learner who sees ホテル under "hotel" anchors to the habit we fight. Stress is shown as ho·TEL（・●）.
+- The checker rejects any katakana run except Japanese sound descriptions like 「アー」「エイ」.
+- Names in translations stay in Latin letters (Ken, Aki). Loanword-only meanings use native words (珈琲, 扉, 上着).
+
+IPA rules (owner: 「発音記号が大切」): IPA follows the Japanese learner's-dictionary style (ジーニアス / ウィズダム):
+- r is written r; primary stress is ´ and secondary stress is ` over the vowel. Short vowels are i / u, long ones carry ː: think /θíŋk/, seat /síːt/, book /búk/, food /fúːd/.
+- r-coloured vowels are ɚ / ɚ́ː (bird /bɚ́ːd/, teacher /tíːtʃɚ/). Vowel + r is car /kɑ́ːr/, here /híɚ/.
+- The flap is written t with a note: water /wɔ́ːtɚ/.
+- Weak forms are shown in weak-form drills (of /əv/, from /frəm/, to /tə/). Strong forms are shown where the word is stressed (Where are you from? → /frʌ́m/).
 
 ## 2. Why this order is the shortest path
 
@@ -42,7 +70,7 @@ Our goal is native-like speech, not just intelligibility (Derwing & Munro 2015 t
 
 | # | unit (tag) | why it sits here |
 |---|---|---|
-| 1 | 英語のリズム (`rhythm-stress`) | Biggest gain per minute: every utterance, largest share of accent ratings; stressed syllables made higher, longer and louder also starts the pitch-range work. |
+| 1 | 英語の強弱 (`rhythm-stress`) | Biggest gain per minute: every utterance, largest share of accent ratings; stressed syllables made higher, longer and louder also starts the pitch-range work. |
 | 2 | 母音を足さない (`epenthesis` + `final-consonants`) | Inserted vowels change the syllable count, which breaks unit 1's rhythm. Also a prerequisite for linking. |
 | 3 | R と L (`r-l`) | Highest-load consonant contrast and the slowest to acquire, so it starts early and every later unit's sentences give spaced review. |
 | 4 | 3つの「ア」 (`vowels-ae-ah-aa`) | Highest-load vowel contrasts, in very frequent words (have, can, but, much, not, got). |
@@ -51,9 +79,9 @@ Our goal is native-like speech, not just intelligibility (Derwing & Munro 2015 t
 | 7 | TH・S・SH (`th` + `s-sh`) | Very frequent (the, this, think) and salient, but low load and easy. A midpoint quick win. si/ti/tu use the same tongue-tip control. |
 | 8 | V・F・H・W (`v-b` + `f-h`) | Visible, easy labiodentals. f/h has high load but in Japanese speech the problem is mostly before u. |
 | 9 | 長い音と短い音 (`vowels-tense-lax`) | /ɪ/–/iː/ moderate load, /ʊ/–/uː/ low. Diphthongs /eɪ/ /oʊ/ are polish ("cold" vs "called"). |
-| 10 | 声のメロディー (`intonation`) | Capstone: focus, contrast, question tunes and thought groups on the longest sentences. It uses everything above. Pitch range itself has been trained since unit 1. |
+| 10 | 声の上がり下がり (`intonation`) | Capstone: focus, contrast, question tunes and thought groups on the longest sentences. It uses everything above. Pitch range itself has been trained since unit 1. |
 
-Within each unit the path is: sound alone (word) → contrast (minimal pair) → in context (phrase) → short sentence.
+Within each unit the path is: short sentence with the sound (3–6 words) → contrast sentence (both sounds in one sentence) → longer sentences (up to 12 words) → boss lesson (12–20 words). Single sounds and words live in `phonemes.json` as listen-only reference.
 Before a feature's unit, the app should show its errors only in a neutral color and not count them. Only the current and already-taught features affect the score, so early units never punish TH or flaps the learner hasn't met yet ("fun, never frustrating").
 
 Scoring caveats for the phone model (vocab = CMUdict ARPAbet with stress digits, no DX):
