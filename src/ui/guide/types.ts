@@ -13,8 +13,9 @@ export type GuideLive = {
   t: number | null;
   /** true while the guide runs (お手本 / count-in / singing / replay): the view follows the cursor */
   follow: boolean;
-  /** your live line (KaraokeJudge.line): semitones vs your own median, same scale as the wave */
-  line: readonly { t: number; st: number | null }[];
+  /** your live line (KaraokeJudge.line): semitones vs your own median, same scale as the wave;
+   *  inBand = inside the guide's tolerance band at that moment (judge built with { wave }) */
+  line: readonly { t: number; st: number | null; inBand?: boolean }[];
   /** per syllable fill / grade (KaraokeJudge.bars); null before the first take */
   bars: readonly BarLive[] | null;
   /** cursor colour: the model's (cyan) or yours (replay, yellow) */
@@ -36,6 +37,10 @@ export type GuideProps = {
   progressive?: boolean;
   /** dim everything but one word (sound card open) */
   focusWord?: number | null;
+  /** the judge's tolerance (±semitones): the band is drawn exactly this thick, so overlap == hit */
+  tolSt?: number;
+  /** stretches where you were off (after the take), shaded lightly behind the band */
+  offStretches?: readonly { start: number; end: number }[] | null;
   /** screen-reader summary */
   label: string;
   className?: string;

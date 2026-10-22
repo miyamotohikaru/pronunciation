@@ -1,21 +1,22 @@
 "use client";
 
 /**
- * The guide as a wave: the model's melody as one thick, rounded, glowing ribbon (karaoke-bar
- * material), thickness from loudness, thinner where a consonant or a short gap is bridged.
- * While the guide runs it scrolls past a fixed "now" line at the chosen speed; each syllable's
- * stretch of ribbon fills left → right as KaraokeJudge's bar fills (waveFill), and turns to its
- * grade colour when decided. Your live line is drawn over it on the same semitone scale.
- *
- * Performance contract: one canvas, one requestAnimationFrame loop, inputs read from refs,
- * no React state and no layout reads per frame (the size comes from a ResizeObserver).
+ * The guide as a wave — honest karaoke.
+ *   - The band is exactly ±tolSt semitones thick (KaraokeJudge's pitch tolerance), so "your line
+ *     overlaps the band" means "the judge counts it". Loudness (w) is drawn as glow, not thickness.
+ *   - Your line is gold where it is inside the band (judge.line[i].inBand) and thin white outside,
+ *     with a small 高い / 低い mark at its head while you are off.
+ *   - A syllable lights up and pops GREAT / PERFECT only once the judge has finalized it (one pop
+ *     at a time); a late syllable gets a small おそい. Sung parts fade as they scroll away.
+ *   - After the take: the model's band, your line over it, and the stretches where you were off
+ *     shaded lightly.
+ * One canvas, one requestAnimationFrame loop, inputs from refs, no React state per frame.
  */
 import { memo, useEffect, useRef } from "react";
-import { waveFill, type BarGrade, type WaveFill } from "@/engine/karaoke/judge.ts";
+import type { BarGrade } from "@/engine/karaoke/judge.ts";
 import type { GuideProps } from "./types";
 
-const PAD = { l: 12, r: 12, t: 26, b: 30 };
-/** follow mode: where "now" sits (share of the width) */
+const PAD = { l: 12, r: 12, t: 22, b: 34 };
 const NOW_X = 0.3;
 
 type RGB = [number, number, number];
@@ -27,9 +28,8 @@ const rgb = (hex: string, fb: RGB): RGB => {
 const rgba = (c: RGB, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 
-type Pop = { i: number; grade: BarGrade; at: number };
-const POP_MS = 950;
-const POP_LABEL: Record<BarGrade, string> = { perfect: "PERFECT", great: "GREAT", good: "GOOD", miss: "" };
+type Pop = { i: number; text: string; late: boolean; at: number };
+const POP_MS = 900;
 
 function WaveGuide(props: GuideProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -53,13 +53,12 @@ function WaveGuide(props: GuideProps) {
     const col = {
       guide: rgb(cs.getPropertyValue("--guide"), [98, 203, 255]),
       voice: rgb(cs.getPropertyValue("--voice"), [255, 210, 63]),
-      hit: rgb(cs.getPropertyValue("--hit"), [255, 79, 163]),
-      good: rgb(cs.getPropertyValue("--j-good"), [255, 182, 72]),
-      great: rgb(cs.getPropertyValue("--j-great"), [91, 232, 154]),
+      miss: rgb(cs.getPropertyValue("--miss"), [214, 36, 95]),
       monitor: rgb(cs.getPropertyValue("--monitor"), [12, 15, 51]),
       muted: cs.getPropertyValue("--monitor-muted").trim() || "#a8acd9",
     };
     let font = cs.fontFamily;
+    let latin = getComputedStyle(document.documentElement).getPropertyValue("--font-latin") || "";
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let W = 0;
@@ -72,7 +71,7 @@ function WaveGuide(props: GuideProps) {
       H = r.height;
       const cw = Math.max(1, Math.round(W * dpr));
       const ch = Math.max(1, Math.round(H * dpr));
-      if (canvas.width !== cw) canvas.width = cw; // assigning clears the canvas: only when it changed
+      if (canvas.width !== cw) canvas.width = cw;
       if (canvas.height !== ch) canvas.height = ch;
       dirty = true;
     };
@@ -81,19 +80,21 @@ function WaveGuide(props: GuideProps) {
     resize(wrap.getBoundingClientRect());
     document.fonts?.ready.then(() => {
       font = getComputedStyle(wrap).fontFamily;
+      latin = getComputedStyle(wrap).getPropertyValue("--font-latin") || latin;
       dirty = true;
     });
 
-    // ---- per-wave geometry (recomputed only when the wave object changes)
+    // ---- per-wave geometry
     let geomKey: unknown = null;
     let t0 = 0;
     let t1 = 1;
-    let st0 = -6;
-    let st1 = 6;
+    let st0 = -8;
+    let st1 = 8;
     const prepare = () => {
       const p = propsRef.current;
       if (geomKey === p.wave) return;
       geomKey = p.wave;
+      const tol = p.tolSt ?? 2.5;
       let lo = Infinity;
       let hi = -Infinity;
       let a = Infinity;
@@ -111,14 +112,13 @@ function WaveGuide(props: GuideProps) {
         a = p.syllables[0]?.start ?? 0;
         b = p.syllables[p.syllables.length - 1]?.end ?? 1;
       }
-      const s0 = Math.min(a, p.syllables[0]?.start ?? a);
-      const s1 = Math.max(b, p.syllables[p.syllables.length - 1]?.end ?? b);
-      t0 = s0 - 0.12;
-      t1 = s1 + 0.16;
-      lo -= 2.2;
-      hi += 2.2;
-      if (hi - lo < 10) {
-        const add = (10 - (hi - lo)) / 2;
+      t0 = Math.min(a, p.syllables[0]?.start ?? a) - 0.12;
+      t1 = Math.max(b, p.syllables[p.syllables.length - 1]?.end ?? b) + 0.16;
+      // room for the band's own thickness and a little air; never so tight that the band swallows the lane
+      lo -= tol + 1.5;
+      hi += tol + 1.5;
+      if (hi - lo < 16) {
+        const add = (16 - (hi - lo)) / 2;
         lo -= add;
         hi += add;
       }
@@ -126,18 +126,15 @@ function WaveGuide(props: GuideProps) {
       st1 = hi;
     };
 
-    // ---- view: 0 = whole guide fitted, 1 = following the cursor
     let k = 0;
     let kFrom = 0;
     let kTo = 0;
     let kAt = 0;
     const secPerView = () => Math.min(4, Math.max(1.8, W / 190));
 
-    // ---- grade pops (drawn on the canvas; no DOM per pop)
     const pops: Pop[] = [];
     let seenGrades: (BarGrade | null)[] = [];
     let barsKey: unknown = null;
-
     let lastSig = "";
     let raf = 0;
 
@@ -145,15 +142,13 @@ function WaveGuide(props: GuideProps) {
       const p = propsRef.current;
       const live = p.live.current;
       prepare();
-      // follow transition
       const target = live.follow && live.t !== null ? 1 : 0;
       if (target !== kTo) {
         kFrom = k;
         kTo = target;
         kAt = now;
       }
-      const dur = reduce.matches ? 1 : 420;
-      const prog = Math.min(1, (now - kAt) / dur);
+      const prog = Math.min(1, (now - kAt) / (reduce.matches ? 1 : 420));
       k = kFrom + (kTo - kFrom) * easeInOut(prog);
       const animating = prog < 1;
 
@@ -166,241 +161,178 @@ function WaveGuide(props: GuideProps) {
       const A = fitA + (folA - fitA) * k;
       const B = fitB + (folB - fitB) * k;
       const X = (t: number) => A + B * t;
-      const Y = (st: number) => PAD.t + ((st1 - st) / (st1 - st0)) * (H - PAD.t - PAD.b);
+      const pxPerSt = (H - PAD.t - PAD.b) / (st1 - st0);
+      const Y = (st: number) => PAD.t + (st1 - st) * pxPerSt;
+      const tol = p.tolSt ?? 2.5;
+      const band = 2 * tol * pxPerSt; // the hit zone, in pixels
       const scale = Math.max(0.85, Math.min(1.7, H / 180));
       const tVis0 = (-A - 20) / B;
       const tVis1 = (W - A + 20) / B;
+      const settled = !!(p.overlay && p.overlay.length);
+      // sung parts fade as they scroll away (follow mode only)
+      const fade = (t: number) => (live.follow && live.t !== null ? Math.max(0.25, Math.min(1, 1 - (live.t - 0.35 - t) / 1.2)) : 1);
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      // staff lines (quiet)
-      ctx.strokeStyle = "rgba(255,255,255,0.05)";
-      ctx.lineWidth = 1;
-      for (let st = Math.ceil(st0 / 2) * 2; st <= st1; st += 2) {
-        const y = Math.round(Y(st)) + 0.5;
-        if (y < PAD.t - 6 || y > H - PAD.b) continue;
-        ctx.beginPath();
-        ctx.moveTo(6, y);
-        ctx.lineTo(W - 6, y);
-        ctx.stroke();
+      // after the take: where you were off, shaded lightly behind everything
+      if (settled && p.offStretches) {
+        ctx.fillStyle = rgba(col.miss, 0.2);
+        for (const r of p.offStretches) {
+          const x0 = X(r.start);
+          const x1 = X(r.end);
+          if (x1 > x0) ctx.fillRect(x0, PAD.t - 8, x1 - x0, H - PAD.t - PAD.b + 10);
+        }
       }
 
-      // ---- the ribbon
-      const fills: WaveFill[][] | null = live.bars ? waveFill(p.wave, p.syllables, live.bars) : null;
-      const thick = (w: number, bridged: boolean) => (5 + 15 * w) * scale * (bridged ? 0.72 : 1);
-      const ribbon = (seg: (typeof p.wave.segments)[number], from: number, to: number, extra: number) => {
-        // polygon: upper edge forward, lower edge back, round caps from the stroke-join of the outline
-        ctx.beginPath();
-        for (let i = from; i <= to; i++) {
-          const pt = seg[i];
-          ctx.lineTo(X(pt.t), Y(pt.st) - thick(pt.w, !!pt.b) / 2 - extra);
-        }
-        for (let i = to; i >= from; i--) {
-          const pt = seg[i];
-          ctx.lineTo(X(pt.t), Y(pt.st) + thick(pt.w, !!pt.b) / 2 + extra);
-        }
-        ctx.closePath();
-        ctx.fill();
+      // ---- the band: constant thickness (= tolerance), glow from loudness, lit once a syllable is won
+      const bars = live.bars;
+      const sylOf = (t: number) => {
+        for (let i = 0; i < p.syllables.length; i++) if (t >= p.syllables[i].start && t <= p.syllables[i].end) return i;
+        return -1;
       };
-      const capR = (pt: { w: number; b?: true }) => thick(pt.w, !!pt.b) / 2;
-      const settled = !!(p.overlay && p.overlay.length);
-      const color = (f: WaveFill): string => {
-        // after the take the chart is a calm comparison: the model's wave in one cyan
-        if (settled) return rgba(col.guide, 0.62);
-        switch (f) {
-          case 5:
-            return "rgba(226,247,255,1)"; // lighting up as you match
-          case 4:
-            return "rgba(255,255,255,1)";
-          case 3:
-            return "rgba(176,232,255,1)";
-          case 2:
-            return rgba(col.guide, 0.85);
-          case 1:
-            return rgba(col.guide, 0.26);
-          default:
-            return rgba(col.guide, k > 0.5 || live.t !== null ? 0.5 : 0.62);
-        }
-      };
-
-      p.wave.segments.forEach((seg, si) => {
-        if (seg.length < 2) return;
-        if (seg[seg.length - 1].t < tVis0 || seg[0].t > tVis1) return;
-        // glow
-        ctx.fillStyle = rgba(col.guide, 0.1);
-        ribbon(seg, 0, seg.length - 1, 5 * scale);
-        // body, in runs of one colour (round caps at both ends of the segment)
-        const f = fills?.[si];
-        let runStart = 0;
-        for (let i = 1; i <= seg.length; i++) {
-          const cur = f ? f[runStart] : 0;
-          if (i < seg.length && (f ? f[i] : 0) === cur) continue;
-          const end = Math.min(seg.length - 1, i); // overlap one point so runs meet without a seam
-          ctx.fillStyle = color(cur as WaveFill);
-          ribbon(seg, runStart, end, 0);
-          if (cur === 4 && !settled) {
-            ctx.fillStyle = rgba(col.hit, 0.28);
-            ribbon(seg, runStart, end, 3 * scale);
-            ctx.fillStyle = "rgba(255,255,255,1)";
-            ribbon(seg, runStart, end, 0);
-          }
-          runStart = i;
-        }
-        const first = seg[0];
-        const last = seg[seg.length - 1];
-        ctx.fillStyle = color((f ? f[0] : 0) as WaveFill);
-        ctx.beginPath();
-        ctx.arc(X(first.t), Y(first.st), capR(first), Math.PI / 2, (Math.PI * 3) / 2);
-        ctx.fill();
-        ctx.fillStyle = color((f ? f[seg.length - 1] : 0) as WaveFill);
-        ctx.beginPath();
-        ctx.arc(X(last.t), Y(last.st), capR(last), -Math.PI / 2, Math.PI / 2);
-        ctx.fill();
-        // gloss along the top
-        ctx.strokeStyle = "rgba(255,255,255,0.32)";
-        ctx.lineWidth = Math.max(1.5, 2.2 * scale);
+      for (const seg of p.wave.segments) {
+        if (seg.length < 2 || seg[seg.length - 1].t < tVis0 || seg[0].t > tVis1) continue;
+        // the band is ±tol semitones around the melody, measured vertically (pitch is vertical):
+        // one ribbon polygon per segment, shaded along its length by a gradient (loudness, "won")
+        const style = (i: number) => {
+          const pt = seg[i];
+          const si = sylOf(pt.t);
+          const g = si >= 0 && bars ? bars[si]?.grade : null;
+          const won = !settled && (g === "great" || g === "perfect");
+          const glow = (0.32 + 0.5 * pt.w) * (pt.b ? 0.6 : 1) * fade(pt.t);
+          return { fill: won ? rgba(col.guide, Math.min(1, glow + 0.4 * fade(pt.t))) : rgba(col.guide, glow * (settled ? 0.75 : 0.85)) };
+        };
+        const xa = X(seg[0].t);
+        const xb = X(seg[seg.length - 1].t);
+        const grad = ctx.createLinearGradient(xa, 0, Math.max(xa + 1, xb), 0);
+        const step = Math.max(1, Math.floor(seg.length / 90)); // ≤ ~90 stops per segment
+        for (let i = 0; i < seg.length; i += step) grad.addColorStop(Math.min(1, Math.max(0, (X(seg[i].t) - xa) / Math.max(1, xb - xa))), style(i).fill);
+        grad.addColorStop(1, style(seg.length - 1).fill);
+        ctx.fillStyle = grad;
         ctx.beginPath();
         for (let i = 0; i < seg.length; i++) {
-          const pt = seg[i];
-          if (pt.b) {
-            ctx.moveTo(X(pt.t), Y(pt.st) - thick(pt.w, true) * 0.22);
-            continue;
-          }
-          ctx.lineTo(X(pt.t), Y(pt.st) - thick(pt.w, false) * 0.22);
+          const x = X(seg[i].t);
+          const y = Y(seg[i].st) - band / 2;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
-        ctx.stroke();
-      });
-
-      // ---- a line (yours): navy halo, white core
-      const line = (pts: readonly { t: number; st: number | null }[], upTo: number | null, width: number, tidy: boolean) => {
-        // runs of voiced points (spikes = octave jumps on a consonant end a run)
-        const runs: { x: number; y: number; t: number }[][] = [];
-        let cur: { x: number; y: number; t: number }[] = [];
-        let prevSt: number | null = null;
-        for (let i = 0; i < pts.length; i++) {
-          const pt = pts[i];
-          if (upTo !== null && pt.t > upTo) break;
-          const spike = pt.st !== null && prevSt !== null && Math.abs(pt.st - prevSt) > 6;
-          prevSt = pt.st;
-          if (pt.st === null || spike) {
-            if (cur.length) runs.push(cur);
-            cur = [];
-            continue;
-          }
-          if (pt.t < tVis0 || pt.t > tVis1) continue;
-          cur.push({ x: X(pt.t), y: Math.min(H - PAD.b + 6, Math.max(PAD.t - 12, Y(pt.st))), t: pt.t });
-        }
-        if (cur.length) runs.push(cur);
-        const keep = tidy ? runs.filter((r) => r.length >= 8) : runs; // no floating crumbs after the take
-        const stroke = (style: string, w: number, dash: number[]) => {
-          ctx.strokeStyle = style;
-          ctx.lineWidth = w;
-          ctx.setLineDash(dash);
+        for (let i = seg.length - 1; i >= 0; i--) ctx.lineTo(X(seg[i].t), Y(seg[i].st) + band / 2);
+        ctx.closePath();
+        ctx.fill();
+        // rounded ends (outward half-discs)
+        for (const [pt, a0, a1] of [
+          [seg[0], Math.PI / 2, (Math.PI * 3) / 2],
+          [seg[seg.length - 1], -Math.PI / 2, Math.PI / 2],
+        ] as const) {
+          ctx.fillStyle = style(pt === seg[0] ? 0 : seg.length - 1).fill;
           ctx.beginPath();
-          keep.forEach((r, ri) => {
-            if (dash.length) {
-              // dotted bridge from the previous run when the voice only broke for a moment
-              const prev = keep[ri - 1];
-              if (prev && r[0].t - prev[prev.length - 1].t < 0.45) {
-                ctx.moveTo(prev[prev.length - 1].x, prev[prev.length - 1].y);
-                ctx.lineTo(r[0].x, r[0].y);
-              }
-              return;
-            }
-            ctx.moveTo(r[0].x, r[0].y);
-            for (let k2 = 1; k2 < r.length; k2++) ctx.lineTo(r[k2].x, r[k2].y);
-          });
-          ctx.stroke();
-          ctx.setLineDash([]);
-        };
-        stroke(rgba(col.monitor, 0.92), width + 4 * scale, []);
-        stroke(rgba(col.voice, 1), width, []);
-        if (tidy) stroke(rgba(col.voice, 0.75), Math.max(1.5, width * 0.6), [1.5 * scale, 5 * scale]);
-      };
-      if (p.overlay && p.overlay.length) {
-        // only where the model speaks (no tail after the last syllable)
-        const end = (p.syllables[p.syllables.length - 1]?.end ?? Infinity) + 0.08;
-        const upTo = p.progressive ? Math.min(live.t ?? -1, end) : end;
-        line(p.overlay, upTo, 2.8 * scale, true);
-      } else if (live.line.length) {
-        line(live.line, null, 2.6 * scale, false);
-        // head of the live line
-        for (let i = live.line.length - 1; i >= 0; i--) {
-          const pt = live.line[i];
-          if (pt.st === null) continue;
-          if (live.t !== null && live.follow && live.t - pt.t < 0.15) {
-            const x = X(pt.t);
-            const y = Math.min(H - PAD.b + 6, Math.max(PAD.t - 12, Y(pt.st)));
-            ctx.fillStyle = rgba(col.voice, 0.3);
-            ctx.beginPath();
-            ctx.arc(x, y, 9 * scale, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = rgba(col.voice, 1);
-            ctx.beginPath();
-            ctx.arc(x, y, 4 * scale, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          break;
+          ctx.ellipse(X(pt.t), Y(pt.st), Math.min(band / 2, 12), band / 2, 0, a0, a1);
+          ctx.fill();
         }
-      }
-
-      // ---- focus on one word
-      if (p.focusWord != null && p.words[p.focusWord]) {
-        const w = p.words[p.focusWord];
-        const a = X(w.start) - 6;
-        const b = X(w.end) + 6;
-        ctx.fillStyle = rgba(col.monitor, 0.72);
-        ctx.fillRect(0, 0, Math.max(0, a), H - PAD.b + 4);
-        ctx.fillRect(b, 0, Math.max(0, W - b), H - PAD.b + 4);
+        // a thin bright centre line: the model's melody itself
+        ctx.strokeStyle = rgba(col.guide, settled ? 0.9 : 1);
+        ctx.lineWidth = Math.max(1.5, 2 * scale);
+        ctx.beginPath();
+        seg.forEach((pt, i) => (i ? ctx.lineTo(X(pt.t), Y(pt.st)) : ctx.moveTo(X(pt.t), Y(pt.st))));
+        ctx.stroke();
       }
 
       // ---- the cursor / now line
       if (live.t !== null) {
         const x = X(live.t);
         const tone = live.tone === "voice" ? col.voice : col.guide;
-        ctx.strokeStyle = live.follow ? "rgba(255,255,255,0.6)" : rgba(tone, 0.95);
+        ctx.strokeStyle = live.follow ? "rgba(255,255,255,0.55)" : rgba(tone, 0.95);
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(x, PAD.t - 16);
         ctx.lineTo(x, H - PAD.b + 2);
         ctx.stroke();
-        ctx.fillStyle = live.follow ? "#fff" : rgba(tone, 1);
-        ctx.beginPath();
-        ctx.moveTo(x - 6, PAD.t - 20);
-        ctx.lineTo(x + 6, PAD.t - 20);
-        ctx.lineTo(x, PAD.t - 12);
-        ctx.closePath();
-        ctx.fill();
       }
 
-      // ---- grade pops + combo
-      const bars = live.bars;
+      // ---- your line: gold inside the band, thin white outside
+      const pts = settled ? smoothLine(p.overlay!) : live.line;
+      const upTo = settled ? (p.progressive ? Math.min(live.t ?? -1, (p.syllables[p.syllables.length - 1]?.end ?? 1e9) + 0.08) : (p.syllables[p.syllables.length - 1]?.end ?? 1e9) + 0.08) : null;
+      let prevSt: number | null = null;
+      let prevPt: { x: number; y: number; t: number; inBand: boolean } | null = null;
+      let head: { x: number; y: number; st: number; t: number; inBand: boolean; run: number } | null = null;
+      let run = 0; // points in the current unbroken stretch
+      for (let i = 0; i < pts.length; i++) {
+        const pt = pts[i] as { t: number; st: number | null; inBand?: boolean };
+        if (upTo !== null && pt.t > upTo) break;
+        const spike = pt.st !== null && prevSt !== null && Math.abs(pt.st - prevSt) > 6;
+        prevSt = pt.st;
+        if (pt.st === null || spike || pt.t < tVis0 || pt.t > tVis1) {
+          if (!settled || (prevPt && pts[i + 1] && (pts[i + 1] as { st: number | null }).st === null)) prevPt = null;
+          continue;
+        }
+        const inBand = settled ? Math.abs(pt.st - guideAt(p.wave, pt.t)) <= tol : !!pt.inBand;
+        const cur = { x: X(pt.t), y: Math.min(H - PAD.b + 6, Math.max(PAD.t - 14, Y(pt.st))), t: pt.t, inBand };
+        const joined = !!prevPt && cur.t - prevPt.t < (settled ? 0.25 : 0.06);
+        run = joined ? run + 1 : 1;
+        // live: a stretch shows from its third point (a stub of one or two frames would be a speck)
+        if (prevPt && joined && (settled || run >= 3)) {
+          const a = fade(cur.t);
+          if (cur.inBand) {
+            ctx.strokeStyle = rgba(col.voice, 0.28 * a);
+            ctx.lineWidth = 9 * scale;
+            ctx.beginPath();
+            ctx.moveTo(prevPt.x, prevPt.y);
+            ctx.lineTo(cur.x, cur.y);
+            ctx.stroke();
+          }
+          ctx.strokeStyle = cur.inBand ? rgba(col.voice, a) : `rgba(255,255,255,${0.85 * a})`;
+          ctx.lineWidth = (cur.inBand ? 3.6 : 1.8) * scale;
+          ctx.beginPath();
+          ctx.moveTo(prevPt.x, prevPt.y);
+          ctx.lineTo(cur.x, cur.y);
+          ctx.stroke();
+        }
+        prevPt = cur;
+        head = { ...cur, st: pt.st, run };
+      }
+      // the head while singing: a dot, and 高い / 低い when you are off
+      // (only at the end of a drawn stretch: a lone point or two after a jump would float)
+      if (!settled && head && head.run >= 4 && live.t !== null && live.follow && live.t - head.t < 0.18) {
+        ctx.fillStyle = head.inBand ? rgba(col.voice, 1) : "#ffffff";
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, 4.5 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        if (!head.inBand) {
+          const g = guideAt(p.wave, head.t);
+          if (Number.isFinite(g)) {
+            const high = head.st > g;
+            ctx.font = `600 ${Math.round(11 * scale)}px ${font}`;
+            ctx.textAlign = "left";
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(high ? "▲ 高い" : "▼ 低い", head.x + 9, head.y + (high ? -6 : 14));
+          }
+        }
+      }
+
+      // ---- pops: finalized GREAT+ only, one at a time; おそい when the syllable came late
       if (bars !== barsKey) {
         barsKey = bars;
         seenGrades = bars ? bars.map((b) => b.grade) : [];
         pops.length = 0;
       }
-      let combo = 0;
       if (bars) {
         for (let i = 0; i < bars.length; i++) {
           const g = bars[i].grade;
           if (g && seenGrades[i] !== g) {
             seenGrades[i] = g;
-            if (g !== "miss" && live.follow) pops.push({ i, grade: g, at: now });
+            if (!live.follow) continue;
+            const late = bars[i].timing === "late";
+            if (g === "great" || g === "perfect" || late) {
+              pops.length = 0; // never two at once
+              pops.push({ i, text: g === "perfect" ? "PERFECT" : g === "great" ? "GREAT" : "", late, at: now });
+            }
           }
-        }
-        for (let i = bars.length - 1; i >= 0; i--) {
-          const g = bars[i].grade;
-          if (!g) continue;
-          if (g === "perfect" || g === "great") combo++;
-          else break;
         }
       }
       ctx.textAlign = "center";
-      ctx.textBaseline = "alphabetic";
       for (let n = pops.length - 1; n >= 0; n--) {
         const pop = pops[n];
         const age = (now - pop.at) / POP_MS;
@@ -409,50 +341,57 @@ function WaveGuide(props: GuideProps) {
           continue;
         }
         const s = p.syllables[pop.i];
-        const tc = (s.start + s.end) / 2;
-        const y0 = Y(s.pitchSt ?? 0) - 18 * scale;
-        const rise = reduce.matches ? 0 : 16 * scale * age;
-        const alpha = age < 0.75 ? 1 : 1 - (age - 0.75) / 0.25;
-        const size = Math.round((age < 0.12 && !reduce.matches ? 0.8 + age * 1.6 : 1) * 15 * scale);
-        ctx.font = `900 ${size}px ${font}`;
+        const alpha = age < 0.7 ? 1 : 1 - (age - 0.7) / 0.3;
+        const rise = reduce.matches ? 0 : 12 * scale * age;
+        const y = Math.max(PAD.t + 4, Y(s.pitchSt ?? 0) - band / 2 - 8 - rise);
         ctx.globalAlpha = alpha;
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = rgba(col.monitor, 1);
-        const label = POP_LABEL[pop.grade];
-        const half = ctx.measureText(label).width / 2 + 6;
-        const x = Math.min(W - half, Math.max(half, X(tc))); // keep the word on the monitor
-        const y = Math.max(PAD.t, y0 - rise);
-        ctx.strokeText(label, x, y);
-        ctx.fillStyle = pop.grade === "perfect" ? rgba(col.hit, 1) : pop.grade === "great" ? rgba(col.great, 1) : rgba(col.good, 1);
-        ctx.fillText(label, x, y);
+        if (pop.text) {
+          ctx.font = `800 ${Math.round(16 * scale)}px ${latin || font}`;
+          const half = ctx.measureText(pop.text).width / 2 + 6;
+          const x = Math.min(W - half, Math.max(half, X((s.start + s.end) / 2)));
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = rgba(col.monitor, 1);
+          ctx.strokeText(pop.text, x, y);
+          ctx.fillStyle = rgba(col.voice, 1);
+          ctx.fillText(pop.text, x, y);
+        }
+        if (pop.late) {
+          ctx.font = `600 ${Math.round(11 * scale)}px ${font}`;
+          const x = Math.min(W - 24, Math.max(24, X((s.start + s.end) / 2)));
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText("おそい", x, y + (pop.text ? 16 * scale : 0));
+        }
         ctx.globalAlpha = 1;
       }
-      if (combo >= 2 && live.follow) {
-        const label = `${combo}コンボ`;
-        ctx.font = `900 ${Math.round(13 * scale)}px ${font}`;
-        const tw = ctx.measureText(label).width;
-        const bx = W - 12 - tw - 20;
-        ctx.fillStyle = rgba(col.hit, 1);
-        ctx.beginPath();
-        ctx.roundRect(bx, 8, tw + 20, 22 * Math.min(scale, 1.2), 11);
-        ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.textAlign = "left";
-        ctx.fillText(label, bx + 10, 8 + 16 * Math.min(scale, 1.2));
-      }
 
-      // ---- word labels
-      ctx.textAlign = "left";
-      ctx.font = `800 ${Math.round(12 * Math.min(scale, 1.35))}px ${font}`;
+      // ---- labels: word names centred under their own wave; the two lines named directly
+      ctx.textAlign = "center";
+      ctx.font = `700 ${Math.round(12 * Math.min(scale, 1.35))}px ${latin || font}`;
       let labelEnd = -Infinity;
       for (let i = 0; i < p.words.length; i++) {
         const w = p.words[i];
-        const x = Math.max(4, X(w.start) + 2, labelEnd + 8); // never overlap the previous label
         const tw = ctx.measureText(w.text).width;
-        labelEnd = x + tw;
-        if (x > W || X(w.end) < 0) continue;
+        const cx = Math.max(X((w.start + w.end) / 2), labelEnd + 6 + tw / 2);
+        labelEnd = cx + tw / 2;
+        if (cx - tw / 2 > W || cx + tw / 2 < 0) continue;
         ctx.fillStyle = p.focusWord == null ? col.muted : p.focusWord === i ? "#ffffff" : "rgba(168,172,217,0.4)";
-        ctx.fillText(w.text, x, H - 10);
+        ctx.globalAlpha = fade(w.end);
+        ctx.fillText(w.text, cx, H - 12);
+        ctx.globalAlpha = 1;
+      }
+      // direct labels (no legend): お手本 at the start of the band, あなた next to your line
+      const first = p.wave.segments[0]?.[0];
+      if (first && !live.follow) {
+        ctx.textAlign = "left";
+        ctx.font = `600 ${Math.round(11 * Math.min(scale, 1.3))}px ${font}`;
+        ctx.fillStyle = rgba(col.guide, 1);
+        ctx.fillText("お手本", Math.max(4, X(first.t) - 4), Math.max(12, Y(first.st) - band / 2 - 6));
+      }
+      if (settled && head) {
+        ctx.textAlign = "left";
+        ctx.font = `600 ${Math.round(11 * Math.min(scale, 1.3))}px ${font}`;
+        ctx.fillStyle = rgba(col.voice, 1);
+        ctx.fillText("あなた", Math.min(W - 40, head.x + 8), Math.min(H - PAD.b - 2, head.y + 4));
       }
 
       return animating || pops.length > 0;
@@ -485,6 +424,67 @@ function WaveGuide(props: GuideProps) {
       <canvas ref={canvasRef} role="img" aria-label={props.label} className="absolute inset-0 h-full w-full" />
     </div>
   );
+}
+
+/** the model's pitch at t (nearest wave point within 40 ms), NaN if none */
+function guideAt(wave: GuideProps["wave"], t: number): number {
+  let best = NaN;
+  let d = 0.04;
+  for (const seg of wave.segments) {
+    if (seg.length === 0 || t < seg[0].t - 0.04 || t > seg[seg.length - 1].t + 0.04) continue;
+    for (const pt of seg) {
+      const dd = Math.abs(pt.t - t);
+      if (dd < d) {
+        d = dd;
+        best = pt.st;
+      }
+    }
+  }
+  return best;
+}
+
+/** after the take: a light 5-point moving average so the line reads as a melody, not jitter */
+function smoothLine(pts: readonly { t: number; st: number | null }[]): { t: number; st: number | null }[] {
+  return pts.map((p, i) => {
+    if (p.st === null) return p;
+    let s = 0;
+    let n = 0;
+    for (let k = Math.max(0, i - 2); k <= Math.min(pts.length - 1, i + 2); k++) {
+      const q = pts[k].st;
+      if (q === null || Math.abs(q - p.st) > 4) continue;
+      s += q;
+      n++;
+    }
+    return { t: p.t, st: n ? s / n : p.st };
+  });
+}
+
+/**
+ * After the take: the guide-time stretches where your (smoothed) line was outside the band for at
+ * least `minS` — what the chart shades. Gaps under 120 ms inside a stretch don't split it.
+ */
+export function offStretches(pts: readonly { t: number; st: number | null }[] | null, wave: GuideProps["wave"], tolSt: number, minS = 0.15): { start: number; end: number }[] {
+  if (!pts || !pts.length) return [];
+  const out: { start: number; end: number }[] = [];
+  let cur: { start: number; end: number } | null = null;
+  for (const p of smoothLine(pts)) {
+    if (p.st === null) continue;
+    const g = guideAt(wave, p.t);
+    if (!Number.isFinite(g)) continue;
+    const off = Math.abs(p.st - g) > tolSt;
+    if (off) {
+      if (cur && p.t - cur.end <= 0.12) cur.end = p.t;
+      else {
+        if (cur && cur.end - cur.start >= minS) out.push(cur);
+        cur = { start: p.t, end: p.t };
+      }
+    } else if (cur && p.t - cur.end > 0.12) {
+      if (cur.end - cur.start >= minS) out.push(cur);
+      cur = null;
+    }
+  }
+  if (cur && cur.end - cur.start >= minS) out.push(cur);
+  return out;
 }
 
 /** memoised: the practice screen re-renders on every phase change, the WaveGuide only when its props change */

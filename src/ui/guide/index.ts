@@ -5,6 +5,6 @@
  *   BarsGuide — DAM-style syllable bars
  */
 export { default as Guide } from "./WaveGuide";
-export { default as WaveGuide } from "./WaveGuide";
+export { default as WaveGuide, offStretches } from "./WaveGuide";
 export { default as BarsGuide } from "./BarsGuide";
 export * from "./types";

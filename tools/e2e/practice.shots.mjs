@@ -127,16 +127,21 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await page.screenshot({ path: join(OUT, "ours-result.png") });
   const r = await page.evaluate(() => window.__practice.result);
   console.log("take:", r.total.toFixed(3), JSON.stringify(r.words), r.flagged.join(" "));
+  // the worst sound is already open on the result (inline); any other flagged word opens the sheet
+  const inline = r.coach >= 0 && r.words[r.coach][0].toLowerCase() === "rice";
+  console.log("coached on the result:", r.coach >= 0 ? r.words[r.coach][0] : "-", inline ? "(rice: inline)" : "(rice: sheet)");
   const opened = await page.evaluate(() => {
     const btn = [...document.querySelectorAll("button")].find((x) => (x.getAttribute("aria-label") || "").startsWith("rice："));
     btn?.click();
     return !!btn;
   });
   if (!opened) throw new Error("rice was not flagged — no card to open");
-  await sleep(700);
+  await sleep(900);
+  if (inline) await page.evaluate(() => document.getElementById("coach")?.scrollIntoView({ block: "start" }));
+  await sleep(200);
   await page.screenshot({ path: join(OUT, "ours-card.png") });
   const before = r.words[1][1];
-  await page.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("もう一度言う"))?.click());
+  await page.evaluate((sel) => [...document.querySelectorAll(`${sel} button`)].find((x) => x.textContent?.includes("だけ言う"))?.click(), inline ? "#coach" : '[role="dialog"]');
   await page.waitForFunction((s) => window.__practice?.result && window.__practice.result.words[1][1] !== s, { timeout: 60000 }, before);
   await sleep(1100); // the meter slides, the +N lands
   await page.screenshot({ path: join(OUT, "ours-card-retry.png") });

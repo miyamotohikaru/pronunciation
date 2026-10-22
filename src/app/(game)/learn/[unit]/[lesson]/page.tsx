@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import LessonFlow from "@/ui/practice/LessonFlow";
-import { getLesson } from "@/ui/practice/catalog.server";
+import { getLesson, getPairs } from "@/ui/practice/catalog.server";
 import { FIELD_HEX, fieldFor } from "@/ui/practice/fields";
 
 type Params = { unit: string; lesson: string };
@@ -26,5 +26,8 @@ export default async function Page({ params, searchParams }: { params: Promise<P
   const sp = await searchParams;
   const raw = Array.isArray(sp.i) ? sp.i[0] : sp.i;
   const i = raw !== undefined && /^\d+$/.test(raw) ? Number(raw) : null;
-  return <LessonFlow key={`${unit}/${lesson}`} field={fieldFor(unit)} unit={v.unit} lesson={v.lesson} next={v.next} initialIndex={i} />;
+  // only the minimal pairs this lesson's words can use (the catalog stays on the server)
+  const words = new Set(v.lesson.items.flatMap((it) => it.text.toLowerCase().match(/[a-z']+/g) ?? []));
+  const pairs = Object.fromEntries(Object.entries(getPairs()).filter(([w]) => words.has(w)));
+  return <LessonFlow key={`${unit}/${lesson}`} field={fieldFor(unit)} unit={v.unit} lesson={v.lesson} next={v.next} initialIndex={i} pairs={pairs} />;
 }

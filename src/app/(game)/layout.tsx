@@ -3,10 +3,10 @@ import { Atkinson_Hyperlegible_Next, M_PLUS_Rounded_1c } from "next/font/google"
 import "@/ui/tokens.css";
 
 // Japanese font: no subsets (the CSS is split by unicode-range), not preloaded.
-// Two weights only: each weight adds ~126 @font-face rules (≈33 KB gzip of render-blocking CSS);
-// 800 renders with 900 and 400/500 with 700 (CSS font matching).
+// Only the karaoke caption and the score use it, at one weight (each weight adds ~126 @font-face
+// rules ≈ 33 KB gzip of render-blocking CSS). Everything else is the system's medium gothic.
 const rounded = M_PLUS_Rounded_1c({
-  weight: ["700", "900"],
+  weight: ["900"],
   display: "swap",
   preload: false,
   variable: "--font-rounded",

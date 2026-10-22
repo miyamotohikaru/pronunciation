@@ -1,15 +1,14 @@
 "use client";
 
 /**
- * The top of the result: the total, big, as a karaoke-machine counter that stays readable while it
- * runs (each digit slides in its own window, ~600 ms, settles with a small spring); the decimals
- * small and quiet; the change since the last attempt; and the three parts as integers in one row
- * that visibly add up to the total (音 /50 + リズム /25 + 抑揚 /25).
+ * The top of the result: the total as "65" with a small "/100", a karaoke-machine counter that
+ * stays readable while it runs (each digit slides in its own window, ~600 ms, settles with a small
+ * spring); the decimals small on its shoulder; the change since the last attempt; the verdict big.
+ * PartsRow: the three parts as integers that visibly add up (音 /50 + リズム /25 + 抑揚 /25).
  *
  * Per frame: only transforms on five digit strips (no React state, no layout).
  */
 import { useEffect, useRef, useState } from "react";
-import TelopText from "../TelopText";
 import { fmt3, parts } from "../score";
 import type { Scores } from "../types";
 
@@ -101,71 +100,78 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run, skip, total]);
 
-  const ip = integerParts(scores);
   const delta = previous === null ? null : Math.round(total - previous);
 
   return (
     <section aria-label="点数" className="w-full">
-      <div className="flex items-end gap-3">
-        <div className="flex items-end leading-none" aria-hidden>
+      {/* "65" big, "/100" small at its foot, the decimals small on its shoulder */}
+      <div className="flex items-end gap-4">
+        <div className="flex items-stretch leading-none" aria-hidden>
           <Digit refFn={(el) => (strips.current[0] = el)} big hidden={total < 10} />
           <Digit refFn={(el) => (strips.current[1] = el)} big />
-          <span className="mb-[0.18em] ml-[2px] text-[22px] font-black text-(--field-ink) opacity-60 md:text-[30px]">.</span>
-          <Digit refFn={(el) => (strips.current[2] = el)} />
-          <Digit refFn={(el) => (strips.current[3] = el)} />
-          <Digit refFn={(el) => (strips.current[4] = el)} />
-          <span className="mb-[0.3em] ml-1 text-[22px] font-black md:text-[28px]">点</span>
-        </div>
-        <div className="mb-2 flex flex-col items-start gap-2">
-          {delta !== null && done ? (
-            <span
-              className="anim-pop num inline-flex h-8 items-center rounded-full px-3 text-[15px] font-black leading-none"
-              style={{ background: delta > 0 ? "var(--voice)" : "var(--paper)", color: "var(--ink)" }}
-              aria-label={`前回より ${delta >= 0 ? "+" : ""}${delta}点`}
-            >
-              {delta > 0 ? `+${delta}` : delta === 0 ? "±0" : `${delta}`}
-              <span className="ml-1 text-[11px] font-extrabold">前回比</span>
+          <span className="ml-[6px] flex flex-col justify-between pb-[14px] pt-[12px] md:pb-[18px] md:pt-[16px]">
+            <span className="num flex items-start text-[17px] font-bold text-(--field-ink) opacity-70 md:text-[20px]">
+              .
+              <Digit refFn={(el) => (strips.current[2] = el)} />
+              <Digit refFn={(el) => (strips.current[3] = el)} />
+              <Digit refFn={(el) => (strips.current[4] = el)} />
             </span>
-          ) : null}
+            <span className="num text-[17px] font-bold md:text-[20px]">/100</span>
+          </span>
         </div>
+        {delta !== null && done ? (
+          <span
+            className="anim-pop num mb-[16px] inline-flex h-8 items-center rounded-full bg-(--paper) px-3 text-[15px] font-bold leading-none text-(--ink)"
+            aria-label={`前回より ${delta >= 0 ? "+" : ""}${delta}点`}
+          >
+            {delta > 0 ? `+${delta}` : delta === 0 ? "±0" : `${delta}`}
+            <span className="ml-1 text-[11px] font-medium">前回比</span>
+          </span>
+        ) : null}
       </div>
-      <p className="mt-2 min-h-[28px] text-[20px] font-black leading-none md:text-[24px]" aria-live="polite">
-        {done ? (celebrate ? <TelopText text={verdict} fill="var(--voice)" className="text-[26px] md:text-[32px]" /> : verdict) : ""}
+      <p className={`mt-1 min-h-[40px] font-black leading-tight ${celebrate ? "text-[36px] md:text-[44px]" : "text-[32px] md:text-[40px]"}`} aria-live="polite">
+        {done ? verdict : ""}
         <span className="sr-only">{done ? `${fmt3(total)}点。` : ""}</span>
       </p>
-
-      {/* the parts: integers that add up, one row, above the fold */}
-      <ul className="mt-4 grid grid-cols-3 gap-2" aria-label="内わけ">
-        {ip.map((p) => (
-          <li key={p.key} className="rounded-[16px] bg-(--paper) px-3 pb-3 pt-[10px] text-(--ink)">
-            <span className="block text-[12px] font-bold leading-none opacity-75">{p.label}</span>
-            <span className="num mt-2 flex items-baseline gap-[3px] leading-none">
-              <span className="text-[26px] font-black">{p.int}</span>
-              <span className="text-[12px] font-bold opacity-60">/{p.max}</span>
-            </span>
-            <span aria-hidden className="mt-2 block h-[5px] overflow-hidden rounded-full bg-[#e4e7f5]">
-              <span className="block h-full origin-left rounded-full bg-(--ink) transition-transform duration-500" style={{ transform: `scaleX(${done ? p.points / p.max : 0})` }} />
-            </span>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
 
-/** one digit window with a 0–9 strip; the total's integer digits big (sticker), the decimals small and quiet */
+/** the parts as integers that add up to the total, one row (inside 「くわしく」) */
+export function PartsRow({ scores }: { scores: Scores }) {
+  const ip = integerParts(scores);
+  return (
+    <ul className="grid grid-cols-3 gap-2" aria-label="内わけ">
+      {ip.map((p) => (
+        <li key={p.key} className="rounded-[16px] bg-(--paper) px-3 pb-3 pt-[10px] text-(--ink)">
+          <span className="block text-[12px] font-medium leading-none">{p.label}</span>
+          <span className="num mt-2 flex items-baseline gap-[3px] leading-none">
+            <span className="text-[24px] font-bold">{p.int}</span>
+            <span className="text-[12px] font-medium opacity-70">/{p.max}</span>
+          </span>
+          <span aria-hidden className="mt-2 block h-[5px] overflow-hidden rounded-full bg-[#e4e7f5]">
+            <span className="block h-full origin-left rounded-full bg-(--ink)" style={{ transform: `scaleX(${p.points / p.max})` }} />
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** one digit window with a 0–9 strip; the total's integer digits big (the rounded face), the decimals small */
 function Digit({ refFn, big, hidden }: { refFn: (el: HTMLSpanElement | null) => void; big?: boolean; hidden?: boolean }) {
   return (
     <span
-      className={`relative inline-block overflow-hidden ${big ? "telop text-[84px] md:text-[112px]" : "num text-[26px] font-black text-(--field-ink) opacity-60 md:text-[34px]"}`}
-      style={{ width: big ? "0.64em" : "0.62em", height: big ? "1.16em" : "1.2em", visibility: hidden ? "hidden" : undefined, marginBottom: big ? 0 : "0.12em" }}
+      className={`relative inline-block overflow-hidden ${big ? "telop text-[88px] md:text-[116px]" : ""}`}
+      style={{ width: big ? "0.64em" : "0.6em", height: big ? "1.16em" : "1.1em", visibility: hidden ? "hidden" : undefined }}
     >
-      <span ref={refFn} className="absolute inset-x-0 top-0 flex flex-col items-center will-change-transform" style={{ height: "1000%" }}>
-        {DIGITS.split("").map((c) => (
-          <span key={c} className={`${big ? "tl-a" : ""} flex flex-1 items-center justify-center`} style={big ? { ["--telop-stroke" as string]: "0.24em" } : undefined}>
-            {c}
-          </span>
-        ))}
+      {/* one text block per window (0–9 on ten lines, one line = one window): few layout objects */}
+      <span
+        ref={refFn}
+        className={`${big ? "tl-a" : ""} absolute inset-x-0 top-0 block whitespace-pre text-center will-change-transform`}
+        style={{ lineHeight: big ? "1.16em" : "1.1em", ...(big ? { ["--telop-stroke" as string]: "0.24em" } : {}) }}
+      >
+        {DIGITS.split("").join("\n")}
       </span>
     </span>
   );

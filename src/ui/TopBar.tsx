@@ -53,7 +53,7 @@ export default function TopBar({ backHref, index, total, combo = 0, muted, onTog
         {combo >= 2 ? (
           <span
             key={combo}
-            className="anim-pop inline-flex h-8 items-center rounded-full border-[3px] border-(--ink) bg-(--hit) px-3 text-[14px] font-black leading-none text-white"
+            className="anim-pop inline-flex h-8 items-center rounded-full bg-(--paper) px-3 text-[14px] font-black leading-none text-(--ink)"
           >
             {combo}コンボ
           </span>

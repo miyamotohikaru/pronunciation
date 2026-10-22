@@ -47,3 +47,19 @@ export function getHome(): HomeUnit[] {
 export function allLessonParams(): { unit: string; lesson: string }[] {
   return catalog.units.flatMap((u) => u.lessons.map((l) => ({ unit: u.id, lesson: l.id })));
 }
+
+/** minimal-pair audio: every word that has a pair item (both directions) → that item */
+export type PairRef = { id: string; other: string; side: "main" | "pair" };
+export function getPairs(): Record<string, PairRef> {
+  const out: Record<string, PairRef> = {};
+  for (const u of catalog.units)
+    for (const l of u.lessons)
+      for (const it of l.items) {
+        if (it.type !== "pair" || !it.pair) continue;
+        const a = it.text.toLowerCase();
+        const b = it.pair.toLowerCase();
+        if (!out[a]) out[a] = { id: it.id, other: it.pair, side: "main" };
+        if (!out[b]) out[b] = { id: it.id, other: it.text, side: "pair" };
+      }
+  return out;
+}

@@ -42,7 +42,7 @@ export default function RoundButton({ icon, label, ariaLabel, onPress, playingMs
           disabled={disabled}
           aria-label={ariaLabel ?? label}
           aria-pressed={playing}
-          className="press relative size-full rounded-full disabled:opacity-60"
+          className="press relative size-full rounded-full disabled:opacity-35"
         >
           {icon}
         </button>

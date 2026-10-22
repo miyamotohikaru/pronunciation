@@ -35,10 +35,10 @@ export default function MicButton({ state, level, onPress, label, hint }: MicBut
           ring1.current.style.opacity = String(0.25 + smooth * 0.6);
           ring2.current.style.opacity = "0";
         } else {
-          ring1.current.style.transform = `scale(${1.06 + smooth * 0.34})`;
-          ring2.current.style.transform = `scale(${1.12 + smooth * 0.72})`;
-          ring1.current.style.opacity = String(0.35 + smooth * 0.5);
-          ring2.current.style.opacity = String(0.12 + smooth * 0.3);
+          ring1.current.style.transform = `scale(${1.05 + smooth * 0.16})`;
+          ring2.current.style.transform = `scale(${1.08 + smooth * 0.26})`;
+          ring1.current.style.opacity = String(0.3 + smooth * 0.5);
+          ring2.current.style.opacity = String(0.08 + smooth * 0.18);
         }
       }
       raf = requestAnimationFrame(loop);
@@ -47,7 +47,8 @@ export default function MicButton({ state, level, onPress, label, hint }: MicBut
     return () => cancelAnimationFrame(raf);
   }, [state, level]);
 
-  const face = state === "recording" ? "press-voice" : "";
+  // recording is not yellow: yellow means "your voice playing back"
+  const face = state === "recording" ? "press-ink" : "";
 
   return (
     // fixed width: the label can be wider than the button without pushing the side buttons around
@@ -55,8 +56,8 @@ export default function MicButton({ state, level, onPress, label, hint }: MicBut
       <div className="relative grid size-[96px] place-items-center md:size-[112px]">
         {state === "recording" ? (
           <>
-            <span ref={ring2} aria-hidden className="absolute inset-0 rounded-full bg-(--voice) will-change-transform" />
-            <span ref={ring1} aria-hidden className="absolute inset-0 rounded-full border-[6px] border-(--voice) will-change-transform" />
+            <span ref={ring2} aria-hidden className="absolute inset-0 rounded-full bg-(--field-ink) will-change-transform" />
+            <span ref={ring1} aria-hidden className="absolute inset-0 rounded-full border-[5px] border-(--field-ink) will-change-transform" />
           </>
         ) : null}
         {state === "thinking" ? (

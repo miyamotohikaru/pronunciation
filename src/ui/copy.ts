@@ -102,15 +102,25 @@ export function chartReadingJa(notes: ProsodyNote[], words: string[]): string {
 
 /** Two lines: where the tongue/lips go. Keyed by the target sound. */
 const TIPS: Record<string, [string, string]> = {
-  R: ["舌先は、◆どこにも付けません。", "唇を少し丸めて、◆「ゥ」から入ります。"],
-  L: ["舌先を、◆上の歯の裏に付けます。", "付けたまま、◆声を出します。"],
-  TH: ["舌先を、◆上の歯に軽く当てます。", "すき間から、◆息だけを流します。"],
-  DH: ["舌先を、◆上の歯に軽く当てます。", "当てたまま、◆声をふるわせます。"],
-  V: ["上の歯を、◆下唇に軽くのせます。", "そのまま、◆声をふるわせます。"],
-  IH: ["「イ」より、◆口の力を抜きます。", "短く、◆少し「エ」寄りに。"],
-  AY: ["「ア」から「イ」へ、◆なめらかに。", "「ア」を長めにします。"],
-  S: ["舌先を、◆歯ぐきに近づけます。", "母音を足さずに、◆息で終わります。"],
-  K: ["のどの奥で、◆息を止めて放します。", "「ク」の「ウ」は、◆足しません。"],
+  // what to do first; what not to do only after
+  R: ["舌先を少し奥に引き、◆どこにも付けずに。", "唇を軽く丸めて言います。"],
+  L: ["舌先を、◆上の前歯の付け根に付けます。", "付けたまま、◆声を出します。"],
+  TH: ["舌先を、◆上の前歯に軽く当てます。", "すき間から、◆息だけを流します。"],
+  DH: ["舌先を、◆上の前歯に軽く当てます。", "当てたまま、◆声をふるわせます。"],
+  V: ["上の前歯を、◆下唇に軽くのせます。", "そのまま、◆声をふるわせます。"],
+  F: ["上の前歯を、◆下唇に軽くのせます。", "すき間から、◆息を流します。"],
+  IH: ["口の力を抜いて、◆短く「イ」と「エ」の間に。", "長くのばしません。"],
+  IY: ["口を横に引いて、◆長めにのばします。", "「イー」をはっきり。"],
+  AE: ["口を大きく横に開いて、◆「エ」の口で「ア」。", "あごをしっかり下げます。"],
+  AH: ["口の力を抜いて、◆短く軽い「ア」。", "あごはあまり下げません。"],
+  AA: ["口を縦に大きく開けて、◆のどの奥から「アー」。", "唇は丸めません。"],
+  ER: ["舌を奥に引いて、◆少し丸めたまま「アー」。", "どこにも付けません。"],
+  AY: ["「ア」から「イ」へ、◆なめらかに動かします。", "「ア」を長めに。"],
+  S: ["舌先を、◆歯ぐきに近づけて息を流します。", "最後に母音を足しません。"],
+  SH: ["唇を少し前に出して、◆「シュ」と息を流します。", "舌は歯ぐきから離します。"],
+  T: ["舌先を歯ぐきに付けて、◆息で放します。", "「ト」の「オ」は足しません。"],
+  D: ["舌先を歯ぐきに付けて、◆声を出して放します。", "「ド」の「オ」は足しません。"],
+  K: ["のどの奥で息を止めて、◆一気に放します。", "「ク」の「ウ」は足しません。"],
 };
 export function mouthTip(phone: string): [string, string] | null {
   return TIPS[base(phone)] ?? null;
@@ -155,3 +165,42 @@ export const STATUS = {
   recordingHint: "言い終わると、自動で止まります",
   thinking: "お手本とくらべています",
 };
+
+/** a sound as a chip: /r/, /th/ — always the same shape; the student's Japanese-like sounds by their kana */
+export function soundChip(symbol: string): string {
+  if (/^[A-Z]+[0-2]?$/.test(symbol)) return `/${soundLabel(symbol)}/`;
+  return heardLabel(symbol).replace(/^日本語の/, "").replace(/の音$/, "");
+}
+
+/** the fix line: our own positive-first tip, else the item's */
+export function fixFor(phone: string, own: string | null): string | null {
+  const t = TIPS[base(phone)];
+  return t ? `${t[0]}${t[1] ? "◇" + t[1] : ""}` : own;
+}
+
+/** one imperative line for the pitch chart (after the take) */
+export function chartTipJa(notes: ProsodyNote[], words: string[]): string {
+  const n = [...notes].sort((a, b) => b.weight - a.weight)[0];
+  if (!n) return "高さの動きは、このままで大丈夫です。";
+  const w = n.word !== undefined ? words[n.word] : undefined;
+  switch (n.kind) {
+    case "flat-intonation":
+      return "高い所を、もっと高く。";
+    case "contour-mismatch":
+      return w ? `${w} で、上げ下げをお手本に合わせる。` : "上げ下げを、お手本に合わせる。";
+    case "final-contour":
+      return "文の終わりで、もっと下げる。";
+    case "equal-timing":
+      return "強い音を長く、弱い音を短く。";
+    case "weak-contrast":
+      return "強い音を、もっとはっきり。";
+    case "stress-misplaced":
+      return w ? `${w} は、強く言う所を変える。` : "強く言う所を変える。";
+    case "pause":
+      return w ? `${w} の前で、止まらずに続ける。` : "止まらずに続ける。";
+    case "too-slow":
+      return "もう少し、速く。";
+    case "too-fast":
+      return "少しだけ、ゆっくり。";
+  }
+}

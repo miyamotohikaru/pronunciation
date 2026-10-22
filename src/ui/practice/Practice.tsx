@@ -18,20 +18,22 @@ import { KaraokeJudge, type BarGrade, type JudgeSummary } from "@/engine/karaoke
 import { compareProsody } from "@/engine/prosody/compare.ts";
 import type { ProsodyResult } from "@/engine/prosody/types.ts";
 import type { ScoreResult } from "@/engine/scoring/types.ts";
-import { Guide, freshLive, type GuideLive } from "../guide";
+import { Guide, freshLive, offStretches, type GuideLive } from "../guide";
 import Telop from "../Telop";
 import TopBar from "../TopBar";
 import MicButton from "../MicButton";
 import RoundButton from "../RoundButton";
-import ScoreHead from "../result/ScoreHead";
+import ScoreHead, { PartsRow } from "../result/ScoreHead";
 import ResultSentence from "../result/ResultSentence";
 import DirectionSlider from "../result/DirectionSlider";
 import SoundSheet, { type RetryState } from "../SoundSheet";
+import SoundCoach, { type CoachClips } from "../SoundCoach";
+import type { Clip } from "./crossfade";
 import type { Voice } from "../SoundCard";
 import TelopText from "../TelopText";
 import { IconMic, IconNext, IconPlay, IconSpeaker } from "../icons";
 import { RETRY_FIRST_BELOW, mark, rangePosition, step7, tempoPosition, total, verdict } from "../score";
-import { chartReadingJa, heardShort } from "../copy";
+import { chartTipJa, heardShort } from "../copy";
 import { buzz, setMuted, sfx } from "../sfx";
 import type { PhoneScore, ProsodyNote, Scores, WordScore } from "../types";
 import { SPEEDS, VOICES, fetchItem, guideFor, keepItems, speedsFor, type GuideTake, type Speed } from "./content";
@@ -62,6 +64,10 @@ export type PracticeResult = {
   bestBefore: number | null;
   /** total of the previous attempt on this line (this visit); null on the first */
   previous: number | null;
+  /** guide-time stretches where your line left the band (≥ 150 ms) */
+  off: { start: number; end: number }[];
+  /** the word coached on the result (the worst flagged sound), fixed for this take; -1 = none */
+  coach: number;
 };
 
 export type PracticeProps = {
@@ -74,30 +80,32 @@ export type PracticeProps = {
   backHref: string;
   onResult?: (itemId: string, score: number) => void;
   onNext: () => void;
+  /** minimal pairs from the catalog: word → the pair item that has both words recorded */
+  pairs?: Record<string, { id: string; other: string; side: "main" | "pair" }>;
 };
 
 declare global {
   interface Window {
     /** test hook (tools/e2e/practice.e2e.mjs) */
-    __practice?: { phase: Phase; debug?: unknown; rec?: () => unknown; result: { total: number; sounds: number; rhythm: number; intonation: number; counts: Record<BarGrade, number>; flagged: string[]; words: [string, number][] } | null; scoring: ReturnType<typeof scoringStatus> };
+    __practice?: { phase: Phase; debug?: unknown; rec?: () => unknown; result: { total: number; sounds: number; rhythm: number; intonation: number; counts: Record<BarGrade, number>; flagged: string[]; words: [string, number][]; coach: number } | null; scoring: ReturnType<typeof scoringStatus> };
   }
 }
 
-export default function Practice({ itemId, nextItemId, field, index, total: totalItems, combo, backHref, onResult, onNext }: PracticeProps) {
+export default function Practice({ itemId, nextItemId, field, index, total: totalItems, combo, backHref, onResult, onNext, pairs }: PracticeProps) {
   const [item, setItem] = useState<ItemData | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [phase, setPhase] = useState<Phase>("loading");
   const [count, setCount] = useState(0);
   const [playing, setPlaying] = useState<null | "model" | "replay" | "seg">(null);
   const [segVoice, setSegVoice] = useState<Voice | null>(null);
-  const [alternating, setAlternating] = useState(false);
   const [result, setResult] = useState<PracticeResult | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [revealKey, setRevealKey] = useState(0);
   const [skip, setSkip] = useState(false);
   const [revealDone, setRevealDone] = useState(false);
-  const [more, setMore] = useState(false);
   const [stage, setStage] = useState(0);
+  // 「くわしく」 mounts its chart only when opened
+  const [details, setDetails] = useState(false);
   const [scorer, setScorer] = useState(scoringStatus());
   const [error, setError] = useState<string | null>(null);
   const [muted, setMutedState] = useState(false);
@@ -119,6 +127,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   const [sheetBefore, setSheetBefore] = useState<number | null>(null);
   const heardEnd = useRef<Record<number, string | null>>({});
   const wordTakes = useRef<Record<number, { take: Take; start: number; end: number }>>({});
+  // the scrubber's two ends from the catalog's minimal pair (rice / lice), per word; null = loading or none
+  const pairClips = useRef<Record<number, { model: Clip; other: Clip } | null>>({});
   const debugRef = useRef<unknown>(null);
 
   const guide: GuideTake | null = useMemo(() => (item ? guideFor(item, settings.voice, settings.speed) : null), [item, settings.voice, settings.speed]);
@@ -217,7 +227,6 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     getPlayer().stop();
     setPlaying(null);
     setSegVoice(null);
-    setAlternating(false);
   }, []);
 
   const playModel = () => {
@@ -256,7 +265,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     player.stop();
     player.events = {}; // "お手本と一緒に" must not move the guide cursor
 
-    const judge = new KaraokeJudge(g.syllables);
+    // the judge gets the same wave the lane draws: every point of your line then says inBand
+    const judge = new KaraokeJudge(g.syllables, { wave: g.wave });
     const l = live.current;
     l.line = judge.line;
     l.bars = judge.bars;
@@ -268,10 +278,12 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
     takeRef.current = null; // the previous take can go
     wordTakes.current = {};
     heardEnd.current = {};
+    pairClips.current = {};
 
     let anchor: { rec: number; perf: number } | null = null;
     let stopping = false;
     let loudAt = 0; // last time the input was clearly above the noise floor (performance.now)
+    let buzzed = 0; // syllables already given their haptic tick
     let digit = 4;
     let startedModel = false;
     const together = settings.together;
@@ -294,6 +306,12 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
         void getPlayer().play(buf); // allowed without a gesture while capturing
       }
       judge.advance(gt);
+      for (let i = buzzed; i < judge.bars.length; i++) {
+        const gr = judge.bars[i].grade;
+        if (!gr) break;
+        buzzed = i + 1;
+        if (gr === "great" || gr === "perfect") buzz(6);
+      }
       // stop after the guide; if you are still talking (a little behind the cursor), wait for you
       const speaking = performance.now() - loudAt < 350;
       if (!stopping && gt >= g.duration + TAIL && (!speaking || gt >= g.duration + LATE_MAX)) {
@@ -391,14 +409,16 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
       startTransition(() => {
         setSkip(false);
         setRevealDone(false);
-        setMore(false);
         setStage(0);
+        setDetails(false);
         setResult(r);
         setRevealKey((k) => k + 1);
         setPhase("result");
       });
+      // the rest follows in small steps while the score counts (each step's layout stays short):
+      // the coach, then the whole line
       setTimeout(() => startTransition(() => setStage(1)), 120);
-      setTimeout(() => startTransition(() => setMore(true)), 600);
+      setTimeout(() => startTransition(() => setStage(2)), 420);
     } catch (e) {
       if (!alive.current) return;
       setError(String((e as Error)?.message ?? e));
@@ -475,6 +495,8 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
       spans: scored.words.map((w) => ({ start: w.start, end: w.end })),
       bestBefore: prev ? prev.score : null,
       previous: lastTotal.current,
+      off: prosody ? offStretches(prosody.userOnRefTime, g.wave, 2.5) : [],
+      coach: worstFlagged(words),
     };
   };
 
@@ -550,13 +572,63 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
         l.version++;
         if (!alive.current) return;
         setSegVoice(null);
-        setAlternating(false);
         setPlaying(null);
       },
     };
     void player.playSequence(seq.map((s) => it[s]), { gap: 0.35 });
     setPlaying("seg");
   };
+
+  /**
+   * The scrubber's two ends. With a minimal pair in the catalog whose other word is what the AI
+   * heard (rice → "lice"), both come from that pair's recordings (same voice, same speed); else
+   * お手本's word ↔ your own take of it. Clips are made only when pressed (no work on render).
+   */
+  const loadPair = (i: number) => {
+    if (!item || !result || !pairs || i < 0 || i in pairClips.current) return;
+    const w = result.words[i];
+    const end = (heardEnd.current[i] ?? heardEndFor(w))?.toLowerCase();
+    const ref = pairs[w.text.toLowerCase()];
+    if (!ref || !end || ref.other.toLowerCase() !== end) return;
+    pairClips.current[i] = null;
+    const voice = settings.voice;
+    fetchItem(ref.id)
+      .then(async (pi) => {
+        const a = ref.side === "main" ? pi : pi.pairItem;
+        const b = ref.side === "main" ? pi.pairItem : pi;
+        if (!a || !b) return;
+        const ga = guideFor(a, voice, "native");
+        const gb = guideFor(b, voice, "native");
+        const [ba, bb] = await Promise.all([loadBuffer(ga.audio), loadBuffer(gb.audio)]);
+        const clip = (g: GuideTake, buffer: AudioBuffer): Clip => ({ buffer, t0: Math.max(0, (g.words[0]?.start ?? g.speech[0]) - 0.04), t1: (g.words[0]?.end ?? g.speech[1]) + 0.06 });
+        if (alive.current) pairClips.current[i] = { model: clip(ga, ba), other: clip(gb, bb) };
+      })
+      .catch(() => undefined);
+  };
+  const clipsFor = (i: number): CoachClips => ({
+    model: () => {
+      const pc = pairClips.current[i];
+      if (pc) return pc.model;
+      const w = guide?.words[i];
+      const buffer = bufferRef.current;
+      return w && buffer ? { buffer, t0: Math.max(0, w.start - 0.04), t1: w.end + 0.06 } : null;
+    },
+    other: () => pairClips.current[i]?.other ?? null,
+    mine: () => {
+      const again = wordTakes.current[i];
+      if (again) return { buffer: getPlayer().toBuffer(playableTake(again.take)), t0: Math.max(0, again.start - 0.05), t1: again.end + 0.05 };
+      const take = takeRef.current;
+      const sp = result?.spans[i];
+      return take && sp ? { buffer: getPlayer().toBuffer(playableTake(take)), t0: Math.max(0, sp.start), t1: sp.end } : null;
+    },
+  });
+  // the coached word's pair loads once the score has landed (idle), the others when opened
+  useEffect(() => {
+    if (!result || result.coach < 0) return;
+    const id = setTimeout(() => loadPair(result.coach), 900);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result?.attempt]);
 
   const openWord = useCallback(
     (i: number) => {
@@ -639,6 +711,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
             counts: result.counts,
             flagged: result.words.flatMap((w) => w.phones.filter((p) => p.issue || p.inserted).map((p) => `${w.text}.${p.phone}:${p.issue ?? "inserted"}${p.heardAs ? ">" + p.heardAs : ""}`)),
             words: result.words.map((w) => [w.text, w.score]),
+            coach: result.coach,
           }
         : null,
     };
@@ -647,10 +720,12 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
   // ---------------------------------------------------------------- view
   const isResult = phase === "result";
   const busyTake = phase === "starting" || phase === "countin" || phase === "singing";
+  const fold = busyTake || phase === "scoring";
   const score = result?.scores.overall ?? 0;
-  const retryFirst = score < RETRY_FIRST_BELOW;
   const words = item?.words.map((w) => w.text) ?? [];
-  const reading = result ? chartReadingJa(result.notes, words) : "";
+  const reading = result ? chartTipJa(result.notes, words) : "";
+  // the sound coached on the result: the worst flagged word of this take
+  const coachIdx = result ? result.coach : -1;
   const passed = score >= RETRY_FIRST_BELOW;
   const tipFor = (word: number) => (phone: string) => {
     const base = phone.replace(/\d/g, "");
@@ -675,73 +750,90 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
 
       <main className="flex flex-1 flex-col">
         {isResult && result && item && guide ? (
-          // ------------------------------------------------ the result: score, the sentence as the diagnosis, the chart
+          // ------------------------------------------------ the result: one coaching moment, the rest folded away
           <section aria-label="結果" className="mx-auto w-full max-w-[680px] px-4 pt-1 md:pt-6" onPointerDown={() => !revealDone && setSkip(true)}>
-            <ScoreHead
-              key={revealKey}
-              scores={result.scores}
-              run
-              skip={skip}
-              onDone={onRevealDone}
-              verdict={verdict(score)}
-              previous={result.previous}
-              celebrate={score >= 90}
-            />
+            <ScoreHead key={revealKey} scores={result.scores} run skip={skip} onDone={onRevealDone} verdict={verdict(score)} previous={result.previous} celebrate={score >= 90} />
             {!revealDone ? (
               <button type="button" className="sr-only" onClick={() => setSkip(true)}>
                 結果をすぐに見る
               </button>
             ) : null}
-            <div className="mt-4">
-              <ResultSentence text={item.text} ja={item.ja.replace(/\n/g, "◆")} words={result.words} onOpen={openWord} selected={selected} />
-            </div>
 
-            <div className="monitor relative mt-4 overflow-hidden rounded-[22px] bg-(--monitor) text-(--monitor-ink) [contain:layout_paint]">
-              <div className="relative h-[clamp(118px,15dvh,150px)] md:h-[170px]">
-                <Guide
-                  className="absolute inset-0"
-                  wave={guide.wave}
-                  syllables={guide.syllables}
-                  words={guide.words}
-                  live={live}
-                  overlay={result.userOnRef}
-                  progressive={playing === "replay"}
-                  focusWord={null}
-                  label={`${label}${reading}`}
+            {coachIdx >= 0 && stage >= 1 ? (
+              <section id="coach" aria-label="いちばんの直しどころ" className="anim-fade mt-3 scroll-mt-4 rounded-[22px] bg-(--paper) px-5 pb-5 pt-4">
+                <SoundCoach
+                  key={`${result.attempt}-${coachIdx}`}
+                  compact
+                  word={result.words[coachIdx]}
+                  token={item.words[coachIdx]?.text ?? result.words[coachIdx].text}
+                  before={selected === null ? sheetBefore : null}
+                  heardEnd={heardEnd.current[coachIdx] ?? heardEndFor(result.words[coachIdx])}
+                  tipFor={tipFor(coachIdx)}
+                  clips={clipsFor(coachIdx)}
+                  onPlayModel={() => playSeq(["model"], coachIdx)}
+                  onPlayMine={() => playSeq(["you"], coachIdx)}
+                  playing={selected === null ? segVoice : null}
+                  retry={selected === null ? retry : { state: "idle" }}
+                  level={level}
+                  onRetry={() => retryWord(coachIdx)}
                 />
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-(--monitor-line) px-4 py-[10px] text-[12px] font-bold">
-                <span className="flex items-center gap-[6px]">
-                  <span aria-hidden className="h-[7px] w-[18px] rounded-full bg-(--guide)" />
-                  お手本
-                </span>
-                <span className="flex items-center gap-[6px]">
-                  <span aria-hidden className="h-[3px] w-[18px] rounded-full bg-(--voice)" />
-                  あなた
-                </span>
-                <span className="jp basis-full text-[13px] font-extrabold leading-snug text-white">{reading}</span>
-              </div>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={replayMine} aria-pressed={playing === "replay"} className="press press-voice h-12 text-[15px]">
-                {playing === "replay" ? <IconSpeaker size={18} /> : <IconPlay size={16} />}
-                自分の声
-              </button>
-              <button type="button" onClick={playModel} aria-pressed={playing === "model"} className="press press-guide h-12 text-[15px]">
-                {playing === "model" ? <IconSpeaker size={18} /> : <IconPlay size={16} />}
-                お手本
-              </button>
-            </div>
+              </section>
+            ) : null}
 
-            {more ? (
-              <div className="mt-6 pb-4 [content-visibility:auto] [contain-intrinsic-size:auto_420px]">
-                <div className="rounded-[20px] bg-(--paper) px-4 py-4 text-(--ink)">
-                  <p className="text-[12px] font-bold opacity-75">話している間の当たり（音節ごと）</p>
+            {/* the whole line, the other marks */}
+            {stage >= 2 ? (
+            <div className="anim-fade mt-3">
+              <ResultSentence
+                text={item.text}
+                ja={item.ja.replace(/\n/g, "◆")}
+                words={result.words}
+                onOpen={(i) => {
+                  if (i === coachIdx) document.getElementById("coach")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  else {
+                    loadPair(i);
+                    openWord(i);
+                  }
+                }}
+                selected={selected}
+              />
+            </div>
+            ) : null}
+
+            <details
+              open={details}
+              onToggle={(e) => setDetails((e.currentTarget as HTMLDetailsElement).open)}
+              className="group mt-3 rounded-[22px] bg-[color-mix(in_srgb,var(--paper)_14%,transparent)] px-4 py-1 [&_summary::-webkit-details-marker]:hidden"
+            >
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-[15px] font-bold">
+                くわしく
+                <span aria-hidden className="text-[13px] transition-transform group-open:rotate-180">▾</span>
+              </summary>
+              {details ? (
+              <div className="pb-4">
+                <PartsRow scores={result.scores} />
+                <div className="monitor relative mt-3 overflow-hidden rounded-[18px] bg-(--monitor) text-(--monitor-ink) [contain:layout_paint]">
+                  <div className="relative h-[150px] md:h-[180px]">
+                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} live={live} overlay={result.userOnRef} offStretches={result.off} progressive={playing === "replay"} focusWord={null} tolSt={2.5} label={`${label}${reading}`} />
+                  </div>
+                  <p className="jp border-t border-(--monitor-line) px-4 py-[10px] text-[14px] font-bold leading-snug">{reading}</p>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button type="button" onClick={playModel} aria-pressed={playing === "model"} className="press press-guide h-12 text-[15px]">
+                    {playing === "model" ? <IconSpeaker size={18} /> : <IconPlay size={16} />}
+                    お手本
+                  </button>
+                  <button type="button" onClick={replayMine} aria-pressed={playing === "replay"} className="press press-voice h-12 text-[15px]">
+                    {playing === "replay" ? <IconSpeaker size={18} /> : <IconPlay size={16} />}
+                    あなた
+                  </button>
+                </div>
+                <div className="mt-4 rounded-[16px] bg-(--paper) px-4 py-4 text-(--ink)">
+                  <p className="text-[12px] font-medium opacity-75">話している間の当たり（音節ごと）</p>
                   <ul className="mt-2 grid grid-cols-4 gap-2 text-center">
                     {(["perfect", "great", "good", "miss"] as const).map((k) => (
                       <li key={k} className="rounded-[12px] bg-[#f1f2f8] py-2">
-                        <span className="en block text-[11px] font-extrabold">{k.toUpperCase()}</span>
-                        <span className="num text-[22px] font-black leading-none">{result.counts[k]}</span>
+                        <span className="en block text-[11px] font-bold">{k.toUpperCase()}</span>
+                        <span className="num text-[20px] font-bold leading-none">{result.counts[k]}</span>
                       </li>
                     ))}
                   </ul>
@@ -751,7 +843,9 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                   </div>
                 </div>
               </div>
-            ) : null}
+              ) : null}
+            </details>
+            <div className="h-4" aria-hidden />
           </section>
         ) : (
           <>
@@ -771,10 +865,11 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                 </p>
               ) : null}
 
-              <div className="monitor relative mx-auto mt-5 w-full max-w-[960px] overflow-hidden rounded-(--radius-monitor) bg-(--monitor) text-(--monitor-ink) [contain:layout_paint] md:mt-7">
-                <div className="relative h-[clamp(176px,26dvh,240px)] md:h-[260px] lg:h-[290px]">
+              {/* the lane takes the room left on the phone (up to a cap); fixed heights from md up */}
+              <div className="monitor relative mx-auto mt-5 flex max-h-[420px] min-h-[200px] w-full max-w-[960px] flex-1 flex-col overflow-hidden rounded-(--radius-monitor) bg-(--monitor) text-(--monitor-ink) [contain:layout_paint] md:mt-7 md:max-h-none md:flex-none">
+                <div className="relative min-h-[200px] flex-1 md:h-[300px] md:flex-none lg:h-[330px]">
                   {guide ? (
-                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} live={live} overlay={null} progressive={false} focusWord={null} label={label} />
+                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} live={live} overlay={null} progressive={false} focusWord={null} tolSt={2.5} label={label} />
                   ) : null}
                   {phase === "countin" && count > 0 ? (
                     <div aria-live="assertive" className="pointer-events-none absolute inset-0 grid place-items-center">
@@ -785,35 +880,20 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                     </div>
                   ) : null}
                 </div>
-                <div className="flex min-h-[48px] items-center gap-3 border-t border-(--monitor-line) px-4 py-2 text-[12px] font-bold">
-                  {phase === "scoring" ? (
-                    <span aria-live="polite" className="text-[13px] font-extrabold">
-                      {scorer.ready ? "お手本とくらべています" : `採点の準備中 ${Math.round(scorer.progress * 100)}%`}
-                    </span>
-                  ) : phase === "silent" ? (
-                    <span aria-live="polite" className="text-[13px] font-extrabold">
-                      声が聞こえませんでした。もう一度どうぞ。
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-4 text-(--monitor-muted)">
-                      <span className="flex items-center gap-[6px]">
-                        <span aria-hidden className="h-[7px] w-[18px] rounded-full bg-(--guide)" />
-                        お手本の声の高さ
-                      </span>
-                      <span className="flex items-center gap-[6px]">
-                        <span aria-hidden className="h-[3px] w-[18px] rounded-full bg-(--voice)" />
-                        あなた
-                      </span>
-                    </span>
-                  )}
-                </div>
+                {phase === "scoring" || phase === "silent" ? (
+                  <div className="flex min-h-[44px] items-center border-t border-(--monitor-line) px-4 py-2 text-[13px] font-bold" aria-live="polite">
+                    {phase === "silent" ? "声が聞こえませんでした。もう一度どうぞ。" : scorer.ready ? "お手本とくらべています" : `採点の準備中 ${Math.round(scorer.progress * 100)}%`}
+                  </div>
+                ) : null}
               </div>
             </section>
 
             {/* ------------------------------------------------ the remote */}
             <div className="mx-auto w-full max-w-[560px] px-4 pt-4 [contain:layout] [padding-bottom:max(18px,calc(env(safe-area-inset-bottom)+10px))] md:pb-10">
-              {/* settings can't change mid-take: hide them (keep their space) instead of greying them out */}
-              <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="練習の設定" style={{ visibility: busyTake ? "hidden" : "visible" }}>
+              {/* settings can't change mid-take: they fold away (once, at the tap) and the lane takes their room */}
+              {fold ? null : (
+                <>
+              <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="練習の設定">
                 <Chip
                   label="速さ"
                   value={speedLabel}
@@ -829,7 +909,9 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
               <p className="mt-2 h-4 text-center text-[12px] font-bold leading-4" style={{ visibility: settings.together ? "visible" : "hidden" }}>
                 イヤホンをおすすめします
               </p>
-              <div className="mt-3 flex items-start justify-center gap-5 md:gap-10">
+                </>
+              )}
+              <div className={`${fold ? "" : "mt-3"} flex items-start justify-center gap-5 md:gap-10`}>
                 <RoundButton
                   icon={<IconSpeaker size={28} />}
                   label="お手本"
@@ -842,7 +924,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
                   state={busyTake ? "recording" : phase === "scoring" ? "thinking" : "idle"}
                   level={level}
                   onPress={onMic}
-                  label={phase === "starting" || phase === "loading" ? "準備中" : phase === "countin" ? "カウント" : phase === "singing" ? "波に合わせて" : phase === "scoring" ? "くらべています" : "押して話す"}
+                  label={phase === "starting" || phase === "loading" ? "準備中" : busyTake ? "止める" : phase === "scoring" ? "くらべています" : "押して話す"}
                   hint={busyTake ? "最後まで行くと、自動で止まります" : undefined}
                 />
                 <RoundButton
@@ -871,16 +953,11 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
             before={sheetBefore}
             heardEnd={heardEnd.current[selected] ?? heardEndFor(result.words[selected])}
             tipFor={tipFor(selected)}
+            clips={clipsFor(selected)}
             onClose={closeWord}
             onPlayModel={() => playSeq(["model"], selected)}
             onPlayMine={() => playSeq(["you"], selected)}
-            onAlternate={() => {
-              if (alternating) return stopPlayback();
-              setAlternating(true);
-              playSeq(["model", "you", "model", "you"], selected);
-            }}
             playing={segVoice}
-            alternating={alternating}
             retry={retry}
             level={level}
             onRetry={() => retryWord(selected)}
@@ -893,7 +970,7 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
             style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--field) 0%, transparent), var(--field) 45%)" }}
           >
             <div className="mx-auto flex max-w-[680px] gap-3">
-              <button type="button" onClick={onMic} className={`press ${passed ? "press-ghost" : "press-voice"} h-[60px] flex-[1.25] text-[18px]`}>
+              <button type="button" onClick={onMic} className={`press ${passed ? "press-ghost" : "press-ink"} h-[60px] flex-[1.25] text-[18px]`}>
                 <IconMic size={22} />
                 もう一度話す
               </button>
@@ -907,6 +984,20 @@ export default function Practice({ itemId, nextItemId, field, index, total: tota
       </main>
     </div>
   );
+}
+
+/** the word with the worst flagged sound (lowest-scoring missed phone; first on a tie), -1 if none */
+function worstFlagged(words: WordScore[]): number {
+  let at = -1;
+  let low = Infinity;
+  words.forEach((w, i) => {
+    for (const p of w.phones)
+      if (mark(p) === "miss" && p.score < low) {
+        low = p.score;
+        at = i;
+      }
+  });
+  return at;
 }
 
 /** the far end of the sound card's meter: what the AI heard for the worst sound */
@@ -926,7 +1017,7 @@ function Chip({ label, value, onClick, pressed, disabled }: { label: string; val
       className="inline-flex h-11 items-center gap-2 rounded-full bg-(--paper) px-4 text-[13px] font-black text-(--ink) disabled:opacity-50"
     >
       <span className="font-extrabold">{label}</span>
-      <span className="rounded-full px-2 py-[2px]" style={{ background: pressed === false ? "#e6e8f6" : "var(--voice)" }}>
+      <span className="rounded-full px-2 py-[2px]" style={pressed ? { background: "var(--ink)", color: "var(--paper)" } : { background: "#e6e8f6" }}>
         {value}
       </span>
     </button>

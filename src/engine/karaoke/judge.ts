@@ -53,16 +53,22 @@ export type JudgeOptions = {
 
   /** 強い棒とみなす prominence の下限 */
   strongProminence: number;
+  /**
+   * 目印の波。渡すと、自分の線の点ごとに「帯の中か」（inBand）を出す。
+   * 描く側は帯の太さを ±pitchTolSt にすれば、「帯に重なった＝当たり」が見た目と一致する。
+   */
+  wave: GuideWave | null;
 };
 
 const DEFAULTS: JudgeOptions = {
   frameSec: 0.01,
   early: 0.15,
-  late: 0.3,
+  late: 0.2,
   pitchTolSt: 2.5,
   pitchPerfectSt: 1.5,
   userMedianHz: null,
   strongProminence: 0.6,
+  wave: null,
 };
 
 type Acc = {
@@ -154,7 +160,9 @@ export function buildGuideWave(
 
 export class KaraokeJudge {
   readonly bars: BarLive[];
-  readonly line: { t: number; st: number | null }[] = [];
+  /** 自分の線。inBand: 目印の帯（±pitchTolSt）の中に入っていたか（wave を渡したときだけ） */
+  readonly line: { t: number; st: number | null; inBand?: boolean }[] = [];
+  private readonly wavePts: WavePoint[] = [];
 
   private readonly guide: GuideBar[];
   private readonly o: JudgeOptions;
@@ -175,6 +183,7 @@ export class KaraokeJudge {
     this.o = { ...DEFAULTS, ...opts };
     this.medianHz = this.o.userMedianHz;
     this.bars = guide.map(() => ({ fill: 0, grade: null, pitch: null, timing: null, strength: null }));
+    for (const seg of this.o.wave?.segments ?? []) for (const p of seg) if (!p.b) this.wavePts.push(p);
 
     this.acc = guide.map((g) => ({
       expected: Math.max(1, Math.round((g.nucleusEnd - g.nucleusStart) / this.o.frameSec)),
@@ -186,6 +195,22 @@ export class KaraokeJudge {
       diffs: [],
       dbs: [],
     }));
+  }
+
+  /** 時刻 t の目印の高さ（半音）。前後 15ms 以内に波の点が無ければ null */
+  private waveAt(t: number): number | null {
+    const P = this.wavePts;
+    if (P.length === 0) return null;
+    let lo = 0;
+    let hi = P.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (P[mid].t < t) lo = mid + 1;
+      else hi = mid;
+    }
+    let best: WavePoint | null = null;
+    for (const i of [lo - 1, lo]) if (i >= 0 && i < P.length && Math.abs(P[i].t - t) <= 0.015 && (!best || Math.abs(P[i].t - t) < Math.abs(best.t - t))) best = P[i];
+    return best ? best.st : null;
   }
 
   /** いまの話者の基準の高さ（Hz）。声が十分に取れるまでは渡された値か null */
@@ -217,7 +242,8 @@ export class KaraokeJudge {
       if (this.voicedHz.length >= 15 && this.voicedHz.length % 5 === 0) this.medianHz = median(this.voicedHz);
     }
     const userSt = f.f0 !== null && this.medianHz ? st(f.f0, this.medianHz) : null;
-    this.line.push({ t: f.t, st: userSt });
+    const guideSt = userSt !== null ? this.waveAt(f.t) : null;
+    this.line.push(guideSt === null ? { t: f.t, st: userSt } : { t: f.t, st: userSt, inBand: Math.abs((userSt as number) - guideSt) <= this.o.pitchTolSt });
 
     for (let i = this.next; i < this.guide.length; i++) {
       const g = this.guide[i];

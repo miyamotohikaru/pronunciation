@@ -20,11 +20,13 @@ export type LessonFlowProps = {
   lesson: { id: string; titleJa: string; goalJa: string; items: { id: string; type: string; text: string; ja: string; pair?: string }[] };
   next: { href: string; titleJa: string } | null;
   initialIndex: number | null;
+  /** minimal pairs for this lesson's words (the sound card's scrubber plays both) */
+  pairs?: Record<string, { id: string; other: string; side: "main" | "pair" }>;
 };
 
 const br = (s: string) => s.replace(/\n/g, "◇");
 
-export default function LessonFlow({ field, unit, lesson, next, initialIndex }: LessonFlowProps) {
+export default function LessonFlow({ field, unit, lesson, next, initialIndex, pairs }: LessonFlowProps) {
   const items = lesson.items;
   const [step, setStep] = useState<"intro" | "item" | "summary">(initialIndex === null ? "intro" : "item");
   const [index, setIndex] = useState(Math.min(Math.max(0, initialIndex ?? 0), items.length - 1));
@@ -51,6 +53,7 @@ export default function LessonFlow({ field, unit, lesson, next, initialIndex }: 
         total={items.length}
         combo={combo}
         backHref="/home"
+        pairs={pairs}
         onResult={(id, s) => {
           setScores((m) => ({ ...m, [id]: Math.max(m[id] ?? 0, s) }));
           setCombo((c) => (s >= 75 ? c + 1 : 0));
@@ -74,28 +77,26 @@ export default function LessonFlow({ field, unit, lesson, next, initialIndex }: 
         <span className="ml-2 text-[14px] font-black">{unit.titleJa}</span>
       </header>
       <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-4 pb-[calc(18px+env(safe-area-inset-bottom))]">
-        <h1 className="mt-2 leading-none">
-          <TelopText text={lesson.titleJa} className="text-[44px] md:text-[72px]" />
-          <span className="sr-only">{lesson.titleJa}</span>
-        </h1>
-        <p className="jp mt-4 text-[17px] font-black leading-snug md:text-[20px]">
+        {/* the heavy rounded face is for the karaoke caption and the score only */}
+        <h1 className="jp mt-2 text-[34px] font-black leading-tight md:text-[48px]">{lesson.titleJa}</h1>
+        <p className="jp mt-4 text-[17px] font-bold leading-snug md:text-[20px]">
           <BreakText text={br(lesson.goalJa)} />
         </p>
 
         <section className="mt-6 rounded-[24px] bg-(--paper) px-5 py-5 text-(--ink) shadow-[0_6px_0_var(--field-deep)]">
           <h2 className="text-[14px] font-black">なぜ大事？</h2>
-          <p className="jp mt-2 text-[15px] font-bold leading-relaxed">
+          <p className="jp mt-2 text-[15px] font-medium leading-relaxed">
             <BreakText text={br(unit.whyJa)} />
           </p>
           <h2 className="mt-5 text-[14px] font-black">どう言う？</h2>
-          <p className="jp mt-2 text-[15px] font-bold leading-relaxed">
+          <p className="jp mt-2 text-[15px] font-medium leading-relaxed">
             <BreakText text={br(unit.howJa)} />
           </p>
         </section>
 
         <ol className="mt-6 flex flex-wrap gap-2" aria-label="このレッスンの練習">
           {items.map((it, i) => (
-            <li key={it.id} className="inline-flex h-9 items-center rounded-full border-[3px] border-(--ink) bg-(--paper) px-3 text-[14px] font-black text-(--ink)">
+            <li key={it.id} className="en inline-flex h-9 items-center rounded-full bg-(--paper) px-3 text-[14px] font-bold text-(--ink)">
               <span className="sr-only">{i + 1}. </span>
               {it.text}
             </li>
@@ -136,10 +137,7 @@ function Summary({
     <div className={`kara ${field} flex min-h-dvh flex-col`}>
       <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-4 pb-[calc(18px+env(safe-area-inset-bottom))] pt-8">
         <p className="text-[15px] font-black">レッスンおわり</p>
-        <h1 className="mt-2 leading-none">
-          <TelopText text={lesson.titleJa} className="text-[40px] md:text-[64px]" />
-          <span className="sr-only">{lesson.titleJa}</span>
-        </h1>
+        <h1 className="jp mt-2 text-[32px] font-black leading-tight md:text-[44px]">{lesson.titleJa}</h1>
         <p className="num mt-5 flex items-baseline gap-2 leading-none">
           <span className="text-[14px] font-black">平均</span>
           <TelopText text={fmt3(avg)} className="text-[48px]" />
@@ -151,7 +149,7 @@ function Summary({
             const stars = s !== undefined ? starsFor(s) : 0;
             return (
               <li key={it.id} className="flex min-h-[52px] items-center gap-3 border-b-2 border-(--field-deep) last:border-b-0">
-                <span className="flex-1 text-[18px] font-black">{it.text}</span>
+                <span className="en flex-1 text-[18px] font-bold">{it.text}</span>
                 <span className="flex items-center gap-[2px]" aria-label={`星 ${stars} / 3`}>
                   {[0, 1, 2].map((i) => (
                     <IconStar key={i} size={18} filled={i < stars} />
