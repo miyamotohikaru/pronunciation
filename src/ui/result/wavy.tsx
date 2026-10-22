@@ -1,13 +1,10 @@
 "use client";
 
 /**
- * The wrong letters of a word: error colour and a wavy line under them. The line is at least
- * 1.2em wide (a one-letter wave read as a ✓) and centred under the letters, but kept inside its
- * own word — so the waves of neighbouring words never run together. useFitWaves does the
- * keeping: it measures inside a ResizeObserver callback, which runs after the browser's own
- * layout and before paint — so it never forces an extra layout (nothing per frame either).
+ * The wrong letters of a word: error colour and a wavy line under exactly those letters (r for
+ * R) — a fine wave, so even one letter carries more than one crest and never reads as a ✓.
  */
-import { useEffect, type ReactNode, type RefObject } from "react";
+import type { ReactNode } from "react";
 import type { WordScore } from "../types";
 import { mark } from "../score";
 
@@ -15,7 +12,7 @@ export function Wavy({ children }: { children: ReactNode }) {
   return (
     <span className="relative inline-block font-extrabold text-(--miss)">
       {children}
-      <span aria-hidden data-wave className="kara-wavy pointer-events-none absolute left-1/2 top-[100%] h-[0.22em] -translate-x-1/2" style={{ width: "max(100%, 1.2em)" }} />
+      <span aria-hidden data-wave className="kara-wavy pointer-events-none absolute inset-x-0 top-[100%] h-[0.2em]" />
     </span>
   );
 }
@@ -48,38 +45,4 @@ export function marked(token: string, w: WordScore): ReactNode {
   });
   if (at < token.length) out.push(token.slice(at));
   return out;
-}
-
-/** keep every wave under `root` inside the [data-word] element around it (± 0.1em) */
-export function useFitWaves(root: RefObject<HTMLElement | null>, key: unknown) {
-  useEffect(() => {
-    const el = root.current;
-    if (!el) return;
-    const fit = () => {
-      el.querySelectorAll<HTMLElement>("[data-word]").forEach((word) => {
-        const waves = word.querySelectorAll<HTMLElement>("[data-wave]");
-        if (!waves.length) return;
-        const wr = word.getBoundingClientRect();
-        const em = parseFloat(getComputedStyle(word).fontSize) || 16;
-        waves.forEach((wave) => {
-          const host = wave.parentElement!.getBoundingClientRect();
-          const w = Math.max(host.width, 1.2 * em);
-          const lo = wr.left - 0.1 * em;
-          const hi = wr.right + 0.1 * em;
-          let left = host.left + host.width / 2 - w / 2;
-          if (hi - lo >= w) left = Math.min(Math.max(left, lo), hi - w);
-          else left = wr.left + wr.width / 2 - w / 2; // a short word: centred on the word
-          wave.style.left = `${(left - host.left).toFixed(1)}px`;
-          wave.style.width = `${w.toFixed(1)}px`;
-          wave.style.translate = "none"; // Tailwind's -translate-x-1/2 is the translate property
-          wave.style.transform = "none";
-        });
-      });
-    };
-    // the first notification comes right after the first layout (no fit() here: reading now would force one)
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    document.fonts?.ready.then(() => requestAnimationFrame(fit)).catch(() => undefined);
-    return () => ro.disconnect();
-  }, [root, key]);
 }

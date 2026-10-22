@@ -10,4 +10,5 @@ export { forcedAlign, mergeTokens, greedyDecode } from "./ctc.ts";
 export { parseVariant, baseOf, isVowel } from "./phones.ts";
 export { createScoringClient, type ScoringClient, type ScoringClientOptions, type ScoringProgress } from "./client.ts";
 export { HEARD_LABELS, heardLabel, heardAsJa, insertedVowelJa } from "./heard-labels.ts";
+export { ipaSymbol, ipaChip, ipaSegments, ipaWord, ipaLine, accent, isEnglishPhone, FLAP_NOTE_JA, IPA_CONSONANTS, IPA_VOWELS, IPA_VOWEL_R, ACUTE, GRAVE } from "./ipa.ts";
 export { DEFAULT_MODEL_URL } from "./client.ts";

@@ -15,6 +15,13 @@ export type ItemWord = {
    */
   phones: Arpabet[];
   /**
+   * 発音記号（辞書式: /ráɪs/。src/engine/scoring/ipa.ts）。phones をそのまま書いたもの。
+   * はじき音・声門閉鎖の t は辞書どおり t と書き、flap を立てる（説明は ipa.ts の FLAP_NOTE_JA）
+   */
+  ipa: string;
+  /** この語の t がはじき音（water /wɔ́ːtɚ/） */
+  flap?: true;
+  /**
    * 採点で受け入れる読み（src/engine/scoring の TargetWord.variants にそのまま渡す）。
    * お手本の misaki・CMUdict・弱形・お手本の音声から学んだ読み。"X?" は省略可、DX ははじき音、Q は声門閉鎖。
    */
@@ -107,6 +114,14 @@ export type ItemData = {
   text: string;
   /** 意味（和訳） */
   ja: string;
+  /** 文全体の発音記号（語ごとの ipa をつないだもの: /tɚ́ːn ráɪt æt ðə láɪt/） */
+  ipa: string;
+  /** 会話の行: 話す人。partner は聞くだけ（採点しない） */
+  role?: "partner" | "you";
+  /** 自己紹介の文: 自分のことに置き換える語（名前、出身地など）と、その説明 */
+  swap?: { word: string; noteJa: string }[];
+  /** アルファベットの文: 文字の名前として読む語（"K, E, N." の K, E, N） */
+  spell?: string[];
   /** 最小対（pair のとき）の相手の語 */
   pair?: string;
   /** 言い換えて録音した文（gonna, wanna …）のもとの書き方。text は実際に言った形 */
@@ -123,7 +138,7 @@ export type ItemData = {
   scoring?: ItemScoring;
   refs: RefVoice[];
   /** 最小対の相手の語（pair のとき）。お手本も採点用の読みも、調整も同じ形で持つ */
-  pairItem?: { id: string; text: string; words: ItemWord[]; scoring?: ItemScoring; refs: RefVoice[] };
+  pairItem?: { id: string; text: string; ipa: string; words: ItemWord[]; scoring?: ItemScoring; refs: RefVoice[] };
 };
 
 /**
@@ -137,7 +152,13 @@ export type ItemScoring = {
 };
 
 /** focus: 注目する音（ARPAbet の基本記号、重複なし） */
-export type CatalogItem = Pick<ItemData, "id" | "type" | "text" | "ja" | "difficulty"> & { focus: string[]; pair?: string; note?: string };
+export type CatalogItem = Pick<ItemData, "id" | "type" | "text" | "ja" | "difficulty"> & { focus: string[]; pair?: string; note?: string; role?: "partner" | "you" };
+
+/**
+ * カリキュラム以外の文のまとまり（content/challenge.json の会話・自己紹介、phonemes.json の音ごとの練習、
+ * alphabet.json の練習）。source = ファイル名、section = その中の区分（"dialogues" など）、id = まとまり（場面・音素）
+ */
+export type CatalogSet = { source: string; section: string; id: string; titleJa?: string; situationJa?: string; noteJa?: string; items: CatalogItem[] };
 
 export type Catalog = {
   version: number;
@@ -149,6 +170,7 @@ export type Catalog = {
     feature: string;
     whyJa: string;
     howJa: string;
-    lessons: { id: string; titleJa: string; goalJa: string; feature: string; items: CatalogItem[] }[];
+    lessons: { id: string; titleJa: string; goalJa: string; feature: string; boss?: true; items: CatalogItem[] }[];
   }[];
+  sets?: CatalogSet[];
 };

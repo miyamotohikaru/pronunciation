@@ -33,7 +33,7 @@ export type VadOptions = {
   onsetMs?: number;
   /** post-speech silence that ends the take (ms). Default 800 */
   endSilenceMs?: number;
-  /** hard cap from the start of recording (ms). Default 12000 */
+  /** hard cap from the start of recording (ms). Default 30000: the scorer's window (1500 frames of 20 ms) */
   maxDurationMs?: number;
   /** utterances shorter than this are discarded (ms). Default 100 */
   minSpeechMs?: number;
@@ -115,7 +115,7 @@ export class VadDetector {
       offsetDb: 6,
       onsetMs: 60,
       endSilenceMs: 800,
-      maxDurationMs: 12000,
+      maxDurationMs: 30000,
       minSpeechMs: 100,
       preRollMs: 250,
       postRollMs: 200,

@@ -36,6 +36,8 @@ audio ─► mel.ts (whisper log-mel) ─► ONNX acoustic model ─► per-fram
 | `diagnose.ts` | extended recognition network: confusions, deletions, epenthesis |
 | `calibrate.ts` | 0–2 → 0–100, word / take aggregation |
 | `misaki.ts` | misaki (Kokoro G2P) phonemes → ARPAbet variant |
+| `ipa.ts` | the app's one notation for sounds: dictionary-style IPA (ジーニアス / ウィズダム: r for English r, acute / grave accents on the vowel; rice /ráɪs/, water /wɔ́ːtɚ/). `ipaSymbol` / `ipaChip` for one sound (/ð/), `ipaSegments` / `ipaWord` / `ipaLine` for words and lines, `FLAP_NOTE_JA`. Same tables as `content/ipa.py` (checked on all of CMUdict) |
+| `heard-labels.ts` | result-card wording in that notation: `heardAsJa("DH", "Z")` → 「/ð/ が /z/ に聞こえました」; the student's Japanese-like sounds by name (「/r/ が日本語のラ行の音に聞こえました」); `insertedVowelJa("UW")` → 「/u/ が入っています」 |
 | `connected.ts` | build-time: weak forms of function words, unreleased final T/D |
 | `reference.ts` | build-time: learn extra variants from the native reference audio |
 
@@ -202,7 +204,12 @@ penalties come from `tune.mts --model-dir public/models/student-ipa`
 (`tools/model/export/student_tuning.json`, written by `export_student_assets.py`). To use it:
 `createScoringClient({ modelUrl })` picks another model; build the content with
 `build.ts --model-dir <dir>` for it (variants and item scoring are per model). Only one
-model is ever loaded. `heardAsJa("R", "ɾ")` → 「R が日本語のラ行の音に聞こえました」.
+model is ever loaded. `heardAsJa("R", "ɾ")` → 「/r/ が日本語のラ行の音に聞こえました」.
+
+Later rounds of the student were evaluated the same way and not shipped (round 4: mixed;
+round 5, 2026-10-22: better PCC 0.619 and fewer false alarms on Kokoro voices, but more low
+words on the SAA native speakers, 4.5 → 5.0 %, and weaker separation of the Japanese
+speakers, AUC 0.711 → 0.673). Their folders: `.work/model-student-r4`, `.work/model-student-r5`.
 
 ## Swapping the model
 
@@ -297,6 +304,8 @@ Python side (`.venv`): `tools/model/export/` — `export_onnx.py`, `quantize_wei
   WASM 73 ms / 145 ms, WebGPU (Metal) 12 ms / 29 ms; first call after load 143 / 303 ms
   (WASM), 42 / 31 ms (WebGPU); load ≈ 1.2–1.8 s from a local server. For comparison
   dynamic int8: WASM 56 / 200 ms, WebGPU 87 / 194 ms; fp32: WASM 65 / 177 ms, WebGPU 13 / 34 ms.
+  A 20.9 s take (student, Chrome, warm): WASM 409 ms (model 322 + align 76), WebGPU 139 ms
+  (model 44 + align 88), one WASM thread 1.33 s; first call 587 / 182 ms.
   Not measured on phones yet.
 * **Behaviour** (`npm run wavs`): all 52 Kokoro reference takes (af_heart, am_michael,
   normal + slow) ≥ 90 per word with nothing flagged (lowest word 91, lowest take 96.9);
@@ -319,6 +328,7 @@ Python side (`.venv`): `tools/model/export/` — `export_onnx.py`, `quantize_wei
 * Deletion detection is deliberately weak (penalty 6) — native reductions look the same.
 * CTC phone times are spikes; word ranges are padded for playback, prosody rebuilds
   boundaries itself.
-* Input must be 16 kHz mono (`src/engine/audio` resamples); takes over 30 s are cut.
+* Input must be 16 kHz mono (`src/engine/audio` resamples); takes over 30 s (1500 frames)
+  are cut. The recorder's default cap (`VadOptions.maxDurationMs`) is 30 s to match.
 * The worker has not been bundled by Next/Turbopack yet (`new Worker(new URL(...))` and the
   `webpackIgnore`/`turbopackIgnore` dynamic import of the ORT bundle).

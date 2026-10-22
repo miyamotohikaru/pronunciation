@@ -23,6 +23,10 @@
   /* inside the monitor: colour = who */
   --guide: #62cbff; /* the model's melody */
   --voice: #ffd23f; /* you: live line, your replay, your score */
+  /* the same two meanings on white: yellow turns dark amber, cyan a deeper blue (legible at 13px) */
+  --voice-ink: #9c6500;
+  --voice-fill: #f0b429;
+  --guide-ink: #1b86c4;
   --hit: #ff4fa3; /* sparkles, combo, PERFECT */
 
   /* errors: one colour, used on white surfaces only (never coral on the electric blue) */
@@ -228,6 +232,38 @@ html:has(.field-shell) {
   paint-order: stroke fill;
   clip-path: inset(-0.35em calc(100% - var(--p) * (100% + 0.7em) + 0.35em) -0.35em -0.35em);
 }
+/* karaoke caption: white on the field, a thin outline, no colour wipe; the words not reached yet
+   are dim, the word at the playhead is marked underneath (only opacity and one bar change) */
+.telop[data-mode="karaoke"] {
+  --telop-stroke: 0.09em;
+}
+.telop[data-mode="karaoke"] .tl-a {
+  text-shadow: none;
+}
+.telop[data-mode="karaoke"] .tl-b {
+  display: none;
+}
+.telop[data-mode="karaoke"] .telop-word {
+  transition: opacity 120ms linear;
+}
+.telop[data-mode="karaoke"] .telop-word[data-state="todo"] {
+  opacity: 0.42;
+}
+.telop[data-mode="karaoke"] .telop-word::after {
+  content: "";
+  position: absolute;
+  left: 0.12em;
+  right: 0.12em;
+  bottom: -0.02em;
+  height: 0.075em;
+  border-radius: 999px;
+  background: var(--paper);
+  opacity: 0;
+  transition: opacity 120ms linear;
+}
+.telop[data-mode="karaoke"] .telop-word[data-state="now"]::after {
+  opacity: 1;
+}
 /* result: every word gets its judgement colour; the outline stays navy */
 .telop[data-mode="result"] .tl-b {
   --tl-sung-stroke: var(--ink);
@@ -289,6 +325,20 @@ button.telop-word::before {
     --face: var(--ink);
     --face-ink: var(--paper);
   }
+  /* secondary on white: an ink outline (the main action of the state is the filled one) */
+  .press-line {
+    --face: transparent;
+    --face-ink: var(--ink);
+    box-shadow: inset 0 0 0 2px var(--ink);
+  }
+}
+
+/* the sounds, dictionary-style IPA (/ðə ráɪs/): a face with every IPA letter, so no glyph falls back alone */
+.kara .ipa {
+  font-family: "Charis SIL", "Doulos SIL", "Gentium Plus", "Noto Sans", system-ui, "Helvetica Neue", Arial, sans-serif;
+  font-feature-settings: normal;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 /* English text everywhere: the Latin face (tailed l, open shapes) */
@@ -428,25 +478,39 @@ button.telop-word::before {
 .kara .kara-wavy {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0 3 Q3 0 6 3 T12 3' fill='none' stroke='%23d6245f' stroke-width='2'/%3E%3C/svg%3E");
   background-repeat: repeat-x;
-  background-size: 0.42em 100%;
+  background-size: 0.22em 100%;
   background-position: center;
 }
 
-/* ---------- home: the caption wipes in お手本's colour, then in yours; the legend lights in turn */
-.kara .hero-cap[data-tone="voice"] .tl-b {
-  --tl-sung: var(--voice);
+/* ---------- home: the syllable blocks, outlined as one shape
+   four stacked copies: one outline layer (stroke + the one shadow) under everything, one fill,
+   then お手本's cyan and your yellow, each wiping in per block (--p) without an outline of its own,
+   so strokes never cut into neighbouring fills */
+.kara .hero-block {
+  display: inline-block;
+  vertical-align: baseline;
+  white-space: pre;
+  --p: 0;
 }
-/* the syllable dot: a thin outline, or it swells into a blob */
-.kara .hero-cap .tl-dot {
+.kara .hero-outline .hero-block {
+  color: transparent;
+  -webkit-text-stroke: 0.17em var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 0 0.07em 0 var(--ink);
+}
+.kara .hero-outline .hero-dot {
   -webkit-text-stroke-width: 0.1em;
 }
-.kara .hero-legend [data-k] {
-  transition:
-    background-color 160ms,
-    color 160ms;
+.kara .hero-fill .hero-block {
+  color: var(--paper);
 }
-.kara .hero-legend[data-tone="guide"] [data-k="guide"],
-.kara .hero-legend[data-tone="voice"] [data-k="voice"] {
-  background: var(--paper);
-  color: var(--ink);
+.kara .hero-guide .hero-block,
+.kara .hero-voice .hero-block {
+  clip-path: inset(-0.3em calc(100% - var(--p) * (100% + 0.3em) + 0.3em) -0.3em -0.3em);
+}
+.kara .hero-guide .hero-block {
+  color: var(--guide);
+}
+.kara .hero-voice .hero-block {
+  color: var(--voice);
 }

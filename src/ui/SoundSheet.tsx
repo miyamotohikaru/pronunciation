@@ -52,7 +52,7 @@ export default function SoundSheet(p: SoundSheetProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="coach-diag"
-        className="anim-sheet relative max-h-[92dvh] w-full max-w-[600px] overflow-y-auto rounded-t-[28px] bg-(--paper) px-5 pt-2 transition-transform duration-150 [padding-bottom:max(24px,calc(env(safe-area-inset-bottom)+18px))] md:rounded-[28px] md:pb-7"
+        className="anim-sheet relative max-h-[92dvh] w-full max-w-[600px] overflow-y-auto rounded-t-[28px] bg-(--paper) px-5 pt-2 transition-transform duration-150 md:rounded-[28px]"
       >
         <div className="flex items-center justify-between">
           <span className="w-11" aria-hidden />
@@ -63,7 +63,7 @@ export default function SoundSheet(p: SoundSheetProps) {
             <IconClose size={22} />
           </button>
         </div>
-        <SoundCoach {...p} />
+        <SoundCoach {...p} retryAt="footer" />
       </section>
     </div>
   );

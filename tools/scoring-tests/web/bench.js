@@ -9,6 +9,10 @@ const params = new URLSearchParams(location.search);
 const RUNS = Number(params.get("runs") ?? 5);
 const configs = (params.get("providers") ?? "wasm,webgpu").split(",");
 const onnxKeys = (params.get("onnx") ?? "int8").split(",");
+// ?model=student-ipa&targets=<model id under .work/eval/targets>&threads=1&sets=3s,8s,20s
+const MODEL = params.get("model") ?? "whisper-phoneme";
+const TARGETS = params.get("targets") ? `/work/eval/targets/${params.get("targets")}` : "/work/eval/targets";
+const THREADS = params.get("threads") ? Number(params.get("threads")) : undefined;
 
 function decodeWav(buf) {
   const v = new DataView(buf);
@@ -27,9 +31,11 @@ function decodeWav(buf) {
   throw new Error("no data");
 }
 const wav = async (p) => decodeWav(await (await fetch(p)).arrayBuffer());
-const targets = async (id) => (await (await fetch(`/work/eval/targets/${id}.json`)).json()).words;
+const targets = async (id) => (await (await fetch(`${TARGETS}/${id}.json`)).json()).words;
 
-const SETS = { "3s": ["t01_rice", "t02_think", "t03_very"], "8s": ["t01_rice", "t02_think", "t03_very", "t04_street", "t05_want", "t06_gonna", "t07_again"] };
+const S8 = ["t01_rice", "t02_think", "t03_very", "t04_street", "t05_want", "t06_gonna", "t07_again"];
+const SETS_ALL = { "3s": ["t01_rice", "t02_think", "t03_very"], "8s": S8, "20s": [...S8, ...S8, ...S8.slice(0, 6)] };
+const SETS = Object.fromEntries((params.get("sets") ?? "3s,8s").split(",").map((k) => [k, SETS_ALL[k]]));
 async function glued(ids) {
   const parts = [], words = [];
   for (const id of ids) { parts.push(await wav(`/work/tts/af_heart/${id}.16k.wav`)); words.push(...(await targets(id))); }
@@ -64,7 +70,7 @@ for (const onnx of onnxKeys) for (const prov of configs) {
   const w = makeWorker();
   const t0 = performance.now();
   let ready;
-  try { ready = await w.init({ modelUrl: "/models/whisper-phoneme/", ortUrl: "/ort/", providers: [prov], onnx }); }
+  try { ready = await w.init({ modelUrl: `/models/${MODEL}/`, ortUrl: "/ort/", providers: [prov], onnx, threads: THREADS }); }
   catch (e) { log(`${onnx}/${prov}: init failed: ${e.message}`); results.runs.push({ onnx, prov, error: e.message }); w.close(); continue; }
   log(`${onnx}/${prov}: ready on ${ready.backend} in ${ready.loadMs} ms (page ${Math.round(performance.now() - t0)} ms)`);
   const rec = { onnx, prov: ready.backend, loadMs: ready.loadMs, sets: {}, clips: {} };

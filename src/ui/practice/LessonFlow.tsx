@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import BreakText from "@/components/BreakText";
 import TelopText from "../TelopText";
 import { IconCheck, IconClose, IconStar } from "../icons";
-import { fmt3 } from "../score";
 import Practice from "./Practice";
 import { allBest, starsFor } from "./progress";
 import type { FieldClass } from "./fields";
@@ -140,7 +139,7 @@ function Summary({
         <h1 className="jp mt-2 text-[32px] font-black leading-tight md:text-[44px]">{lesson.titleJa}</h1>
         <p className="num mt-5 flex items-baseline gap-2 leading-none">
           <span className="text-[14px] font-black">平均</span>
-          <TelopText text={fmt3(avg)} className="text-[48px]" />
+          <TelopText text={String(Math.round(avg))} className="text-[48px]" />
           <span className="text-[16px] font-black">点</span>
         </p>
         <ul className="mt-6 flex flex-col">
@@ -155,7 +154,7 @@ function Summary({
                     <IconStar key={i} size={18} filled={i < stars} />
                   ))}
                 </span>
-                <span className="num w-[72px] text-right text-[15px] font-black">{s !== undefined ? fmt3(s) : "—"}</span>
+                <span className="num w-[72px] text-right text-[15px] font-black">{s !== undefined ? Math.round(s) : "—"}</span>
               </li>
             );
           })}

@@ -87,25 +87,32 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
     return () => ro.disconnect();
   }, [text]);
 
-  // --- wipe: write --p on each word every frame (no React renders)
+  // --- karaoke: each word changes as the playhead reaches it (todo → now → done), written as a data
+  //     attribute only when it changes; result: the colour-in, --p per word (no React renders)
   useEffect(() => {
     let raf = 0;
     let last = "";
     const loop = () => {
       const n = words.length;
-      const ps = words.map((w, i) => {
-        if (mode === "result") {
-          const r = reveal ? reveal.current : 1;
-          return Math.min(1, Math.max(0, r * n - i));
-        }
+      if (mode === "karaoke") {
         const t = clock?.current ?? null;
-        if (t === null) return 0;
-        return Math.min(1, Math.max(0, (t - w.start) / Math.max(0.01, w.end - w.start)));
-      });
-      const sig = ps.map((p) => p.toFixed(3)).join(",");
-      if (sig !== last) {
-        last = sig;
-        ps.forEach((p, i) => wordRefs.current[i]?.style.setProperty("--p", String(p)));
+        const states = words.map((w) => (t === null ? "idle" : t < w.start - 0.03 ? "todo" : t <= w.end + 0.03 ? "now" : "done"));
+        const sig = states.join(",");
+        if (sig !== last) {
+          last = sig;
+          states.forEach((st, i) => {
+            const el = wordRefs.current[i];
+            if (el && el.dataset.state !== st) el.dataset.state = st;
+          });
+        }
+      } else {
+        const r = reveal ? reveal.current : 1;
+        const ps = words.map((_, i) => Math.min(1, Math.max(0, r * n - i)));
+        const sig = ps.map((p) => p.toFixed(3)).join(",");
+        if (sig !== last) {
+          last = sig;
+          ps.forEach((p, i) => wordRefs.current[i]?.style.setProperty("--p", String(p)));
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -141,8 +148,9 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
         <div
           key={li}
           aria-hidden={mode === "karaoke" ? true : undefined}
-          className={`flex ${!lines ? "flex-wrap justify-center" : single ? "justify-center" : li % 2 === 0 ? "justify-start" : "justify-end"}`}
-          style={{ columnGap: "0.24em", marginTop: li ? (mode === "result" ? "0.32em" : "0.04em") : 0 }}
+          // karaoke: one axis — every line from the same left edge (the IPA and the meaning below follow it)
+          className={`flex ${mode === "karaoke" ? (!lines ? "flex-wrap justify-start" : "justify-start") : !lines ? "flex-wrap justify-center" : single ? "justify-center" : li % 2 === 0 ? "justify-start" : "justify-end"}`}
+          style={{ columnGap: mode === "karaoke" ? "0.34em" : "0.24em", marginTop: li ? (mode === "result" ? "0.32em" : "0.06em") : 0 }}
         >
           {g.map((i) => (
             <Word
@@ -185,8 +193,8 @@ function Word({
   const style = {
     paddingInline: "0.12em",
     ...(j ? { "--tl-sung": JUDGEMENT_VAR[j] } : {}),
-    opacity: dim ? 0.5 : 1,
-    transition: "opacity 160ms",
+    // only when another word is selected; otherwise the stylesheet decides (karaoke: dim until reached)
+    ...(dim ? { opacity: 0.5 } : {}),
   } as CSSProperties;
 
   const layers = (

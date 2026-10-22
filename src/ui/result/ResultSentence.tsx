@@ -1,33 +1,29 @@
 "use client";
 
 /**
- * The sentence itself is the diagnosis: one calm line in the Latin face, one colour, and only the
- * letters of a sound that went wrong stand out — in the error colour with a wavy line under them
- * (shape too, so it reads without colour). A flagged word is a button that opens its sound card.
+ * The sentence in one line under the score: one calm line in the Latin face, one colour, and only
+ * the letters of a sound that went wrong stand out — in the error colour with a wavy line under
+ * them (shape too, so it reads without colour). A flagged word is a button that opens its card.
  */
-import { useRef } from "react";
-import BreakText from "@/components/BreakText";
 import type { WordScore } from "../types";
 import { mark } from "../score";
-import { marked, useFitWaves } from "./wavy";
+import { marked } from "./wavy";
 
 export type ResultSentenceProps = {
   text: string;
-  ja: string;
   words: WordScore[];
   onOpen: (i: number) => void;
   selected?: number | null;
 };
 
-export default function ResultSentence({ text, ja, words, onOpen, selected }: ResultSentenceProps) {
+export default function ResultSentence({ text, words, onOpen, selected }: ResultSentenceProps) {
   const tokens = text.split(/\s+/).filter(Boolean);
   const flagged = words.map((w) => w.phones.some((p) => mark(p) === "miss"));
-  const count = flagged.filter(Boolean).length;
-  const line = useRef<HTMLParagraphElement>(null);
-  useFitWaves(line, words);
+  // one line where it fits; a long line just gets smaller first
+  const size = text.length > 34 ? "text-[17px] md:text-[22px]" : text.length > 22 ? "text-[20px] md:text-[26px]" : "text-[24px] md:text-[30px]";
   return (
-    <section aria-label="あなたの文" className="w-full rounded-[22px] bg-(--paper) px-5 pb-4 pt-4 text-(--ink)">
-      <p ref={line} className="en text-[28px] font-bold leading-[1.35] md:text-[36px]">
+    <section aria-label="あなたの文" className="w-full rounded-[18px] bg-(--paper) px-4 pb-3 pt-2 text-(--ink)">
+      <p className={`en ${size} font-bold leading-[1.45]`}>
         {words.map((w, i) => {
           const tok = tokens[i] ?? w.text;
           const content = <span data-word>{marked(tok, w)}</span>;
@@ -56,14 +52,6 @@ export default function ResultSentence({ text, ja, words, onOpen, selected }: Re
           );
         })}
       </p>
-      <p className="jp mt-2 text-[14px] font-medium leading-snug text-[color-mix(in_srgb,var(--ink)_75%,transparent)]">
-        <BreakText text={ja} />
-      </p>
-      {count !== 1 ? (
-        <p className="jp mt-2 text-[13px] font-medium leading-snug">
-          <BreakText text={count > 1 ? "ほかの波線の文字も、押すと直し方が出ます。" : "音のずれは、見つかりませんでした。"} />
-        </p>
-      ) : null}
     </section>
   );
 }

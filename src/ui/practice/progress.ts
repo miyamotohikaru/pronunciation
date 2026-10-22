@@ -55,3 +55,16 @@ export function loadSettings(): Settings {
 export function saveSettings(s: Settings) {
   write(KEY_SETTINGS, s);
 }
+
+/** the lane's one-time hint (「線を青い帯に重ねよう」): shown on this device's first take only */
+const KEY_HINT = "kara.v1.hint";
+export function hintSeen(): boolean {
+  try {
+    return localStorage.getItem(KEY_HINT) === "1";
+  } catch {
+    return true;
+  }
+}
+export function markHintSeen() {
+  write(KEY_HINT, 1);
+}

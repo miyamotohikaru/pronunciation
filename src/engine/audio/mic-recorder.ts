@@ -7,7 +7,7 @@
  *
  * record() must be called from the tap handler itself: the first thing it does (synchronously)
  * is unlock the shared AudioContext and switch the iOS audio session to play-and-record.
- * It resolves when the take ends — VAD auto-stop, stop(), the 12 s cap, or an interruption
+ * It resolves when the take ends — VAD auto-stop, stop(), the 30 s cap, or an interruption
  * (see Take.stopReason) — and rejects if the microphone can't be opened.
  *
  * The mic is opened per take and released right after (tracks stopped): iOS otherwise keeps

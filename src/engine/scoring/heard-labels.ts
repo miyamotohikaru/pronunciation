@@ -1,70 +1,32 @@
 /**
- * Short plain-Japanese names for everything the scorer can report as `heardAs` or as an
- * inserted vowel: the ARPAbet phones and the student model's Japanese-like sounds (IPA
- * unit names in public/models/student-ipa/meta.json). For the result card:
+ * What the result card says about a sound, in the app's one notation (ipa.ts): English sounds as
+ * dictionary IPA in slashes; the student model's Japanese-like sounds (ɾ ɯ ɕ …), which no
+ * dictionary has a symbol for, by a Japanese name.
  *
- *   heardAsJa("R", "ɾ")  ->  「R が日本語のラ行の音に聞こえました」
- *   insertedVowelJa("ɯ") ->  「日本語のウ が入っています」
+ *   heardAsJa("R", "L")    ->  「/r/ が /l/ に聞こえました」
+ *   heardAsJa("DH", "Z")   ->  「/ð/ が /z/ に聞こえました」
+ *   heardAsJa("R", "ɾ")    ->  「/r/ が日本語のラ行の音に聞こえました」
+ *   insertedVowelJa("UW")  ->  「/u/ が入っています」
+ *   insertedVowelJa("ɯ")   ->  「日本語のウが入っています」
  *
- * Every unit, confusion and epenthetic vowel of both models has an entry (checked by
+ * Every unit, confusion and epenthetic vowel of both models has a label (checked by
  * tools/scoring-tests/scoring.test.mts).
  */
+import { ipaChip, isEnglishPhone } from "./ipa.ts";
 
+/** Japanese names of the sounds that are not English phonemes, and of the flap / glottal t. */
 export const HEARD_LABELS: Record<string, string> = {
-  // English consonants (ARPAbet)
-  B: "B（ブ）",
-  CH: "CH（チ）",
-  D: "D（ドゥ）",
-  DH: "this の TH（濁る th）",
-  F: "F（下くちびるをかむフ）",
-  G: "G（グ）",
-  HH: "H（ハ行の音）",
-  JH: "J（ジュ）",
-  K: "K（ク）",
-  L: "L",
-  M: "M（ム）",
-  N: "N（舌先で止めるン）",
-  NG: "NG（鼻に抜けるン）",
-  P: "P（プ）",
-  R: "R",
-  S: "S（スー）",
-  SH: "SH（シュ）",
-  T: "T（トゥ）",
-  TH: "TH（舌をかむス）",
-  V: "V（下くちびるをかむヴ）",
-  W: "W（ウ）",
-  Y: "Y（ユ）",
-  Z: "Z（ズー）",
-  ZH: "ZH（measure のジュ）",
-  // English vowels (ARPAbet)
-  AA: "口を大きく開けるア",
-  AE: "エに近いア（æ）",
-  AH: "短くあいまいなア",
-  AO: "オー（ɔ）",
-  AW: "アウ",
-  AY: "アイ",
-  EH: "エ",
-  ER: "舌を丸めたアー（ɚ）",
-  EY: "エイ",
-  IH: "短いイ（ɪ）",
-  IY: "長いイー",
-  OW: "オウ",
-  OY: "オイ",
-  UH: "短いウ（ʊ）",
-  UW: "長いウー",
-  // target-only symbols (flap / glottal T)
-  DX: "はじく T（water の t）",
-  Q: "のどで止める T",
-  // the student's Japanese-like and other L1 sounds (IPA unit names)
+  DX: "はじく t",
+  Q: "のどで止める t",
   "ɾ": "日本語のラ行の音",
-  r: "巻き舌の R",
+  r: "巻き舌の音",
   "ʔ": "のどで止める音",
   "ɕ": "日本語のシ",
   "tɕ": "日本語のチ",
   "dʑ": "日本語のジ",
-  ts: "ツ",
+  ts: "日本語のツ",
   "ɸ": "日本語のフ",
-  "β": "B と V の中間の音",
+  "β": "/b/ と /v/ の中間の音",
   "ç": "日本語のヒ",
   x: "のどの奥でこする音",
   "ɲ": "日本語のニ",
@@ -75,20 +37,30 @@ export const HEARD_LABELS: Record<string, string> = {
   "aː": "日本語のアー",
   "eː": "日本語のエー",
   "oː": "日本語のオー",
-  y: "くちびるを丸めたユ（ü）",
+  y: "くちびるを丸めたイ",
 };
 
-/** Label for a phone / unit symbol; stress digits are ignored ("AY1" = "AY"). */
+const JA = "\\u3000-\\u30ff\\u3400-\\u9fff\\uff00-\\uffef";
+const LATIN_JA = new RegExp(`([^\\s${JA}])([${JA}])`, "gu");
+const JA_LATIN = new RegExp(`([${JA}])([^\\s${JA}])`, "gu");
+/** a space where Japanese meets a chip or other Latin text: 「/r/が/l/に」 → 「/r/ が /l/ に」 */
+const spaced = (s: string) => s.replace(LATIN_JA, "$1 $2").replace(JA_LATIN, "$1 $2");
+
+/** A heard sound: "/l/" for an English phone (stress digit respected: "AH0" → /ə/), else its Japanese name. */
 export function heardLabel(symbol: string): string {
-  return HEARD_LABELS[symbol] ?? HEARD_LABELS[symbol.replace(/[0-2]$/, "")] ?? symbol;
+  const s = symbol.replace(/\?$/, "");
+  if (isEnglishPhone(s)) return ipaChip(s);
+  return HEARD_LABELS[s] ?? ipaChip(s);
 }
 
-/** 「<target> が<heard>に聞こえました」. target is shown as given (e.g. "R", or the UI's own spelling). */
+/** 「<target> が <heard> に聞こえました」. An ARPAbet target ("R", "AH0") is written /r/, /ə/; anything else (a word, the UI's own text) as given. */
 export function heardAsJa(target: string, heard: string): string {
-  return `${target.replace(/[0-2]$/, "")} が${heardLabel(heard)}に聞こえました`;
+  const t = isEnglishPhone(target) ? ipaChip(target) : target;
+  return spaced(`${t}が${heardLabel(heard)}に聞こえました`);
 }
 
-/** 「<vowel> が入っています」 for an inserted vowel. */
+/** 「<vowel> が入っています」. An inserted English vowel is short and weak: UW → /u/, AH → /ə/. */
 export function insertedVowelJa(vowel: string): string {
-  return `${heardLabel(vowel)} が入っています`;
+  const v = vowel.replace(/[0-2]?\??$/, "");
+  return spaced(`${isEnglishPhone(v) ? ipaChip(`${v}0`) : heardLabel(v)}が入っています`);
 }

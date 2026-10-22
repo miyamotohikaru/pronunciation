@@ -40,7 +40,7 @@ export default function DirectionSlider({ label, left, right, step }: DirectionS
           ))}
           <span className="absolute left-1/2 top-[34px] -translate-x-1/2 whitespace-nowrap text-[10px] font-extrabold leading-none">お手本</span>
           <span
-            className="absolute top-1/2 grid size-[22px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-(--ink) bg-(--voice)"
+            className="absolute top-1/2 grid size-[22px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-(--ink) bg-(--voice-fill)"
             style={{ left: `${pos}%` }}
           />
         </div>

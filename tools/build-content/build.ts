@@ -1,27 +1,38 @@
 /**
- * Content build: content/curriculum.json + the Kokoro reference takes (.work/tts/<voice>/)
+ * Content build: content/ (curriculum.json + challenge / phonemes / alphabet.json, see
+ * sources.ts) + the Kokoro reference takes (.work/tts/<voice>/)
  * -> public/content/items/<id>.json (src/data/schema.ts ItemData) + src/data/catalog.json.
  *
  *   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/build-content/build.ts [--only <id-prefix>] [--runtime node|web]
+ *        [--curriculum <file>] [--content <dir>] [--model-dir <dir>] [--out <items dir>] [--plan] [--partial]
+ *   --plan: build nothing, only write the lines that still need TTS (.work/content-tts-needed.json,
+ *           tools/tts/synth.py input: synth.py .work/content-tts-needed.json)
  *
  * Per item: target words (misaki of both voices + CMUdict + weak forms + variants learned
  * from the four reference takes), then per voice and speed: the scorer's alignment and
  * self-score, pitch (src/engine/audio/pitch.ts), syllables (src/engine/prosody), Kokoro's
  * word timings. rhythm / intonation of a voice = the other voice compared with it.
+ * Dictionary-style IPA (src/engine/scoring/ipa.ts) per word and per line, from what the
+ * reference voice was asked to say (misaki).
+ * A line whose takes are missing or were recorded for another text is skipped; those lines are
+ * listed for tools/tts/synth.py in .work/content-tts-needed.json, and the app's catalog is then
+ * left as it is (--partial writes one with the built lines only).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readWav } from "./wav.ts";
 import { loadCmudict } from "./cmudict.ts";
+import { loadSources, type CFocus, type SourceLine } from "./sources.ts";
 import { analyzePitch } from "../../src/engine/audio/pitch.ts";
 import { compareProsody, speakerMedianHz, syllabify, syllableStats, toRegions, type PhoneSpan, type PitchFrame } from "../../src/engine/prosody/index.ts";
 import { addConnectedSpeech } from "../../src/engine/scoring/connected.ts";
 import { deriveVariants, type LearnedVariant } from "../../src/engine/scoring/reference.ts";
 import { baseOf } from "../../src/engine/scoring/phones.ts";
+import { ipaLine, ipaWord } from "../../src/engine/scoring/ipa.ts";
 import type { Scorer } from "../../src/engine/scoring/engine.ts";
 import type { ScoreResult, TargetWord } from "../../src/engine/scoring/types.ts";
-import type { Catalog, CatalogItem, FocusPoint, ItemData, ItemType, ItemWord, RefSyllable, RefTiming, RefVoice } from "../../src/data/schema.ts";
-import { targetsFromKokoro, tokenize, type KokoroClip } from "../lib/targets.ts";
+import type { Catalog, CatalogItem, FocusPoint, ItemData, ItemWord, RefSyllable, RefTiming, RefVoice } from "../../src/data/schema.ts";
+import { cmuVariants, targetsFromKokoro, tokenize, type KokoroClip } from "../lib/targets.ts";
 import { makeNodeScorer, ROOT } from "../lib/scorer-node.ts";
 
 const VOICES = ["af_heart", "am_michael"];
@@ -29,21 +40,22 @@ const TTS = join(ROOT, ".work/tts");
 const OUT_ITEMS_DEFAULT = join(ROOT, "public/content/items");
 const OUT_CATALOG = join(ROOT, "src/data/catalog.json");
 const LOG = join(ROOT, ".work/build-content.json");
-
-// ------------------------------------------------------------------ curriculum types
-type CFocus = { word: string; phone: string; watch_for: string[]; tip_ja?: string; tag?: string };
-type CItem = { id: string; type: ItemType; text: string; ja: string; pair?: string; tts_text?: string; focus: CFocus[]; difficulty: number };
-type CLesson = { id: string; title_ja: string; goal_ja: string; feature: string; items: CItem[] };
-type CUnit = { id: string; title_ja: string; subtitle_ja: string; feature: string; why_ja: string; how_ja: string; lessons: CLesson[] };
-type CPlacement = { id: string; text: string; ja: string; tts_text?: string; diagnoses: string[]; focus: CFocus[] };
-type Curriculum = { version: number; placement: CPlacement[]; units: CUnit[] };
+const NEEDED = join(ROOT, ".work/content-tts-needed.json");
 
 const args = process.argv.slice(2);
 const only = args.includes("--only") ? args[args.indexOf("--only") + 1] : "";
 const runtime = (args.includes("--runtime") ? args[args.indexOf("--runtime") + 1] : "auto") as "auto" | "node" | "web";
-/** --model-dir / --out: build with another model into another folder (catalog untouched) */
+/** --model-dir / --out: build with another model into another folder (its catalog.json and log go next to it) */
 const modelDir = args.includes("--model-dir") ? args[args.indexOf("--model-dir") + 1] : undefined;
 const outDir = args.includes("--out") ? args[args.indexOf("--out") + 1] : undefined;
+/** --curriculum: another curriculum file (e.g. an older version whose takes are on disk) */
+const curriculumPath = args.includes("--curriculum") ? args[args.indexOf("--curriculum") + 1] : undefined;
+/** --plan: only check the takes and write the lines that need TTS (.work/content-tts-needed.json) */
+const plan = args.includes("--plan");
+/** --partial: write the app's catalog even though some lines had no takes (it then lists only the built ones) */
+const partial = args.includes("--partial");
+/** --content: another content folder (tests) */
+const contentDir = args.includes("--content") ? args[args.indexOf("--content") + 1] : join(ROOT, "content");
 
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 const r2 = (x: number) => Math.round(x * 100) / 100;
@@ -64,6 +76,63 @@ function loadTake(voice: string, id: string, speed: Speed): Take {
   if (sampleRate !== 16000) throw new Error(`${base}.16k.wav is ${sampleRate} Hz`);
   const clip = JSON.parse(readFileSync(`${base}.json`, "utf8")) as KokoroClip;
   return { audio: samples, clip, pitch: analyzePitch(samples), speed };
+}
+
+/**
+ * Are all six takes of `id` on disk and recorded for this text? Ids are kept when content is
+ * rewritten (v2 turned "hotel" into "I have an idea."), so an old take must not be reused.
+ */
+function takeStatus(id: string, text: string, tts: string): "ok" | "missing" | "changed" {
+  for (const v of VOICES)
+    for (const sp of SPEEDS) {
+      const base = join(TTS, v, id + sp);
+      if (!existsSync(`${base}.16k.wav`) || !existsSync(`${base}.json`)) return "missing";
+      const clip = JSON.parse(readFileSync(`${base}.json`, "utf8")) as KokoroClip;
+      if (norm(clip.text) !== norm(text) || norm(stripMarkup(clip.tts_text ?? clip.text)) !== norm(tts)) return "changed";
+    }
+  return "ok";
+}
+
+/** Edit-distance alignment of two phone lists (bases); DX / Q match T or D for free. map[i] = j or -1. */
+function alignPhones(a: string[], b: string[]): { cost: number; map: number[] } {
+  const same = (x: string, y: string) => x === y || ((x === "DX" || x === "Q") && (y === "T" || y === "D"));
+  const D = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)));
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      D[i][j] = Math.min(D[i - 1][j - 1] + (same(a[i - 1], b[j - 1]) ? 0 : 1), D[i - 1][j] + 1, D[i][j - 1] + 1);
+  const map = new Array<number>(a.length).fill(-1);
+  for (let i = a.length, j = b.length; i > 0 && j > 0; ) {
+    if (D[i][j] === D[i - 1][j - 1] + (same(a[i - 1], b[j - 1]) ? 0 : 1)) map[--i] = --j;
+    else if (D[i][j] === D[i - 1][j] + 1) i--;
+    else j--;
+  }
+  return { cost: D[a.length][b.length], map };
+}
+
+/**
+ * The phones a dictionary writes for a word: the flap / glottal T (DX, Q) back to the T or D it
+ * stands for — from the closest CMUdict pronunciation, else the spelling. flap = a t became a flap.
+ */
+function dictionaryPhones(text: string, phones: string[]): { phones: string[]; flap: boolean } {
+  const at = phones.flatMap((p, i) => (p === "DX" || p === "Q" ? [i] : []));
+  if (!at.length) return { phones, flap: false };
+  const a = phones.map(baseOf);
+  let best: { b: string[]; map: number[]; cost: number } | null = null;
+  for (const pr of cmuVariants(text, cmu)) {
+    const b = pr.map(baseOf);
+    const r = alignPhones(a, b);
+    if (!best || r.cost < best.cost) best = { b, ...r };
+  }
+  const spelled = /t/i.test(text) || !/d/i.test(text) ? "T" : "D";
+  const out = phones.slice();
+  let flap = false;
+  for (const i of at) {
+    const j = best ? best.map[i] : -1;
+    const u = best && j >= 0 && (best.b[j] === "T" || best.b[j] === "D") ? best.b[j] : spelled;
+    if (phones[i] === "DX" && u === "T") flap = true;
+    out[i] = u;
+  }
+  return { phones: out, flap };
 }
 
 /**
@@ -203,12 +272,17 @@ async function buildRefs(scorer: Scorer, id: string, protect: string[], log: Wor
       if (!existsSync(join(ROOT, "public", p))) console.warn(`  missing audio ${p}`);
   }
   // phones: the first voice's misaki spelling (what it was asked to say; the recognizer's
-  // reading of the take is in refs[].phones); variants: everything the scorer accepts
+  // reading of the take is in refs[].phones); variants: everything the scorer accepts;
+  // ipa: those phones as a dictionary writes them (flap t written t, flap: true)
+  const dict: string[][] = [];
   const itemWords: ItemWord[] = words.map((w) => {
     const variants = w.variants.map((v) => (typeof v === "string" ? v : v.join(" ")));
-    return { text: w.text, phones: variants[0].split(/\s+/).map((p) => p.replace(/\?$/, "")), variants };
+    const phones = variants[0].split(/\s+/).map((p) => p.replace(/\?$/, ""));
+    const d = dictionaryPhones(w.text, phones);
+    dict.push(d.phones);
+    return { text: w.text, phones, ipa: ipaWord(d.phones), ...(d.flap ? { flap: true as const } : {}), variants };
   });
-  return { words: itemWords, refs, clip: takes[0].normal.clip, scoring: compactScoring(scoring) };
+  return { words: itemWords, ipa: ipaLine(dict), refs, clip: takes[0].normal.clip, scoring: compactScoring(scoring) };
 }
 
 /** Drops empty tables so items without adjustments carry nothing. */
@@ -301,7 +375,11 @@ async function calibrateScoring(scorer: Scorer, words: TargetWord[], takes: Take
 }
 
 function focusPoints(focus: CFocus[], words: ItemWord[], pairWords: ItemWord[] | undefined, id: string): FocusPoint[] {
-  const find = (ws: ItemWord[], w: string) => ws.findIndex((x) => norm(x.text) === norm(w));
+  // a letter or word inside a chunk the voice said as one ("F.B.I.", focus "B") -> that chunk
+  const find = (ws: ItemWord[], w: string) => {
+    const i = ws.findIndex((x) => norm(x.text) === norm(w));
+    return i >= 0 ? i : ws.findIndex((x) => tokenize(x.text).length > 1 && tokenize(x.text).includes(norm(w)));
+  };
   return focus.map((f) => {
     let word = find(words, f.word);
     let inPair = false;
@@ -322,55 +400,67 @@ function focusPoints(focus: CFocus[], words: ItemWord[], pairWords: ItemWord[] |
 }
 
 // ------------------------------------------------------------------ main
-const cur = JSON.parse(readFileSync(join(ROOT, "content/curriculum.json"), "utf8")) as Curriculum;
+const { curriculum: cur, lines, sets } = loadSources(contentDir, curriculumPath);
 const cmu = loadCmudict(join(ROOT, ".work/cmudict.dict"));
 const OUT_ITEMS = outDir ?? OUT_ITEMS_DEFAULT;
 const { scorer, runtime: rt } = await makeNodeScorer({ runtime, dir: modelDir });
 console.log(`scorer: ${rt}`);
 mkdirSync(OUT_ITEMS, { recursive: true });
 
-type Job = { item: CItem | CPlacement; unit: string; lesson: string; type: ItemType; difficulty: number };
-const jobs: Job[] = [
-  ...cur.units.flatMap((u) => u.lessons.flatMap((l) => l.items.map((it) => ({ item: it, unit: u.id, lesson: l.id, type: it.type, difficulty: it.difficulty })))),
-  ...cur.placement.map((p) => ({ item: p, unit: "placement", lesson: "placement", type: "sentence" as ItemType, difficulty: 0 })),
-];
 const wordLog: WordLog[] = [];
 const learnedLog: { id: string; learned: LearnedVariant[] }[] = [];
 const display = new Map<string, { text: string; note?: string }>();
+/** ids built in this run (the catalog lists only these) */
+const built = new Set<string>();
+/** lines without usable takes, as tools/tts/synth.py input */
+const needed: { id: string; text: string; tts_text?: string; why: "missing" | "changed" }[] = [];
 const t0 = performance.now();
 let bytes = 0;
 let n = 0;
-for (const job of jobs) {
-  const it = job.item;
+for (const it of lines) {
   const tts = it.tts_text ? stripMarkup(it.tts_text) : it.text;
   const respelled = norm(tts) !== norm(it.text);
   const shown = respelled ? { text: tts, note: it.text } : { text: it.text };
   display.set(it.id, shown);
   if (only && !it.id.startsWith(only)) continue;
+  const status = takeStatus(it.id, it.text, tts);
+  // a pair recording only for v1 "pair" items (v2 keeps `pair` as metadata of a sentence)
+  const pairStatus = it.type === "pair" && it.pair ? takeStatus(`${it.id}-pair`, it.pair, it.pair) : "ok";
+  if (status !== "ok" || pairStatus !== "ok") {
+    if (status !== "ok") needed.push({ id: it.id, text: it.text, ...(it.tts_text ? { tts_text: it.tts_text } : {}), why: status });
+    if (pairStatus !== "ok" && it.pair) needed.push({ id: `${it.id}-pair`, text: it.pair, why: pairStatus });
+    continue;
+  }
+  if (plan) continue;
   // the contrast this item trains is never learned away (win / wing: N, NG)
   const protect = [...new Set(it.focus.flatMap((f) => [f.phone, ...f.watch_for]).filter((p) => p !== "EPEN").map(baseOf))];
   const main = await buildRefs(scorer, it.id, protect, wordLog, learnedLog);
-  const pair = "pair" in it && it.pair ? await buildRefs(scorer, `${it.id}-pair`, protect, wordLog, learnedLog) : undefined;
+  const pair = it.type === "pair" && it.pair ? await buildRefs(scorer, `${it.id}-pair`, protect, wordLog, learnedLog) : undefined;
   const data: ItemData = {
     id: it.id,
-    unit: job.unit,
-    lesson: job.lesson,
-    type: job.type,
+    unit: it.unit,
+    lesson: it.lesson,
+    type: it.type,
     text: shown.text,
     ja: it.ja,
-    ...("pair" in it && it.pair ? { pair: it.pair } : {}),
+    ipa: main.ipa,
+    ...(it.role ? { role: it.role } : {}),
+    ...(it.swap ? { swap: it.swap.map((x) => ({ word: x.word, noteJa: x.note_ja })) } : {}),
+    ...(it.spell ? { spell: it.spell } : {}),
+    ...(it.pair ? { pair: it.pair } : {}),
     ...(shown.note ? { note: shown.note } : {}),
-    ...("diagnoses" in it ? { diagnoses: it.diagnoses } : {}),
+    ...(it.diagnoses ? { diagnoses: it.diagnoses } : {}),
     words: main.words,
     ...(main.scoring ? { scoring: main.scoring } : {}),
     focus: focusPoints(it.focus, main.words, pair?.words, it.id),
-    difficulty: job.difficulty,
+    difficulty: it.difficulty,
     refs: main.refs,
     ...(pair
       ? {
           pairItem: {
             id: `${it.id}-pair`,
-            text: "pair" in it && it.pair ? it.pair : pair.clip.text,
+            text: it.pair ?? pair.clip.text,
+            ipa: pair.ipa,
             words: pair.words,
             ...(pair.scoring ? { scoring: pair.scoring } : {}),
             refs: pair.refs,
@@ -380,13 +470,19 @@ for (const job of jobs) {
   };
   const body = JSON.stringify(data);
   writeFileSync(join(OUT_ITEMS, `${it.id}.json`), body);
+  built.add(it.id);
   bytes += body.length;
   n++;
-  if (n % 25 === 0) console.log(`  ${n}/${jobs.length} ${((performance.now() - t0) / 1000).toFixed(0)} s`);
+  if (n % 25 === 0) console.log(`  ${n}/${lines.length} ${((performance.now() - t0) / 1000).toFixed(0)} s`);
+}
+if (needed.length || plan) {
+  writeFileSync(NEEDED, JSON.stringify(needed, null, 1) + "\n");
+  console.warn(`\n${needed.length} lines skipped (no takes for this text: ${needed.filter((x) => x.why === "missing").length} missing, ${needed.filter((x) => x.why === "changed").length} recorded for an older text) -> ${NEEDED}`);
 }
 
 // ------------------------------------------------------------------ catalog
-const catalogItem = (it: CItem): CatalogItem => ({
+const byId = new Map(lines.map((l) => [l.id, l]));
+const catalogItem = (it: SourceLine): CatalogItem => ({
   id: it.id,
   type: it.type,
   text: display.get(it.id)?.text ?? it.text,
@@ -395,27 +491,53 @@ const catalogItem = (it: CItem): CatalogItem => ({
   focus: [...new Set(it.focus.map((f) => baseOf(f.phone)))],
   ...(it.pair ? { pair: it.pair } : {}),
   ...(display.get(it.id)?.note ? { note: display.get(it.id)?.note } : {}),
+  ...(it.role ? { role: it.role } : {}),
 });
-const catalog: Catalog = {
-  version: cur.version,
-  placement: cur.placement.map((p) => ({
-    id: p.id,
-    text: display.get(p.id)?.text ?? p.text,
-    ja: p.ja,
-    diagnoses: p.diagnoses,
-    focus: p.focus.map((f) => ({ word: f.word, phone: baseOf(f.phone), watchFor: f.watch_for, tag: f.tag ?? "" })),
-  })),
-  units: cur.units.map((u) => ({
+const units = cur.units
+  .map((u) => ({
     id: u.id,
     titleJa: u.title_ja,
     subtitleJa: u.subtitle_ja,
     feature: u.feature,
     whyJa: u.why_ja,
     howJa: u.how_ja,
-    lessons: u.lessons.map((l) => ({ id: l.id, titleJa: l.title_ja, goalJa: l.goal_ja, feature: l.feature, items: l.items.map(catalogItem) })),
-  })),
+    lessons: u.lessons
+      .map((l) => ({
+        id: l.id,
+        titleJa: l.title_ja,
+        goalJa: l.goal_ja,
+        feature: l.feature,
+        ...(l.boss ? { boss: true as const } : {}),
+        items: l.items.filter((x) => built.has(x.id)).map((x) => catalogItem(byId.get(x.id)!)),
+      }))
+      .filter((l) => l.items.length),
+  }))
+  .filter((u) => u.lessons.length);
+const catalogSets = sets
+  .map((s) => ({ ...s, items: s.ids.filter((id) => built.has(id)).map((id) => catalogItem(byId.get(id)!)) }))
+  .filter((s) => s.items.length)
+  .map(({ ids: _ids, ...s }) => s);
+const catalog: Catalog = {
+  version: cur.version,
+  placement: cur.placement
+    .filter((p) => built.has(p.id))
+    .map((p) => ({
+      id: p.id,
+      text: display.get(p.id)?.text ?? p.text,
+      ja: p.ja,
+      diagnoses: p.diagnoses,
+      focus: p.focus.map((f) => ({ word: f.word, phone: baseOf(f.phone), watchFor: f.watch_for, tag: f.tag ?? "" })),
+    })),
+  units,
+  ...(catalogSets.length ? { sets: catalogSets } : {}),
 };
-if (!only && !outDir) writeFileSync(OUT_CATALOG, JSON.stringify(catalog, null, 1) + "\n");
+// with --out the catalog goes next to that folder, the app's stays as it is; the app's catalog is
+// not replaced by one that silently drops lessons whose takes are not recorded yet
+if (!only && !plan) {
+  if (outDir) writeFileSync(join(outDir, "..", "catalog.json"), JSON.stringify(catalog, null, 1) + "\n");
+  else if (needed.length && !partial) console.warn(`src/data/catalog.json NOT written: ${needed.length} lines have no takes yet (record them, or pass --partial)`);
+  else writeFileSync(OUT_CATALOG, JSON.stringify(catalog, null, 1) + "\n");
+}
 
 // ------------------------------------------------------------------ report
 const secs = (performance.now() - t0) / 1000;
@@ -435,5 +557,5 @@ for (const sp of SPEEDS) {
   console.log(`speed ${sp || "normal"}: min word ${Math.min(...ws)}; before item calibration ${uBelow}/${u.length} words < 90 (${((100 * uBelow) / Math.max(1, u.length)).toFixed(1)} %); Kokoro word boundary vs alignment |d| median ${q(0.5)} ms, p90 ${q(0.9)} ms, max ${q(1)} ms (${d.length} boundaries)`);
 }
 console.log(`learned variants: ${learnedLog.reduce((a, x) => a + x.learned.length, 0)} on ${learnedLog.length} recordings`);
-writeFileSync(outDir ? join(outDir, "..", "build-content.json") : LOG, JSON.stringify({ runtime: rt, items: n, seconds: secs, bytes, below, learned: learnedLog, drift }, null, 1));
+if (!plan) writeFileSync(outDir ? join(outDir, "..", "build-content.json") : LOG, JSON.stringify({ runtime: rt, items: n, seconds: secs, bytes, below, learned: learnedLog, drift }, null, 1));
 await scorer.dispose();

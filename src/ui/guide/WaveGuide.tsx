@@ -1,23 +1,26 @@
 "use client";
 
 /**
- * The guide as a wave — honest karaoke.
- *   - The band is exactly ±tolSt semitones thick (KaraokeJudge's pitch tolerance), so "your line
- *     overlaps the band" means "the judge counts it". Loudness (w) is drawn as glow, not thickness.
- *   - Your line is gold where it is inside the band (judge.line[i].inBand) and thin white outside,
- *     with a small 高い / 低い mark at its head while you are off.
- *   - A syllable lights up and pops GREAT / PERFECT only once the judge has finalized it (one pop
- *     at a time); a late syllable gets a small おそい. Sung parts fade as they scroll away.
- *   - After the take: the model's band, your line over it, and the stretches where you were off
- *     shaded lightly.
+ * The guide as a wave — honest karaoke, with your voice as the hero.
+ *   - お手本 is one quiet band, exactly ±tolSt semitones thick (the judge's tolerance), so "your
+ *     line overlaps the band" means "the judge counts it".
+ *   - Your line: median-filtered and drawn as a smooth curve, 3–4 pt, glowing — gold inside the
+ *     band (judge.line[i].inBand), white outside. Its pen tip is held at the playhead (the pitch
+ *     tracker runs a few frames behind; the tip is drawn on to the cursor while you are voicing).
+ *   - When a word is fully judged, PERFECT / GREAT / もう一歩 pops right above that word — never
+ *     over the cursor or the edges. A late word gets a small おそい.
+ *   - A small bracket under each word with its name; the word under the cursor bright, the rest dim.
+ *     The pitch range is fitted to the sentence; the left and right edges fade out.
+ *   - After the take: the band, your line over it, the stretches where you were off shaded lightly.
  * One canvas, one requestAnimationFrame loop, inputs from refs, no React state per frame.
  */
 import { memo, useEffect, useRef } from "react";
-import type { BarGrade } from "@/engine/karaoke/judge.ts";
 import type { GuideProps } from "./types";
+import { WORD_GRADE_LABEL, wordGrade, type WordGrade } from "./grades";
 
-const PAD = { l: 12, r: 12, t: 22, b: 34 };
-const NOW_X = 0.3;
+const PAD = { l: 12, r: 12, t: 30, b: 40 };
+const NOW_X = 0.36; // room on the left for the judgement of the word just sung
+const EDGE = 26; // px of fade at the left and right edges
 
 type RGB = [number, number, number];
 const rgb = (hex: string, fb: RGB): RGB => {
@@ -28,8 +31,9 @@ const rgb = (hex: string, fb: RGB): RGB => {
 const rgba = (c: RGB, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 
-type Pop = { i: number; text: string; late: boolean; at: number };
-const POP_MS = 900;
+type Pop = { word: number; grade: WordGrade; late: boolean; at: number; x0: number; x1: number };
+const POP_MS = 1000;
+type SmPt = { t: number; st: number | null; inBand: boolean };
 
 function WaveGuide(props: GuideProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -55,7 +59,7 @@ function WaveGuide(props: GuideProps) {
       voice: rgb(cs.getPropertyValue("--voice"), [255, 210, 63]),
       miss: rgb(cs.getPropertyValue("--miss"), [214, 36, 95]),
       monitor: rgb(cs.getPropertyValue("--monitor"), [12, 15, 51]),
-      muted: cs.getPropertyValue("--monitor-muted").trim() || "#a8acd9",
+      muted: rgb(cs.getPropertyValue("--monitor-muted"), [168, 172, 217]),
     };
     let font = cs.fontFamily;
     let latin = getComputedStyle(document.documentElement).getPropertyValue("--font-latin") || "";
@@ -84,7 +88,7 @@ function WaveGuide(props: GuideProps) {
       dirty = true;
     });
 
-    // ---- per-wave geometry
+    // ---- per-wave geometry: the time span, and a pitch range fitted to this sentence
     let geomKey: unknown = null;
     let t0 = 0;
     let t1 = 1;
@@ -114,16 +118,49 @@ function WaveGuide(props: GuideProps) {
       }
       t0 = Math.min(a, p.syllables[0]?.start ?? a) - 0.12;
       t1 = Math.max(b, p.syllables[p.syllables.length - 1]?.end ?? b) + 0.16;
-      // room for the band's own thickness and a little air; never so tight that the band swallows the lane
-      lo -= tol + 1.5;
-      hi += tol + 1.5;
-      if (hi - lo < 16) {
-        const add = (16 - (hi - lo)) / 2;
+      // the band's own thickness and a little air above and below; a flat line still gets some room
+      lo -= tol + 1;
+      hi += tol + 1;
+      if (hi - lo < 10) {
+        const add = (10 - (hi - lo)) / 2;
         lo -= add;
         hi += add;
       }
       st0 = lo;
       st1 = hi;
+    };
+
+    // ---- your live line, smoothed once per new point (a causal 5-point median within a run)
+    let smKey: unknown = null;
+    let sm: SmPt[] = [];
+    let run: number[] = [];
+    let lastT = -1;
+    const smoothLive = (line: readonly { t: number; st: number | null; inBand?: boolean }[]) => {
+      if (line !== smKey || line.length < sm.length) {
+        smKey = line;
+        sm = [];
+        run = [];
+        lastT = -1;
+      }
+      for (let i = sm.length; i < line.length; i++) {
+        const q = line[i];
+        if (q.st === null || q.t - lastT > 0.06) run = [];
+        if (q.st === null) {
+          sm.push({ t: q.t, st: null, inBand: false });
+          continue;
+        }
+        // an octave slip is not a melody: drop a point far from where the run has been
+        const ref = run.length ? median(run) : q.st;
+        if (run.length >= 3 && Math.abs(q.st - ref) > 6) {
+          sm.push({ t: q.t, st: null, inBand: false });
+          continue;
+        }
+        run.push(q.st);
+        if (run.length > 5) run.shift();
+        sm.push({ t: q.t, st: median(run), inBand: !!q.inBand });
+        lastT = q.t;
+      }
+      return sm;
     };
 
     let k = 0;
@@ -133,7 +170,7 @@ function WaveGuide(props: GuideProps) {
     const secPerView = () => Math.min(4, Math.max(1.8, W / 190));
 
     const pops: Pop[] = [];
-    let seenGrades: (BarGrade | null)[] = [];
+    let popped: boolean[] = [];
     let barsKey: unknown = null;
     let lastSig = "";
     let raf = 0;
@@ -163,14 +200,17 @@ function WaveGuide(props: GuideProps) {
       const X = (t: number) => A + B * t;
       const pxPerSt = (H - PAD.t - PAD.b) / (st1 - st0);
       const Y = (st: number) => PAD.t + (st1 - st) * pxPerSt;
+      const clampY = (y: number) => Math.min(H - PAD.b + 4, Math.max(PAD.t - 12, y));
       const tol = p.tolSt ?? 2.5;
       const band = 2 * tol * pxPerSt; // the hit zone, in pixels
-      const scale = Math.max(0.85, Math.min(1.7, H / 180));
+      const scale = Math.max(0.85, Math.min(1.6, H / 190));
       const tVis0 = (-A - 20) / B;
       const tVis1 = (W - A + 20) / B;
       const settled = !!(p.overlay && p.overlay.length);
+      const following = live.follow && live.t !== null;
       // sung parts fade as they scroll away (follow mode only)
-      const fade = (t: number) => (live.follow && live.t !== null ? Math.max(0.25, Math.min(1, 1 - (live.t - 0.35 - t) / 1.2)) : 1);
+      const fade = (t: number) => (following ? Math.max(0.35, Math.min(1, 1 - (cursor - 0.35 - t) / 1.4)) : 1);
+      const bars = live.bars;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
@@ -187,30 +227,27 @@ function WaveGuide(props: GuideProps) {
         }
       }
 
-      // ---- the band: constant thickness (= tolerance), glow from loudness, lit once a syllable is won
-      const bars = live.bars;
+      // ---- お手本: one quiet band; a won syllable a little brighter
       const sylOf = (t: number) => {
         for (let i = 0; i < p.syllables.length; i++) if (t >= p.syllables[i].start && t <= p.syllables[i].end) return i;
         return -1;
       };
       for (const seg of p.wave.segments) {
         if (seg.length < 2 || seg[seg.length - 1].t < tVis0 || seg[0].t > tVis1) continue;
-        // the band is ±tol semitones around the melody, measured vertically (pitch is vertical):
-        // one ribbon polygon per segment, shaded along its length by a gradient (loudness, "won")
         const style = (i: number) => {
           const pt = seg[i];
           const si = sylOf(pt.t);
           const g = si >= 0 && bars ? bars[si]?.grade : null;
           const won = !settled && (g === "great" || g === "perfect");
-          const glow = (0.32 + 0.5 * pt.w) * (pt.b ? 0.6 : 1) * fade(pt.t);
-          return { fill: won ? rgba(col.guide, Math.min(1, glow + 0.4 * fade(pt.t))) : rgba(col.guide, glow * (settled ? 0.75 : 0.85)) };
+          const a = (won ? 0.5 : 0.3) * (pt.b ? 0.6 : 1) * fade(pt.t);
+          return rgba(col.guide, a);
         };
         const xa = X(seg[0].t);
         const xb = X(seg[seg.length - 1].t);
         const grad = ctx.createLinearGradient(xa, 0, Math.max(xa + 1, xb), 0);
-        const step = Math.max(1, Math.floor(seg.length / 90)); // ≤ ~90 stops per segment
-        for (let i = 0; i < seg.length; i += step) grad.addColorStop(Math.min(1, Math.max(0, (X(seg[i].t) - xa) / Math.max(1, xb - xa))), style(i).fill);
-        grad.addColorStop(1, style(seg.length - 1).fill);
+        const step = Math.max(1, Math.floor(seg.length / 60));
+        for (let i = 0; i < seg.length; i += step) grad.addColorStop(Math.min(1, Math.max(0, (X(seg[i].t) - xa) / Math.max(1, xb - xa))), style(i));
+        grad.addColorStop(1, style(seg.length - 1));
         ctx.fillStyle = grad;
         ctx.beginPath();
         for (let i = 0; i < seg.length; i++) {
@@ -222,117 +259,162 @@ function WaveGuide(props: GuideProps) {
         for (let i = seg.length - 1; i >= 0; i--) ctx.lineTo(X(seg[i].t), Y(seg[i].st) + band / 2);
         ctx.closePath();
         ctx.fill();
-        // rounded ends (outward half-discs)
-        for (const [pt, a0, a1] of [
-          [seg[0], Math.PI / 2, (Math.PI * 3) / 2],
-          [seg[seg.length - 1], -Math.PI / 2, Math.PI / 2],
+        for (const [pt, a0, a1, i] of [
+          [seg[0], Math.PI / 2, (Math.PI * 3) / 2, 0],
+          [seg[seg.length - 1], -Math.PI / 2, Math.PI / 2, seg.length - 1],
         ] as const) {
-          ctx.fillStyle = style(pt === seg[0] ? 0 : seg.length - 1).fill;
+          ctx.fillStyle = style(i);
           ctx.beginPath();
           ctx.ellipse(X(pt.t), Y(pt.st), Math.min(band / 2, 12), band / 2, 0, a0, a1);
           ctx.fill();
         }
-        // a thin bright centre line: the model's melody itself
-        ctx.strokeStyle = rgba(col.guide, settled ? 0.9 : 1);
-        ctx.lineWidth = Math.max(1.5, 2 * scale);
-        ctx.beginPath();
-        seg.forEach((pt, i) => (i ? ctx.lineTo(X(pt.t), Y(pt.st)) : ctx.moveTo(X(pt.t), Y(pt.st))));
-        ctx.stroke();
       }
 
-      // ---- the cursor / now line
+      // ---- the playhead (under your line, so the pen tip sits on it)
       if (live.t !== null) {
         const x = X(live.t);
         const tone = live.tone === "voice" ? col.voice : col.guide;
-        ctx.strokeStyle = live.follow ? "rgba(255,255,255,0.55)" : rgba(tone, 0.95);
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = following ? "rgba(255,255,255,0.4)" : rgba(tone, 0.95);
+        ctx.lineWidth = following ? 1.5 : 2;
         ctx.beginPath();
-        ctx.moveTo(x, PAD.t - 16);
+        ctx.moveTo(x, PAD.t - 18);
         ctx.lineTo(x, H - PAD.b + 2);
         ctx.stroke();
       }
 
-      // ---- your line: gold inside the band, thin white outside
-      const pts = settled ? smoothLine(p.overlay!) : live.line;
+      // ---- your line: smooth, glowing; gold inside the band, white outside
+      const pts: readonly SmPt[] = settled ? smoothLine(p.overlay!).map((q) => ({ t: q.t, st: q.st, inBand: q.st !== null && Math.abs(q.st - guideAt(p.wave, q.t)) <= tol })) : smoothLive(live.line);
       const upTo = settled ? (p.progressive ? Math.min(live.t ?? -1, (p.syllables[p.syllables.length - 1]?.end ?? 1e9) + 0.08) : (p.syllables[p.syllables.length - 1]?.end ?? 1e9) + 0.08) : null;
-      let prevSt: number | null = null;
-      let prevPt: { x: number; y: number; t: number; inBand: boolean } | null = null;
-      let head: { x: number; y: number; st: number; t: number; inBand: boolean; run: number } | null = null;
-      let run = 0; // points in the current unbroken stretch
-      for (let i = 0; i < pts.length; i++) {
-        const pt = pts[i] as { t: number; st: number | null; inBand?: boolean };
-        if (upTo !== null && pt.t > upTo) break;
-        const spike = pt.st !== null && prevSt !== null && Math.abs(pt.st - prevSt) > 6;
-        prevSt = pt.st;
-        if (pt.st === null || spike || pt.t < tVis0 || pt.t > tVis1) {
-          if (!settled || (prevPt && pts[i + 1] && (pts[i + 1] as { st: number | null }).st === null)) prevPt = null;
-          continue;
+      const gap = settled ? 0.25 : 0.06;
+      let tip: { x: number; y: number; t: number; st: number; inBand: boolean } | null = null;
+      // a run = consecutive voiced points; drawn as quadratic curves through the midpoints, one path per colour
+      let runPts: { x: number; y: number; t: number; inBand: boolean; st: number }[] = [];
+      const flush = () => {
+        const n = runPts.length;
+        // a stretch of one or two frames is not drawn (a speck), and it does not move the pen tip
+        if (n >= (settled ? 2 : 3)) {
+          strokeRun(runPts);
+          const l = runPts[n - 1];
+          tip = { x: l.x, y: l.y, t: l.t, st: l.st, inBand: l.inBand };
         }
-        const inBand = settled ? Math.abs(pt.st - guideAt(p.wave, pt.t)) <= tol : !!pt.inBand;
-        const cur = { x: X(pt.t), y: Math.min(H - PAD.b + 6, Math.max(PAD.t - 14, Y(pt.st))), t: pt.t, inBand };
-        const joined = !!prevPt && cur.t - prevPt.t < (settled ? 0.25 : 0.06);
-        run = joined ? run + 1 : 1;
-        // live: a stretch shows from its third point (a stub of one or two frames would be a speck)
-        if (prevPt && joined && (settled || run >= 3)) {
-          const a = fade(cur.t);
-          if (cur.inBand) {
-            ctx.strokeStyle = rgba(col.voice, 0.28 * a);
-            ctx.lineWidth = 9 * scale;
-            ctx.beginPath();
-            ctx.moveTo(prevPt.x, prevPt.y);
-            ctx.lineTo(cur.x, cur.y);
-            ctx.stroke();
-          }
-          ctx.strokeStyle = cur.inBand ? rgba(col.voice, a) : `rgba(255,255,255,${0.85 * a})`;
-          ctx.lineWidth = (cur.inBand ? 3.6 : 1.8) * scale;
+        runPts = [];
+      };
+      const strokeRun = (r: typeof runPts) => {
+        let i0 = 0;
+        while (i0 < r.length - 1) {
+          const inBand = r[i0 + 1].inBand;
+          let i1 = i0 + 1;
+          while (i1 < r.length - 1 && r[i1 + 1].inBand === inBand) i1++;
+          // path from the midpoint before i0+1 … to the midpoint after i1 (or the run's ends)
+          const a = fade(r[i1].t);
           ctx.beginPath();
-          ctx.moveTo(prevPt.x, prevPt.y);
-          ctx.lineTo(cur.x, cur.y);
+          const sx = i0 === 0 ? r[0].x : (r[i0].x + r[i0 + 1].x) / 2;
+          const sy = i0 === 0 ? r[0].y : (r[i0].y + r[i0 + 1].y) / 2;
+          ctx.moveTo(sx, sy);
+          for (let i = i0 + 1; i <= i1; i++) {
+            const last = i === r.length - 1;
+            const mx = last ? r[i].x : (r[i].x + r[i + 1].x) / 2;
+            const my = last ? r[i].y : (r[i].y + r[i + 1].y) / 2;
+            ctx.quadraticCurveTo(r[i].x, r[i].y, mx, my);
+          }
+          // glow, then the line
+          ctx.strokeStyle = inBand ? rgba(col.voice, 0.3 * a) : `rgba(255,255,255,${0.14 * a})`;
+          ctx.lineWidth = (inBand ? 11 : 8) * scale;
+          ctx.stroke();
+          ctx.strokeStyle = inBand ? rgba(col.voice, a) : `rgba(255,255,255,${0.92 * a})`;
+          ctx.lineWidth = (inBand ? 3.8 : 3) * scale;
+          ctx.stroke();
+          i0 = i1;
+        }
+      };
+      let prevT = -1;
+      for (let i = 0; i < pts.length; i++) {
+        const q = pts[i];
+        if (upTo !== null && q.t > upTo) break;
+        if (q.t < tVis0 - 0.3) continue;
+        if (q.st === null || q.t - prevT > gap) flush();
+        if (q.st === null) continue;
+        if (q.t > tVis1) break;
+        runPts.push({ x: X(q.t), y: clampY(Y(q.st)), t: q.t, inBand: q.inBand, st: q.st });
+        prevT = q.t;
+      }
+      flush();
+      // the pen tip, held at the playhead while you are voicing (the pitch arrives a few frames late)
+      const tp = tip as { x: number; y: number; t: number; st: number; inBand: boolean } | null;
+      if (!settled && following && tp && cursor - tp.t < 0.22) {
+        const cx = X(cursor);
+        if (cx > tp.x + 0.5) {
+          ctx.strokeStyle = tp.inBand ? rgba(col.voice, 1) : "rgba(255,255,255,0.92)";
+          ctx.lineWidth = (tp.inBand ? 3.8 : 3) * scale;
+          ctx.beginPath();
+          ctx.moveTo(tp.x, tp.y);
+          ctx.lineTo(cx, tp.y);
           ctx.stroke();
         }
-        prevPt = cur;
-        head = { ...cur, st: pt.st, run };
-      }
-      // the head while singing: a dot, and 高い / 低い when you are off
-      // (only at the end of a drawn stretch: a lone point or two after a jump would float)
-      if (!settled && head && head.run >= 4 && live.t !== null && live.follow && live.t - head.t < 0.18) {
-        ctx.fillStyle = head.inBand ? rgba(col.voice, 1) : "#ffffff";
+        ctx.fillStyle = tp.inBand ? rgba(col.voice, 1) : "#ffffff";
+        ctx.shadowColor = tp.inBand ? rgba(col.voice, 0.9) : "rgba(255,255,255,0.7)";
+        ctx.shadowBlur = 10 * scale;
         ctx.beginPath();
-        ctx.arc(head.x, head.y, 4.5 * scale, 0, Math.PI * 2);
+        ctx.arc(Math.max(cx, tp.x), tp.y, 5 * scale, 0, Math.PI * 2);
         ctx.fill();
-        if (!head.inBand) {
-          const g = guideAt(p.wave, head.t);
+        ctx.shadowBlur = 0;
+        if (!tp.inBand) {
+          const g = guideAt(p.wave, cursor);
           if (Number.isFinite(g)) {
-            const high = head.st > g;
-            ctx.font = `600 ${Math.round(11 * scale)}px ${font}`;
+            const high = tp.st > g;
+            ctx.font = `600 ${Math.round(12 * scale)}px ${font}`;
             ctx.textAlign = "left";
             ctx.fillStyle = "#ffffff";
-            ctx.fillText(high ? "▲ 高い" : "▼ 低い", head.x + 9, head.y + (high ? -6 : 14));
+            ctx.fillText(high ? "▲ 高い" : "▼ 低い", Math.max(cx, tp.x) + 10, tp.y + (high ? -8 : 16));
           }
         }
       }
 
-      // ---- pops: finalized GREAT+ only, one at a time; おそい when the syllable came late
+      // ---- words: a small bracket under each, its name below; the word at the playhead bright
+      const yb = H - PAD.b + 12;
+      const nowWord = following ? p.words.findIndex((w) => cursor >= w.start - 0.02 && cursor <= w.end + 0.02) : -1;
+      ctx.textAlign = "center";
+      ctx.font = `700 ${Math.round(12 * Math.min(scale, 1.3))}px ${latin || font}`;
+      let labelEnd = -Infinity;
+      for (let i = 0; i < p.words.length; i++) {
+        const w = p.words[i];
+        const x0 = X(w.start) + 2;
+        const x1 = Math.max(x0 + 4, X(w.end) - 2);
+        if (x1 < 0 || x0 > W) continue;
+        const bright = p.focusWord != null ? p.focusWord === i : nowWord < 0 ? !following : nowWord === i;
+        const a = (bright ? 0.95 : 0.32) * (following ? fade(w.end) : 1);
+        ctx.strokeStyle = `rgba(255,255,255,${a})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x0, yb - 5);
+        ctx.lineTo(x0, yb);
+        ctx.lineTo(x1, yb);
+        ctx.lineTo(x1, yb - 5);
+        ctx.stroke();
+        const tw = ctx.measureText(w.text).width;
+        const cx = Math.max((x0 + x1) / 2, labelEnd + 6 + tw / 2);
+        labelEnd = cx + tw / 2;
+        ctx.fillStyle = bright ? "#ffffff" : rgba(col.muted, 0.6 * (following ? fade(w.end) : 1));
+        ctx.fillText(w.text, cx, yb + 16 * Math.min(scale, 1.3));
+      }
+
+      // ---- one judgement per word, right above it, once the word is final
       if (bars !== barsKey) {
         barsKey = bars;
-        seenGrades = bars ? bars.map((b) => b.grade) : [];
+        popped = p.words.map(() => false);
         pops.length = 0;
       }
-      if (bars) {
-        for (let i = 0; i < bars.length; i++) {
-          const g = bars[i].grade;
-          if (g && seenGrades[i] !== g) {
-            seenGrades[i] = g;
-            if (!live.follow) continue;
-            const late = bars[i].timing === "late";
-            if (g === "great" || g === "perfect" || late) {
-              pops.length = 0; // never two at once
-              pops.push({ i, text: g === "perfect" ? "PERFECT" : g === "great" ? "GREAT" : "", late, at: now });
-            }
-          }
+      if (bars && following) {
+        for (let wi = 0; wi < p.words.length; wi++) {
+          if (popped[wi]) continue;
+          const g = wordGrade(bars, p.syllables, wi);
+          if (!g) continue;
+          popped[wi] = true;
+          pops.length = 0; // one judgement on screen at a time: the newest word
+          pops.push({ word: wi, grade: g.grade, late: g.late, at: now, x0: 0, x1: 0 });
         }
       }
-      ctx.textAlign = "center";
+      const cursorX = following ? X(cursor) : Infinity;
       for (let n = pops.length - 1; n >= 0; n--) {
         const pop = pops[n];
         const age = (now - pop.at) / POP_MS;
@@ -340,58 +422,66 @@ function WaveGuide(props: GuideProps) {
           pops.splice(n, 1);
           continue;
         }
-        const s = p.syllables[pop.i];
-        const alpha = age < 0.7 ? 1 : 1 - (age - 0.7) / 0.3;
-        const rise = reduce.matches ? 0 : 12 * scale * age;
-        const y = Math.max(PAD.t + 4, Y(s.pitchSt ?? 0) - band / 2 - 8 - rise);
+        const w = p.words[pop.word];
+        const label = WORD_GRADE_LABEL[pop.grade];
+        const latinLabel = pop.grade !== "near";
+        ctx.font = latinLabel ? `800 ${Math.round(Math.min(22, 17 * scale))}px ${latin || font}` : `700 ${Math.round(Math.min(19, 15 * scale))}px ${font}`;
+        const half = ctx.measureText(label).width / 2 + 6;
+        // above the top of the band inside this word
+        let top = Infinity;
+        for (const seg of p.wave.segments) for (const pt of seg) if (pt.t >= w.start && pt.t <= w.end) top = Math.min(top, Y(pt.st) - band / 2);
+        if (!Number.isFinite(top)) top = Y(0) - band / 2;
+        const lo = half + EDGE;
+        const hi = Math.min(W - half - 8, cursorX - half - 10);
+        const x = Math.max(lo, Math.min(hi, (X(w.start) + X(w.end)) / 2));
+        const rise = reduce.matches ? 0 : 10 * scale * Math.min(1, age * 1.6);
+        const y = Math.max(PAD.t - 2 + 10 * scale, top - 10 - rise);
+        // ポン: a quick overshoot, then hold, then fade
+        const s = reduce.matches ? 1 : age < 0.14 ? 0.6 + (0.5 * age) / 0.14 : age < 0.26 ? 1.1 - (0.1 * (age - 0.14)) / 0.12 : 1;
+        const alpha = age < 0.75 ? 1 : 1 - (age - 0.75) / 0.25;
+        ctx.save();
         ctx.globalAlpha = alpha;
-        if (pop.text) {
-          ctx.font = `800 ${Math.round(16 * scale)}px ${latin || font}`;
-          const half = ctx.measureText(pop.text).width / 2 + 6;
-          const x = Math.min(W - half, Math.max(half, X((s.start + s.end) / 2)));
-          ctx.lineWidth = 5;
-          ctx.strokeStyle = rgba(col.monitor, 1);
-          ctx.strokeText(pop.text, x, y);
-          ctx.fillStyle = rgba(col.voice, 1);
-          ctx.fillText(pop.text, x, y);
-        }
+        ctx.translate(x, y);
+        ctx.scale(s, s);
+        ctx.textAlign = "center";
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = rgba(col.monitor, 1);
+        ctx.strokeText(label, 0, 0);
+        ctx.fillStyle = latinLabel ? rgba(col.voice, 1) : "#ffffff";
+        ctx.fillText(label, 0, 0);
         if (pop.late) {
           ctx.font = `600 ${Math.round(11 * scale)}px ${font}`;
-          const x = Math.min(W - 24, Math.max(24, X((s.start + s.end) / 2)));
           ctx.fillStyle = "#ffffff";
-          ctx.fillText("おそい", x, y + (pop.text ? 16 * scale : 0));
+          ctx.fillText("おそい", 0, 15 * scale);
         }
-        ctx.globalAlpha = 1;
+        ctx.restore();
       }
 
-      // ---- labels: word names centred under their own wave; the two lines named directly
-      ctx.textAlign = "center";
-      ctx.font = `700 ${Math.round(12 * Math.min(scale, 1.35))}px ${latin || font}`;
-      let labelEnd = -Infinity;
-      for (let i = 0; i < p.words.length; i++) {
-        const w = p.words[i];
-        const tw = ctx.measureText(w.text).width;
-        const cx = Math.max(X((w.start + w.end) / 2), labelEnd + 6 + tw / 2);
-        labelEnd = cx + tw / 2;
-        if (cx - tw / 2 > W || cx + tw / 2 < 0) continue;
-        ctx.fillStyle = p.focusWord == null ? col.muted : p.focusWord === i ? "#ffffff" : "rgba(168,172,217,0.4)";
-        ctx.globalAlpha = fade(w.end);
-        ctx.fillText(w.text, cx, H - 12);
-        ctx.globalAlpha = 1;
-      }
-      // direct labels (no legend): お手本 at the start of the band, あなた next to your line
+      // ---- direct labels (no legend): お手本 at the start of the band, あなた next to your line
       const first = p.wave.segments[0]?.[0];
-      if (first && !live.follow) {
+      if (first && !following) {
         ctx.textAlign = "left";
-        ctx.font = `600 ${Math.round(11 * Math.min(scale, 1.3))}px ${font}`;
+        ctx.font = `600 ${Math.round(12 * Math.min(scale, 1.3))}px ${font}`;
         ctx.fillStyle = rgba(col.guide, 1);
-        ctx.fillText("お手本", Math.max(4, X(first.t) - 4), Math.max(12, Y(first.st) - band / 2 - 6));
+        ctx.fillText("お手本", Math.max(EDGE, X(first.t) - 4), Math.max(14, Y(first.st) - band / 2 - 8));
       }
-      if (settled && head) {
+      if (settled && tp) {
         ctx.textAlign = "left";
-        ctx.font = `600 ${Math.round(11 * Math.min(scale, 1.3))}px ${font}`;
+        ctx.font = `600 ${Math.round(12 * Math.min(scale, 1.3))}px ${font}`;
         ctx.fillStyle = rgba(col.voice, 1);
-        ctx.fillText("あなた", Math.min(W - 40, head.x + 8), Math.min(H - PAD.b - 2, head.y + 4));
+        ctx.fillText("あなた", Math.min(W - 44, tp.x + 8), Math.min(H - PAD.b - 2, tp.y + 4));
+      }
+
+      // ---- the edges fade out
+      for (const [x, dir] of [
+        [0, 1],
+        [W, -1],
+      ] as const) {
+        const g = ctx.createLinearGradient(x, 0, x + dir * EDGE, 0);
+        g.addColorStop(0, rgba(col.monitor, 1));
+        g.addColorStop(1, rgba(col.monitor, 0));
+        ctx.fillStyle = g;
+        ctx.fillRect(dir > 0 ? 0 : W - EDGE, 0, EDGE, H);
       }
 
       return animating || pops.length > 0;
@@ -424,6 +514,12 @@ function WaveGuide(props: GuideProps) {
       <canvas ref={canvasRef} role="img" aria-label={props.label} className="absolute inset-0 h-full w-full" />
     </div>
   );
+}
+
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
 /** the model's pitch at t (nearest wave point within 40 ms), NaN if none */

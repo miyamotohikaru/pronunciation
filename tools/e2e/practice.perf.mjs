@@ -66,6 +66,16 @@ async function oneTake(label) {
   await page.click('button[aria-label="録音して話す"], button[aria-label="もう一回"]').catch(async () => {
     await page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("もう一度話す"))?.click());
   });
+  // under the 4× slowdown and the trace a real click can miss while the page settles: press it from the page then
+  const started = await page
+    .waitForFunction(() => window.__practice?.phase !== "result" && window.__practice?.phase !== "ready", { timeout: 4000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!started)
+    await page.evaluate(() => {
+      const b = document.querySelector('button[aria-label="録音して話す"], button[aria-label="文をもう一度話す"]') ?? [...document.querySelectorAll("button")].find((x) => x.textContent?.includes("もう一度話す"));
+      b?.click();
+    });
   await page.waitForFunction(() => window.__practice?.phase !== "result" && window.__practice?.phase !== "ready", { timeout: 30000 });
   await page.waitForFunction(() => window.__practice?.phase === "result", { timeout: 180000 });
   await new Promise((r) => setTimeout(r, 2500)); // the score reveal (1.2 s) and the lower half

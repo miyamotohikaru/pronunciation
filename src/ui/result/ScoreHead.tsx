@@ -1,15 +1,16 @@
 "use client";
 
 /**
- * The top of the result: the total as "65" with a small "/100", a karaoke-machine counter that
- * stays readable while it runs (each digit slides in its own window, ~600 ms, settles with a small
- * spring); the decimals small on its shoulder; the change since the last attempt; the verdict big.
- * PartsRow: the three parts as integers that visibly add up (音 /50 + リズム /25 + 抑揚 /25).
+ * The top of the result: the total as a whole number — "65" with a small "/100" (no decimals:
+ * they read as a bug or as meaningless precision) — a karaoke-machine counter that stays readable
+ * while it runs (each digit slides in its own window, ~600 ms, settles with a small spring); the
+ * change since the last attempt; the verdict big.
+ * PartsRow: the three parts as integers that visibly add up to it (音 /50 + リズム /25 + 抑揚 /25).
  *
  * Per frame: only transforms on five digit strips (no React state, no layout).
  */
 import { useEffect, useRef, useState } from "react";
-import { fmt3, parts } from "../score";
+import { parts } from "../score";
 import type { Scores } from "../types";
 
 export type ScoreHeadProps = {
@@ -29,11 +30,14 @@ export type ScoreHeadProps = {
 const DIGITS = "0123456789";
 const DURATION = 600;
 
-/** integer parts that add up to floor(total): largest remainders get the leftover points */
+/** the total as shown: a whole number */
+export const shownTotal = (s: Scores) => Math.round(s.overall);
+
+/** integer parts that add up to the shown total: largest remainders get the leftover points */
 function integerParts(s: Scores) {
   const ps = parts(s);
   const floors = ps.map((p) => Math.floor(p.points));
-  const target = Math.floor(ps.reduce((a, p) => a + p.points, 0) + 1e-9);
+  const target = Math.round(ps.reduce((a, p) => a + p.points, 0));
   let left = target - floors.reduce((a, b) => a + b, 0);
   const order = ps.map((p, i) => [p.points - floors[i], i] as const).sort((a, b) => b[0] - a[0]);
   for (const [, i] of order) {
@@ -45,18 +49,19 @@ function integerParts(s: Scores) {
 }
 
 export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdict, previous, celebrate }: ScoreHeadProps) {
-  const total = scores.overall;
+  const total = shownTotal(scores);
   const [done, setDone] = useState(!run);
   const strips = useRef<(HTMLSpanElement | null)[]>([]);
   const cb = useRef({ onProgress, onDone });
   cb.current = { onProgress, onDone };
-  const PLACES = [10, 1, 0.1, 0.01, 0.001];
+  const PLACES = [100, 10, 1];
 
   const show = (v: number, settle: boolean) => {
+    const n = Math.round(v);
     PLACES.forEach((p, i) => {
       const el = strips.current[i];
       if (!el) return;
-      const d = Math.floor(v / p + 1e-6) % 10;
+      const d = Math.floor(n / p) % 10;
       // a short slide per step while counting; a spring when it lands
       el.style.transition = settle ? "transform 340ms cubic-bezier(.34,1.56,.64,1)" : "transform 70ms linear";
       el.style.transform = `translateY(${-d * 10}%)`;
@@ -85,7 +90,7 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
       const step = Math.floor(k * 12);
       if (step !== lastStep) {
         lastStep = step;
-        show(total * (1 - Math.pow(1 - step / 12, 3)), false);
+        show(Math.floor(total * (1 - Math.pow(1 - step / 12, 3))), false);
       }
       cb.current.onProgress?.(k);
       if (k < 1) raf = requestAnimationFrame(loop);
@@ -104,20 +109,13 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
 
   return (
     <section aria-label="点数" className="w-full">
-      {/* "65" big, "/100" small at its foot, the decimals small on its shoulder */}
+      {/* "65" big, "/100" small at its foot */}
       <div className="flex items-end gap-4">
-        <div className="flex items-stretch leading-none" aria-hidden>
-          <Digit refFn={(el) => (strips.current[0] = el)} big hidden={total < 10} />
-          <Digit refFn={(el) => (strips.current[1] = el)} big />
-          <span className="ml-[6px] flex flex-col justify-between pb-[14px] pt-[12px] md:pb-[18px] md:pt-[16px]">
-            <span className="num flex items-start text-[17px] font-bold text-(--field-ink) opacity-70 md:text-[20px]">
-              .
-              <Digit refFn={(el) => (strips.current[2] = el)} />
-              <Digit refFn={(el) => (strips.current[3] = el)} />
-              <Digit refFn={(el) => (strips.current[4] = el)} />
-            </span>
-            <span className="num text-[17px] font-bold md:text-[20px]">/100</span>
-          </span>
+        <div className="flex items-end leading-none" aria-hidden>
+          {total >= 100 ? <Digit refFn={(el) => (strips.current[0] = el)} big /> : null}
+          <Digit refFn={(el) => (strips.current[1] = el)} big hidden={total < 10} />
+          <Digit refFn={(el) => (strips.current[2] = el)} big />
+          <span className="num mb-[16px] ml-[6px] text-[18px] font-bold md:mb-[20px] md:text-[21px]">/100</span>
         </div>
         {delta !== null && done ? (
           <span
@@ -131,7 +129,7 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
       </div>
       <p className={`mt-1 min-h-[40px] font-black leading-tight ${celebrate ? "text-[36px] md:text-[44px]" : "text-[32px] md:text-[40px]"}`} aria-live="polite">
         {done ? verdict : ""}
-        <span className="sr-only">{done ? `${fmt3(total)}点。` : ""}</span>
+        <span className="sr-only">{done ? `${total}点。` : ""}</span>
       </p>
     </section>
   );

@@ -12,7 +12,9 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { makeScorer, readWav, targetsFor, ROOT } from "./lib.mts";
 import { readFileSync } from "node:fs";
-import { HEARD_LABELS } from "../../src/engine/scoring/heard-labels.ts";
+import { HEARD_LABELS, heardLabel } from "../../src/engine/scoring/heard-labels.ts";
+import { isEnglishPhone } from "../../src/engine/scoring/ipa.ts";
+import { ipaParity } from "./ipa-parity.mts";
 import type { ModelMeta } from "../../src/engine/scoring/types.ts";
 import { cases } from "./cases.mts";
 import { runParity } from "./parity.mts";
@@ -74,12 +76,22 @@ for (const model of ["vb223", "student"] as const) {
   });
 }
 
-test("every heardAs / inserted-vowel symbol has a Japanese label", () => {
+test("every heardAs / inserted-vowel symbol has a label: IPA for English, a Japanese name otherwise", () => {
   const missing: string[] = [];
   for (const m of ["whisper-phoneme", "student-ipa"]) {
     const meta = JSON.parse(readFileSync(join(ROOT, "public/models", m, "meta.json"), "utf8")) as ModelMeta;
     const symbols = new Set([...Object.keys(meta.units), ...Object.values(meta.diagnosis.confusions).flat(), ...meta.diagnosis.epentheticVowels]);
-    for (const s of symbols) if (!(s in HEARD_LABELS)) missing.push(`${m}: ${s}`);
+    for (const s of symbols) {
+      const label = heardLabel(s);
+      const ok = isEnglishPhone(s) ? /^\/[^A-Z/]+\/$/.test(label) : s in HEARD_LABELS && label === HEARD_LABELS[s];
+      if (!ok) missing.push(`${m}: ${s} -> ${label}`);
+    }
   }
   assert.deepEqual(missing, []);
+});
+
+test("ipa.ts writes every CMUdict word as content/ipa.py does", () => {
+  const r = ipaParity();
+  assert.ok(r.checked > 100000, `checked ${r.checked}`);
+  assert.deepEqual(r.diffs.slice(0, 10), []);
 });

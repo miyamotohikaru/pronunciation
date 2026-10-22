@@ -89,13 +89,13 @@ test("capture path at 48 / 44.1 kHz: VAD ±150 ms, 16 kHz ≈ source, live pitch
   }
 });
 
-test("silence only: no utterance, stops at the 12 s cap", () => {
-  const { take, events } = run(noise(48000 * 13, -62, 5), 48000);
+test("silence only: no utterance, stops at the 30 s cap", () => {
+  const { take, events } = run(noise(48000 * 31, -62, 5), 48000);
   assert.equal(events.length, 0);
   assert.equal(take.stopReason, "max");
   assert.equal(take.speech, null);
-  assert.ok(Math.abs(take.stats.rawDuration - 12) < 0.02, `${take.stats.rawDuration}`);
-  assert.ok(Math.abs(take.duration - 12) < 0.02, "no speech → untrimmed");
+  assert.ok(Math.abs(take.stats.rawDuration - 30) < 0.02, `${take.stats.rawDuration}`);
+  assert.ok(Math.abs(take.duration - 30) < 0.02, "no speech → untrimmed");
 });
 
 test("start-up zeros then AGC-loud room tone: no false onset; speech after it is found", () => {
