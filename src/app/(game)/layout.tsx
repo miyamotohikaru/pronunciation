@@ -1,5 +1,6 @@
 import type { Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, Gentium_Plus, M_PLUS_Rounded_1c } from "next/font/google";
+import { M_PLUS_Rounded_1c } from "next/font/google";
+import localFont from "next/font/local";
 import "@/ui/tokens.css";
 
 // Japanese font: no subsets (the CSS is split by unicode-range), not preloaded.
@@ -12,22 +13,45 @@ const rounded = M_PLUS_Rounded_1c({
   variable: "--font-rounded",
 });
 
-// English text: a Latin face whose l has a tail (rounded l reads as I or 1). Variable, latin only (~40 KB).
-const latin = Atkinson_Hyperlegible_Next({
-  subsets: ["latin"],
-  display: "swap",
+// ONE Latin face for the whole app — English sentences, sounds (IPA) and the Latin letters inside
+// Japanese copy: SIL's Andika (made for reading; every IPA letter, ɚ́ ɪ́ with their accents placed),
+// cut down to the letters we show (~24 KB a weight) with a double-story a (so a never reads as ɑ)
+// and the tailed l (so l never reads as I or |). A subset is a Modified Version under the OFL and
+// "Andika" is a Reserved Font Name, so the files carry their own name (Hatsuon IPA); see
+// src/ui/fonts/OFL.txt and /credits. Weights 500 / 600 / 700 match the UI gothic (W5 / W6 / W7).
+// Preloaded and font-display: block, so no glyph is ever drawn in a fallback face.
+// (next/font needs the options written out as literals in each call.)
+const latin = localFont({
+  src: [
+    { path: "../../ui/fonts/hatsuon-ipa-500.woff2", weight: "500", style: "normal" },
+    { path: "../../ui/fonts/hatsuon-ipa-600.woff2", weight: "600", style: "normal" },
+    { path: "../../ui/fonts/hatsuon-ipa-700.woff2", weight: "700", style: "normal" },
+  ],
+  display: "block",
+  preload: true,
+  adjustFontFallback: false,
   variable: "--font-latin",
 });
-
-// Sounds (IPA): Gentium Plus (SIL, OFL) — made for phonetic text: every IPA letter (ɚ ɪ ʊ ð θ ŋ ː …)
-// in one upright face, a serif l that never reads as I or |. Self-hosted by next/font, not preloaded;
-// the latin-ext / greek files load only when a page shows those letters (unicode-range).
-const ipa = Gentium_Plus({
-  weight: ["400", "700"],
-  subsets: ["latin", "latin-ext", "greek"],
-  display: "swap",
+// The same files, for letters only (no digits, no punctuation) at the head of the Japanese stack:
+// 「舌を付ける l」 gets the tailed l, 「4分」「1/8」 keep the gothic's figures. A touch larger, so its
+// x-height sits with the gothic's Latin.
+const latinInJa = localFont({
+  src: [
+    { path: "../../ui/fonts/hatsuon-ipa-500.woff2", weight: "500", style: "normal" },
+    { path: "../../ui/fonts/hatsuon-ipa-600.woff2", weight: "600", style: "normal" },
+    { path: "../../ui/fonts/hatsuon-ipa-700.woff2", weight: "700", style: "normal" },
+  ],
+  display: "block",
   preload: false,
-  variable: "--font-ipa",
+  adjustFontFallback: false,
+  declarations: [
+    {
+      prop: "unicode-range",
+      value: "U+0041-005A, U+0061-007A, U+00C0-00D6, U+00D8-00F6, U+00F8-00FF, U+0131, U+014B, U+0152-0153, U+0250-02B8, U+02C8, U+02CC, U+02D0-02D1, U+0300-036F, U+03B2, U+03B8, U+03C7",
+    },
+    { prop: "size-adjust", value: "104%" },
+  ],
+  variable: "--font-latin-ja",
 });
 
 export const viewport: Viewport = {
@@ -37,5 +61,5 @@ export const viewport: Viewport = {
 
 /** Game routes (/home, /play, /check, /learn): own fonts and tokens; each page sets its field colour. */
 export default function GameLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <div className={`${rounded.variable} ${latin.variable} ${ipa.variable}`}>{children}</div>;
+  return <div className={`${rounded.variable} ${latin.variable} ${latinInJa.variable}`}>{children}</div>;
 }

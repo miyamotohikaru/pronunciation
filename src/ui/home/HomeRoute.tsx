@@ -2,9 +2,8 @@
 
 /**
  * Home: one card for the line to say next — its syllables as blocks, the strong ones big (ho·TEL,
- * ・●), outlined as one shape; its sounds dictionary-style; its meaning small. One main button
- * runs the whole loop on the card: お手本 plays and paints the blocks (cyan), then it listens and
- * your voice paints them again, in yellow, over the top; then it takes you into the lesson.
+ * ○●); its sounds dictionary-style; its meaning small. お手本を聞く plays it with a light running
+ * over the syllables; タップして話す listens and your voice paints them; then into the lesson.
  * The route opens only the current unit, as steps with minutes; later units stay folded.
  * Progress is this device's best score per item (localStorage).
  */
@@ -15,7 +14,7 @@ import type { ItemData } from "@/data/schema";
 import type { MicRecorder } from "@/engine/audio/mic-recorder.ts";
 import { Player } from "@/engine/audio/player.ts";
 import { audioCore } from "@/engine/audio/context.ts";
-import { IconCheck, IconFlame, IconMic, IconNext, IconPlay, IconStar } from "../icons";
+import { IconCheck, IconFlame, IconMic, IconNext, IconPlay, IconSpeaker, IconStar, IconStop } from "../icons";
 import { allBest, loadSettings, type Best } from "../practice/progress";
 import { fieldFor } from "../practice/fields";
 import { fetchItem, refFor } from "../practice/content";
@@ -113,7 +112,7 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
                     <Marker state={state === "done" ? "done" : "next"} n={ui + 1} />
                     <span className="min-w-0 flex-1">
                       <span className={`block text-[15px] font-bold leading-tight ${state === "next" ? "text-[color-mix(in_srgb,var(--ink)_78%,transparent)]" : ""}`}>{u.titleJa}</span>
-                      <UnitBar k={(items.length - left) / Math.max(1, items.length)} />
+                      <LessonDots lessons={u.lessons.map((l) => ({ done: l.items.every((id) => done(id)), boss: !!l.boss }))} />
                     </span>
                     <span className="num w-14 shrink-0 text-right text-[13px] font-medium text-[color-mix(in_srgb,var(--ink)_72%,transparent)]">{left === 0 ? "できた" : `${minutes(left)}分`}</span>
                   </Link>
@@ -125,7 +124,7 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
                   <Marker state="now" n={ui + 1} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-[16px] font-black leading-tight">{u.titleJa}</span>
-                    <UnitBar k={(items.length - left) / Math.max(1, items.length)} />
+                    <LessonDots lessons={u.lessons.map((l, li) => ({ done: li < cur.l, boss: !!l.boss }))} />
                   </span>
                   <span className="num w-20 shrink-0 text-right text-[13px] font-medium">のこり {minutes(left)}分</span>
                 </div>
@@ -198,18 +197,26 @@ function GoalRing({ k }: { k: number }) {
   const len = 2 * Math.PI * r;
   return (
     <svg aria-hidden viewBox="0 0 20 20" className="size-6 -rotate-90">
-      {/* a visible base, so an empty day still shows the ring to fill */}
-      <circle cx="10" cy="10" r={r} fill="#ffffff" stroke="#b9bed3" strokeWidth="3" />
+      {/* a coloured base, so an empty day still shows the ring to fill */}
+      <circle cx="10" cy="10" r={r} fill="#e3f1fb" stroke="#a9d3ef" strokeWidth="3" />
       <circle cx="10" cy="10" r={r} fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - k)} />
     </svg>
   );
 }
 
-/** a unit's progress, a thin bar under its name */
-function UnitBar({ k }: { k: number }) {
+/** a unit's progress as its lessons, one dot each (● done, ○ not yet, ☆ the まとめ) — never an empty bar */
+function LessonDots({ lessons }: { lessons: { done: boolean; boss: boolean }[] }) {
   return (
-    <span aria-hidden className="mt-[6px] block h-1 w-full overflow-hidden rounded-full bg-[#d4d8e6]">
-      <span className="block h-full origin-left rounded-full bg-(--ink)" style={{ transform: `scaleX(${k})` }} />
+    <span aria-hidden className="mt-[7px] flex items-center gap-[6px]">
+      {lessons.map((l, i) =>
+        l.boss ? (
+          <span key={i} className="grid size-[11px] place-items-center text-(--ink)">
+            <IconStar size={11} filled={l.done} />
+          </span>
+        ) : (
+          <span key={i} className="size-[8px] rounded-full" style={l.done ? { background: "var(--ink)" } : { boxShadow: "inset 0 0 0 1.5px #9aa0bb" }} />
+        ),
+      )}
     </span>
   );
 }
@@ -256,9 +263,10 @@ function Step({ state, boss }: { state: "done" | "now" | "next"; boss?: boolean 
 type Flow = "idle" | "model" | "turn" | "done";
 
 /**
- * The line to say next, and the one button that runs it: お手本 paints the blocks in cyan, then
- * your voice paints them in yellow over the top (the yellow moves only while you are actually
- * speaking), then the button takes you into the lesson.
+ * The line to say next. Two buttons: お手本を聞く plays it and a light runs over its syllables in
+ * their own time; タップして話す listens, and your voice paints the syllables (the same one colour)
+ * only while you are actually speaking; then the button takes you into the lesson. When the card
+ * opens, the light runs over the syllables once by itself (no sound), so the rhythm shows first.
  */
 function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: { unitId: string; lessonTitle: string; item: ItemData | null; index: number; count: number; href: string; lessonMin: number }) {
   const router = useRouter();
@@ -269,7 +277,8 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
   const span = flat.length ? { a: flat[0].start, b: flat[flat.length - 1].end } : { a: 0, b: 1 };
   const guideRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const voiceRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const clock = useRef<{ g: number | null; v: number | null }>({ g: null, v: null });
+  // g: お手本's clock (playing), sweep: the silent light on open (start time), fade: the light going out
+  const clock = useRef<{ g: number | null; v: number | null; sweep: number | null; fade: number | null }>({ g: null, v: null, sweep: null, fade: null });
   const level = useRef(0);
   const ringRef = useRef<HTMLSpanElement>(null);
   const player = useRef<Player | null>(null);
@@ -290,27 +299,57 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
   const flowRef = useRef<Flow>("idle");
   flowRef.current = flow;
 
-  // the wipes: --p per syllable block from the two clocks (no React state per frame)
+  // the light: --p (how far painted) and --o (how bright) per syllable block, from the clocks
   useEffect(() => {
     if (!flat.length) return;
     let raf = 0;
     let last = "";
-    const loop = () => {
-      const { g, v } = clock.current;
+    const loop = (now: number) => {
+      const c = clock.current;
       const p = (t: number | null, s: (typeof flat)[number]) => (t === null ? 0 : Math.min(1, Math.max(0, (t - s.start) / Math.max(0.01, s.end - s.start))));
-      const pg = flat.map((s) => p(g, s));
-      const pv = flat.map((s) => p(v, s));
-      const sig = `${pg.map((x) => x.toFixed(3)).join(",")}|${pv.map((x) => x.toFixed(3)).join(",")}`;
+      let pg: number[];
+      let og: number[];
+      if (c.sweep !== null && now >= c.sweep) {
+        // on open: each syllable lights up as the light reaches it, then dims again
+        const t = span.a + (now - c.sweep) / 1000;
+        pg = flat.map((s) => (t >= s.start ? 1 : 0));
+        og = flat.map((s) => (t < s.start ? 0 : t <= s.end ? 1 : Math.max(0, 1 - (t - s.end) / 0.35)));
+        if (t > span.b + 0.4) c.sweep = null;
+      } else {
+        pg = flat.map((s) => p(c.g, s));
+        const k = c.fade === null ? 1 : Math.max(0, 1 - (now - c.fade) / 450);
+        og = flat.map(() => k);
+        if (c.fade !== null && k === 0) {
+          c.fade = null;
+          c.g = null;
+        }
+      }
+      const pv = flat.map((s) => p(c.v, s));
+      const sig = `${pg.map((x) => x.toFixed(3)).join(",")}|${og.map((x) => x.toFixed(2)).join(",")}|${pv.map((x) => x.toFixed(3)).join(",")}`;
       if (sig !== last) {
         last = sig;
-        pg.forEach((x, i) => guideRefs.current[i]?.style.setProperty("--p", String(x)));
+        pg.forEach((x, i) => {
+          const el = guideRefs.current[i];
+          if (!el) return;
+          el.style.setProperty("--p", String(x));
+          el.style.setProperty("--o", og[i].toFixed(2));
+        });
         pv.forEach((x, i) => voiceRefs.current[i]?.style.setProperty("--p", String(x)));
       }
-      if (ringRef.current) ringRef.current.style.transform = `scale(${1 + (flowRef.current === "turn" ? level.current * 0.25 : 0)})`;
+      if (ringRef.current) ringRef.current.style.transform = `scale(${1 + (flowRef.current === "turn" ? level.current * 0.3 : 0)})`;
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
+  }, [flat]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // once, when the card opens: the light runs over the syllables by itself (no sound)
+  const swept = useRef(false);
+  useEffect(() => {
+    if (!flat.length || swept.current) return;
+    swept.current = true;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    clock.current.sweep = performance.now() + 450;
   }, [flat]);
 
   // the model's audio, decoded ahead so the button starts it inside the tap
@@ -330,11 +369,19 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
     };
   }, [item, voice]);
 
-  // your turn: listen, and move the yellow only while you are speaking (at the model's pace)
-  const listen = async () => {
+  // your turn: listen, and move the paint only while you are speaking (at the model's pace)
+  const speak = async () => {
+    if (!item) return;
+    if (flow === "done") return router.push(href);
+    if (flow === "turn") return rec.current?.stop();
+    player.current?.stop();
+    void audioCore.unlock(); // inside the tap (iOS)
+    const c = clock.current;
+    c.sweep = null;
+    c.fade = performance.now(); // お手本's light goes out
+    c.v = null;
     setFlow("turn");
     const { MicRecorder } = await import("@/engine/audio/mic-recorder.ts");
-    const c = clock.current;
     let loudUntil = 0;
     let lastNow = performance.now();
     let raf = 0;
@@ -358,32 +405,35 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
     try {
       await r.record();
     } catch {
-      /* no mic, or stopped: the yellow stays where it got to */
+      /* no mic, or stopped: the paint stays where it got to */
     }
     cancelAnimationFrame(raf);
     level.current = 0;
     setFlow("done");
   };
 
-  const press = async () => {
-    if (!item) return;
-    if (flow === "done") return router.push(href);
-    if (flow === "turn") return rec.current?.stop();
-    if (flow === "model") return;
-    void audioCore.unlock(); // inside the tap, before anything is awaited (iOS)
+  // お手本を聞く: plays it; the light runs with it and goes out at the end
+  const listen = async () => {
+    if (!item || flow === "turn") return;
     const p = (player.current ??= new Player());
+    if (flow === "model") {
+      p.stop();
+      return;
+    }
+    void audioCore.unlock(); // inside the tap, before anything is awaited (iOS)
     const c = clock.current;
+    c.sweep = null;
+    c.fade = null;
     c.g = null;
-    c.v = null;
     const buf = await (buffer.current ?? (buffer.current = p.load(refFor(item, voice).audio)));
     p.events = {
       onPlayhead: (e) => {
         c.g = e.t;
       },
-      onEnd: (completed) => {
-        c.g = span.b; // the blocks stay painted in お手本's colour
-        if (completed) void listen();
-        else setFlow("idle");
+      onEnd: () => {
+        c.g = span.b;
+        c.fade = performance.now() + 500;
+        setFlow((f) => (f === "model" ? (c.v !== null ? "done" : "idle") : f));
       },
     };
     void p.play(buf);
@@ -391,52 +441,49 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
   };
 
   // fit the line to the card: the blocks' weighted length decides the size (cqw of the card)
-  const weight = flat.reduce((a, s) => a + s.text.length * (s.strong ? 1 : 0.7), 0) + flat.filter((s) => s.dot).length * 0.4 + Math.max(0, (pieces?.length ?? 1) - 1) * 0.3;
+  const weight = flat.reduce((a, s) => a + s.text.length * (s.strong ? 1 : 0.7), 0) + flat.filter((s) => s.dot).length * 0.15 + Math.max(0, (pieces?.length ?? 1) - 1) * 0.36;
   // a short line big; a long one shrinks to fit (it wraps between words, never inside one)
-  const fit = weight <= 14 ? `min(84px, calc(100cqw / ${(Math.max(4, weight) * 0.66).toFixed(2)}))` : `max(20px, min(44px, calc(100cqw / ${(weight * 0.36).toFixed(2)})))`;
+  const fit = weight <= 14 ? `min(84px, calc(100cqw / ${(Math.max(4, weight) * 0.64).toFixed(2)}))` : `max(20px, min(44px, calc(100cqw / ${(weight * 0.35).toFixed(2)})))`;
 
-  // the button says what it does (a verb); how it works goes small underneath
-  const label = flow === "model" ? "お手本を聞いています" : flow === "turn" ? "話してください" : flow === "done" ? "練習を続ける" : "話す";
-  const note = flow === "idle" ? "お手本のあとに話します・自動で止まります" : flow === "turn" ? "言い終わると、自動で止まります" : flow === "done" ? `このレッスンの のこり ${lessonMin}分` : " ";
-
+  // the main button says what it does; while you speak it looks different (not a filled button)
+  const talking = flow === "turn";
+  const label = talking ? "話しています" : flow === "done" ? "練習を続ける" : "タップして話す";
+  const note = talking ? "言い終わると、自動で止まります（タップでも止まります）" : flow === "done" ? `このレッスンの のこり ${lessonMin}分` : "お手本を聞いてから話しても、すぐ話しても";
 
   return (
     <section
       ref={card}
       aria-label="次に言う文"
-      onClick={(e) => {
-        // the whole card presses the button (except the button itself, which handles its own tap)
-        if ((e.target as HTMLElement).closest("button, a")) return;
-        void press();
-      }}
-      className={`${field} hero-card mt-2 cursor-pointer rounded-[24px] bg-(--paper) px-6 pb-6 pt-4 text-(--ink) shadow-[inset_0_6px_0_var(--field)] [container-type:inline-size]`}
+      className={`${field} hero-card relative mt-2 overflow-hidden rounded-[24px] bg-(--paper) px-6 pb-6 pt-5 text-(--ink) [container-type:inline-size]`}
     >
+      {/* a clean band at the top, clear of the rounded corners (so it never tapers into a crescent) */}
+      <span aria-hidden className="absolute inset-x-6 top-0 h-[5px] rounded-b-[4px] bg-(--ink)" />
       <p className="flex items-center justify-between gap-4 text-[13px] font-medium">
-        {/* the same lesson as the route's 「いまここ」 row */}
-        <span className="min-w-0 truncate rounded-full bg-(--field) px-3 py-[3px] font-bold text-(--field-ink)">{lessonTitle}</span>
+        {/* the same lesson as the route's 「いまここ」 row (orange is for 「いまここ」 only) */}
+        <span className="min-w-0 truncate rounded-full bg-[#eef0f8] px-3 py-[3px] font-bold">{lessonTitle}</span>
         <span className="shrink-0">
           このセット <span className="num ml-1 text-[15px] font-bold">{index + 1}</span>
           <span className="num">/{count}</span>
         </span>
       </p>
 
-      {/* the syllable blocks: an outline layer under one fill, then the two colours wiping over it */}
+      {/* the syllable blocks: the ink line, then the one colour painting over it (light / your voice) */}
       <div className="mt-4">
         {pieces && item ? (
           <p className="hero en relative grid leading-[1.15]" style={{ fontSize: fit }}>
             <span className="sr-only">{`${item.text}。強く読むところ：${flat.filter((s) => s.strong).map((s) => s.text.toLowerCase()).join("、")}`}</span>
-            {/* one look: plain type (no TV-caption outline); strength only by size and weight */}
             {(["fill", "guide", "voice"] as const).map((layer) => {
               let k = 0;
               return (
-                <span key={layer} aria-hidden className={`hero-layer hero-${layer} flex flex-wrap items-baseline gap-x-[0.28em] gap-y-[0.3em] pb-[0.32em]`} style={{ gridArea: "1 / 1" }}>
+                // syllables of a word close together, words well apart (the gap between words is 2× and more)
+                <span key={layer} aria-hidden className={`hero-layer hero-${layer} flex flex-wrap items-baseline gap-x-[0.36em] gap-y-[0.34em] pb-[0.36em]`} style={{ gridArea: "1 / 1" }}>
                   {pieces.map((w, wi) => (
                     <span key={wi} className="inline-flex items-baseline">
                       {w.map((s) => {
                         const i = k++;
                         return (
                           // each block keeps the line's own strut: big and small blocks share a baseline
-                          <span key={i} className="relative inline-block" style={s.dot ? { marginRight: "0.14em" } : undefined}>
+                          <span key={i} className="relative inline-block" style={s.dot ? { marginRight: "0.02em" } : undefined}>
                             <span
                               ref={
                                 layer === "guide"
@@ -450,13 +497,20 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
                                     : undefined
                               }
                               className="hero-block"
-                              style={{ fontSize: s.strong ? "1em" : "0.7em", fontWeight: s.strong ? 800 : 700 }}
+                              style={{ fontSize: s.strong ? "1em" : "0.7em", fontWeight: s.strong ? 700 : 600 }}
                             >
                               {s.text}
                             </span>
                             {layer === "fill" ? (
-                              // the stress pattern under its own block: ・ weak, ● strong
-                              <span className="absolute left-1/2 top-full -translate-x-1/2 rounded-full bg-(--ink)" style={s.strong ? { width: "0.2em", height: "0.2em", marginTop: "0.02em" } : { width: "0.1em", height: "0.1em", marginTop: "0.07em" }} />
+                              // the stress pattern under its block, one colour: ● strong (2.5× and filled), ○ weak
+                              <span
+                                className="absolute left-1/2 top-full -translate-x-1/2 rounded-full"
+                                style={
+                                  s.strong
+                                    ? { width: "0.24em", height: "0.24em", marginTop: "0.02em", background: "var(--ink)" }
+                                    : { width: "0.096em", height: "0.096em", marginTop: "0.09em", boxShadow: "inset 0 0 0 max(1.5px, 0.022em) var(--ink)" }
+                                }
+                              />
                             ) : null}
                           </span>
                         );
@@ -482,35 +536,54 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
         </>
       ) : null}
 
-      {/* the one button, for the whole loop */}
-      <div className="mt-6">
-        <button ref={mainBtn} type="button" onClick={press} disabled={!item} aria-live="polite" className="press press-ink h-14 w-full text-[16px]">
-          <span ref={ringRef} aria-hidden className="grid size-8 place-items-center rounded-full bg-(--paper) text-(--ink) will-change-transform">
-            {flow === "done" ? <IconNext size={15} /> : flow === "idle" || flow === "model" ? <IconPlay size={13} /> : <IconMic size={16} />}
-          </span>
-          <span className="text-[17px]">{label}</span>
+      {/* listen (quiet) and speak (the main one) */}
+      <div className="mt-6 flex gap-2">
+        <button type="button" onClick={listen} disabled={!item || talking} aria-pressed={flow === "model"} className="press press-line h-14 shrink-0 px-4 text-[15px]">
+          {flow === "model" ? <IconSpeaker size={18} /> : <IconPlay size={13} />}
+          お手本を聞く
         </button>
-        <p className="mt-2 min-h-4 text-center text-[13px] font-medium" style={{ color: "color-mix(in srgb, var(--ink) 78%, transparent)" }}>
-          {note}
-        </p>
-        {flow === "done" ? (
-          <button type="button" onClick={() => (setFlow("idle"), (clock.current = { g: null, v: null }))} className="mt-1 h-11 w-full text-[14px] font-bold">
-            もう一度、聞いて話す
-          </button>
-        ) : null}
+        <button
+          ref={mainBtn}
+          type="button"
+          onClick={speak}
+          disabled={!item}
+          aria-live="polite"
+          className={`press ${talking ? "press-line" : "press-ink"} h-14 min-w-0 flex-1 text-[16px]`}
+          style={talking ? { boxShadow: "inset 0 0 0 3px var(--ink)", background: "color-mix(in srgb, var(--guide) 14%, white)" } : undefined}
+        >
+          <span ref={ringRef} aria-hidden className={`grid size-8 shrink-0 place-items-center rounded-full will-change-transform ${talking ? "bg-(--ink) text-(--paper)" : "bg-(--paper) text-(--ink)"}`}>
+            {flow === "done" ? <IconNext size={15} /> : talking ? <IconStop size={13} /> : <IconMic size={16} />}
+          </span>
+          <span className="truncate text-[16px]">{label}</span>
+        </button>
       </div>
+      <p className="mt-2 min-h-4 text-center text-[12px] font-medium" style={{ color: "color-mix(in srgb, var(--ink) 78%, transparent)" }}>
+        {note}
+      </p>
+      {flow === "done" ? (
+        <button
+          type="button"
+          onClick={() => {
+            setFlow("idle");
+            clock.current = { g: null, v: null, sweep: null, fade: null };
+          }}
+          className="mt-1 h-11 w-full text-[14px] font-bold"
+        >
+          もう一度話す
+        </button>
+      ) : null}
       {away ? (
         <div className="fixed inset-x-0 bottom-0 z-20 bg-[#f4f5fa] px-4 pt-3 shadow-[0_-1px_0_#dfe2ee] [padding-bottom:max(16px,calc(env(safe-area-inset-bottom)+10px))]">
           <button
             type="button"
             onClick={() => {
               card.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-              void press();
+              void speak();
             }}
             className="press press-ink mx-auto flex h-14 w-full max-w-[560px] text-[16px]"
           >
             <IconMic size={18} />
-            {flow === "done" ? "練習を続ける" : "話す"}
+            {flow === "done" ? "練習を続ける" : "タップして話す"}
           </button>
         </div>
       ) : null}

@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * The big mic in the thumb zone. While recording it is the stop button, with one thin ring
- * around it that runs down as the time left before the take stops by itself (`progress`, a ref
- * read every frame). No glow: the lane shows that you are being heard.
+ * The big mic in the thumb zone. While recording it is the stop button, with a ring around it that
+ * runs down — full at the tap, empty when the take stops by itself (`progress`, a ref read every
+ * frame) — and, given the take's length (`total`), the seconds left under it (「のこり 4秒」).
+ * No glow: the lane shows that you are being heard.
  */
 import { useEffect, useRef } from "react";
 import { IconMic, IconStop } from "./icons";
@@ -19,25 +20,38 @@ export type MicButtonProps = {
   hint?: string;
   /** 0..1 until the take stops by itself (recording only) */
   progress?: { current: number };
+  /** the take's whole length in seconds (with `progress`: the seconds left are shown under the button) */
+  total?: number;
 };
 
 const R = 52; // the progress ring's radius in its 120 × 120 box
 const LEN = 2 * Math.PI * R;
 
-export default function MicButton({ state, onPress, label, hint, progress }: MicButtonProps) {
+export default function MicButton({ state, onPress, label, hint, progress, total }: MicButtonProps) {
   const arc = useRef<SVGCircleElement>(null);
+  const left = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (state !== "recording" || !progress) return;
     let raf = 0;
+    let shown = -1;
     const loop = () => {
       // the time left: full at the start, empty when it stops by itself
-      if (arc.current) arc.current.style.strokeDashoffset = String(LEN * Math.min(1, Math.max(0, progress.current)));
+      const k = Math.min(1, Math.max(0, progress.current));
+      if (arc.current) arc.current.style.strokeDashoffset = String(LEN * k);
+      if (left.current && total) {
+        const sec = Math.max(0, Math.ceil((1 - k) * total));
+        if (sec !== shown) {
+          shown = sec;
+          left.current.textContent = `のこり ${sec}秒`;
+        }
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [state, progress]);
+  }, [state, progress, total]);
+  const counting = state === "recording" && !!progress && !!total;
 
   // recording is not yellow: yellow means "your voice playing back"
   const face = state === "recording" ? "press-ink" : "";
@@ -50,8 +64,8 @@ export default function MicButton({ state, onPress, label, hint, progress }: Mic
         {state === "recording" && progress ? (
           // until it stops by itself
           <svg aria-hidden viewBox="0 0 120 120" className="pointer-events-none absolute -inset-[14px] z-[1] size-[calc(100%+28px)] -rotate-90">
-            <circle cx="60" cy="60" r={R} fill="none" stroke="color-mix(in srgb, var(--field-ink) 28%, transparent)" strokeWidth="4" />
-            <circle ref={arc} cx="60" cy="60" r={R} fill="none" stroke="var(--paper)" strokeWidth="4" strokeLinecap="round" strokeDasharray={LEN} strokeDashoffset={0} />
+            <circle cx="60" cy="60" r={R} fill="none" stroke="color-mix(in srgb, var(--field-ink) 22%, transparent)" strokeWidth="6" />
+            <circle ref={arc} cx="60" cy="60" r={R} fill="none" stroke="var(--paper)" strokeWidth="6" strokeLinecap="round" strokeDasharray={LEN} strokeDashoffset={0} />
           </svg>
         ) : null}
         {state === "thinking" ? (
@@ -75,8 +89,8 @@ export default function MicButton({ state, onPress, label, hint, progress }: Mic
         {label}
       </p>
       {/* always takes its line, so starting a take never changes the page's layout */}
-      <p className="mt-2 h-3 whitespace-nowrap text-[12px] font-bold leading-none" style={{ visibility: hint ? "visible" : "hidden" }}>
-        {hint ?? "　"}
+      <p className="mt-2 h-3 whitespace-nowrap text-[12px] font-bold leading-none" style={{ visibility: hint || counting ? "visible" : "hidden" }}>
+        {counting ? <span ref={left} className="num" /> : (hint ?? "　")}
       </p>
     </div>
   );

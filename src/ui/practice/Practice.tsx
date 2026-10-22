@@ -21,12 +21,14 @@ import type { ScoreResult } from "@/engine/scoring/types.ts";
 import { Guide, freshLive, offStretches, type GuideLive } from "../guide";
 import { wordGrade } from "../guide/grades";
 import { lineIpa } from "../ipa";
+import { piecesFor } from "../home/stress";
 import Telop from "../Telop";
 import TopBar from "../TopBar";
 import MicButton from "../MicButton";
 import RoundButton from "../RoundButton";
 import ScoreHead, { PartsRow, shownTotal } from "../result/ScoreHead";
 import ResultSentence from "../result/ResultSentence";
+import { leadCount, rankMistakes } from "../result/weigh";
 import DirectionSlider from "../result/DirectionSlider";
 import type { RetryState } from "../SoundSheet";
 import SoundCoach, { type CoachClips } from "../SoundCoach";
@@ -34,7 +36,7 @@ import type { Clip } from "./crossfade";
 /** what a word-level play button is playing: お手本, your take, or what it was heard as */
 type Voice = "model" | "you" | "heard";
 import TelopText from "../TelopText";
-import { IconMic, IconNext, IconPlay, IconRetry, IconSpeaker } from "../icons";
+import { IconCheck, IconMic, IconNext, IconPlay, IconRetry, IconSpeaker } from "../icons";
 import { RETRY_FIRST_BELOW, mark, rangePosition, step7, tempoPosition, total, verdict } from "../score";
 import { chartTipJa, heardShort, heardWord } from "../copy";
 import { buzz, setMuted, sfx } from "../sfx";
@@ -69,10 +71,14 @@ export type PracticeResult = {
   previous: number | null;
   /** guide-time stretches where your line left the band (≥ 150 ms) */
   off: { start: number; end: number }[];
-  /** the word coached on the result (the worst flagged sound), fixed for this take; -1 = none */
+  /** the word coached on the result (the one that gets most in the way), fixed for this take; -1 = none */
   coach: number;
-  /** the words with a wrong sound when the take was scored, in line order (the coach moves between them) */
+  /** the words with a wrong sound when the take was scored, heaviest first (the coach moves between them) */
   mistakes: number[];
+  /** per word: how much it gets in the way of being understood (0 = fine) */
+  weights: number[];
+  /** how many of `mistakes` the result leads with (1–2); the rest fold into 「ほかにN か所」 */
+  lead: number;
 };
 
 /**
@@ -127,6 +133,8 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
   const [result, setResult] = useState<PracticeResult | null>(null);
   // the word the result's card is on (null = the worst one); a pair recording arriving re-renders it
   const [coachSel, setCoachSel] = useState<number | null>(null);
+  // 「ほかにN か所」 opened
+  const [showRest, setShowRest] = useState(false);
   const [, setPairVersion] = useState(0);
   const [revealKey, setRevealKey] = useState(0);
   const [skip, setSkip] = useState(false);
@@ -167,6 +175,8 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
   const debugRef = useRef<unknown>(null);
 
   const guide: GuideTake | null = useMemo(() => (item ? guideFor(item, settings.voice, settings.speed) : null), [item, settings.voice, settings.speed]);
+  // the words' syllables for the lane (the strong one a size up)
+  const pieces = useMemo(() => (item ? piecesFor(item, settings.voice).map((ws) => ws.map((x) => ({ text: x.text, strong: x.strong }))) : null), [item, settings.voice]);
   const speeds = useMemo(() => (item ? speedsFor(item, settings.voice) : (["native"] as Speed[])), [item, settings.voice]);
   const clock = useMemo(
     () => ({
@@ -327,6 +337,9 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
     const buzzedWords = g.words.map(() => false); // words already given their haptic tick
     hits.current = g.words.map(() => 0);
     let lineAt = 0; // judge.line points already turned into gold
+    let inBand = false; // your line is inside the band right now (lock-on)
+    let lockAt = 0; // the last lock-on buzz (performance.now)
+    let hitOnce = false;
     let digit = 4;
     let startedModel = false;
     const together = settings.together;
@@ -353,7 +366,23 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
       const line = judge.line;
       for (; lineAt < line.length; lineAt++) {
         const q = line[lineAt];
-        if (!q.inBand) continue;
+        if (!q.inBand) {
+          if (q.st !== null) inBand = false;
+          continue;
+        }
+        if (!inBand) {
+          // lock-on: the band fills gold under your line; a light tick (not more than one in 350 ms)
+          inBand = true;
+          const ms = performance.now();
+          if (ms - lockAt > 350) {
+            lockAt = ms;
+            buzz(5);
+          }
+          if (!hitOnce) {
+            hitOnce = true;
+            startTransition(() => setHint(false)); // the hint has done its job at the first hit
+          }
+        }
         for (let w = 0; w < g.words.length; w++) {
           const W = g.words[w];
           if (q.t < W.start - 0.04 || q.t > W.end + 0.04) continue;
@@ -475,6 +504,7 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
         setStage(0);
         setDetails(false);
         setCoachSel(null);
+        setShowRest(false);
         setResult(r);
         setRevealKey((k) => k + 1);
         setPhase("result");
@@ -560,8 +590,13 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
       bestBefore: prev ? prev.score : null,
       previous: lastTotal.current,
       off: prosody ? offStretches(prosody.userOnRefTime, g.wave, 2.5) : [],
-      coach: worstFlagged(words),
-      mistakes: words.map((w, i) => (w.phones.some((ph) => mark(ph) === "miss") ? i : -1)).filter((i) => i >= 0),
+      ...(() => {
+        // the one or two mistakes that get most in the way lead; the rest fold away
+        const ranked = rankMistakes(words);
+        const weights = words.map(() => 0);
+        for (const r of ranked) weights[r.index] = r.weight;
+        return { coach: ranked[0]?.index ?? -1, mistakes: ranked.map((r) => r.index), weights, lead: leadCount(ranked) };
+      })(),
     };
   };
 
@@ -813,6 +848,7 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
     setSheetBefore(null);
     setRetry({ state: "idle" });
     setCoachSel(i);
+    if (result && result.mistakes.indexOf(i) >= result.lead) setShowRest(true);
     loadPair(i);
   };
   useEffect(() => {
@@ -901,6 +937,7 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
                 <ResultSentence
                   text={item.text}
                   words={result.words}
+                  weights={result.weights}
                   onOpen={(i) => {
                     if (i !== coachIdx) pickCoach(i);
                     document.getElementById("coach")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -912,7 +949,35 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
 
             {/* the worst sound, opened by itself: the one thing to do now */}
             {coachIdx >= 0 && stage >= 2 ? (
-              <section id="coach" aria-label="いちばんの直しどころ" className="anim-fade mt-3 scroll-mt-4 rounded-[22px] bg-(--paper) px-5 pb-5 pt-4">
+              <section id="coach" aria-label="いちばんの直しどころ" className="anim-fade mt-3 scroll-mt-4 rounded-[22px] bg-(--paper) px-5 pb-5 pt-4 text-(--ink)">
+                {result.mistakes.length > 1 ? (
+                  // the one or two that matter; the others fold into 「ほかにN か所」 (✓ once fixed)
+                  <div className="mb-3 flex flex-wrap items-center gap-2" role="tablist" aria-label="直す所">
+                    {(showRest ? result.mistakes : result.mistakes.slice(0, result.lead)).map((wi) => {
+                      const on = wi === coachIdx;
+                      const fixed = !result.words[wi].phones.some((ph) => mark(ph) === "miss");
+                      return (
+                        <button
+                          key={wi}
+                          type="button"
+                          role="tab"
+                          aria-selected={on}
+                          onClick={() => pickCoach(wi)}
+                          className="en inline-flex h-11 items-center gap-1 rounded-full px-4 text-[15px] font-bold"
+                          style={on ? { background: "var(--ink)", color: "var(--paper)" } : { background: "#eef0f8", color: "var(--ink)" }}
+                        >
+                          {fixed ? <IconCheck size={13} /> : null}
+                          {(item.words[wi]?.text ?? result.words[wi].text).replace(/[.,!?]/g, "")}
+                        </button>
+                      );
+                    })}
+                    {!showRest && result.mistakes.length > result.lead ? (
+                      <button type="button" onClick={() => setShowRest(true)} className="inline-flex h-11 items-center px-2 text-[14px] font-bold underline decoration-[1.5px] underline-offset-4">
+                        ほかに{result.mistakes.length - result.lead}か所
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
                 <SoundCoach
                   key={`${result.attempt}-${coachIdx}`}
                   compact
@@ -924,11 +989,6 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
                   before={sheetBefore}
                   heardEnd={heardEnd.current[coachIdx] ?? heardEndFor(result.words[coachIdx])}
                   heardClip={!!pairClips.current[coachIdx]}
-                  nav={{
-                    items: result.mistakes.map((i) => ({ label: (item.words[i]?.text ?? result.words[i].text).replace(/[.,!?]/g, ""), done: !result.words[i].phones.some((ph) => mark(ph) === "miss") })),
-                    index: Math.max(0, result.mistakes.indexOf(coachIdx)),
-                    onPick: (k) => pickCoach(result.mistakes[k]),
-                  }}
                   tipFor={tipFor(coachIdx)}
                   clips={clipsFor(coachIdx)}
                   onPlayModel={() => playEnd("model", coachIdx)}
@@ -959,7 +1019,7 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
                 <PartsRow scores={result.scores} />
                 <div className="monitor relative mt-3 overflow-hidden rounded-[18px] bg-(--monitor) text-(--monitor-ink) [contain:layout_paint]">
                   <div className="relative h-[150px] md:h-[180px]">
-                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} live={live} overlay={result.userOnRef} offStretches={result.off} progressive={playing === "replay"} focusWord={null} tolSt={2.5} label={`${label}${reading}`} />
+                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} pieces={pieces} live={live} overlay={result.userOnRef} offStretches={result.off} progressive={playing === "replay"} focusWord={null} tolSt={2.5} label={`${label}${reading}`} />
                   </div>
                   <p className="jp border-t border-(--monitor-line) px-4 py-[10px] text-[14px] font-bold leading-snug">{reading}</p>
                 </div>
@@ -1023,12 +1083,12 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
               <div className="monitor relative mx-auto mt-5 flex max-h-[420px] min-h-[200px] w-full max-w-[960px] flex-1 flex-col overflow-hidden rounded-(--radius-monitor) bg-(--monitor) text-(--monitor-ink) [contain:layout_paint] md:mt-7 md:max-h-none md:flex-none">
                 <div className="relative min-h-[200px] flex-1 md:h-[300px] md:flex-none lg:h-[330px]">
                   {guide ? (
-                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} live={live} overlay={null} progressive={false} focusWord={null} tolSt={2.5} label={label} />
+                    <Guide className="absolute inset-0" wave={guide.wave} syllables={guide.syllables} words={guide.words} pieces={pieces} live={live} overlay={null} progressive={false} focusWord={null} tolSt={2.5} label={label} />
                   ) : null}
                   {hint && (phase === "countin" || phase === "singing") ? (
                     // top left, clear of the playhead in the middle
                     <div className="pointer-events-none absolute left-4 top-3 flex">
-                      <span className="rounded-full bg-[rgba(255,255,255,0.14)] px-3 py-[6px] text-[13px] font-bold">線を青い帯に重ねよう</span>
+                      <span className="rounded-full bg-[rgba(255,255,255,0.14)] px-3 py-[6px] text-[13px] font-bold">白い線を帯に重ねよう</span>
                     </div>
                   ) : null}
                   {phase === "countin" && count > 0 ? (
@@ -1101,6 +1161,7 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
                   onPress={onMic}
                   label={phase === "starting" || phase === "loading" ? "準備中" : busyTake ? "止める" : phase === "scoring" ? "くらべています" : "押して話す"}
                   progress={stopAt}
+                  total={guide ? COUNT_IN + guide.duration + TAIL : undefined}
                 />
                 )}
                 {fold || partner ? null : (
@@ -1129,11 +1190,11 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
           <div className="sticky bottom-0 z-10 mt-auto bg-(--field) px-4 pt-3 [padding-bottom:max(16px,calc(env(safe-area-inset-bottom)+10px))]">
             {/* what scrolls under the bar fades out instead of being cut */}
             <span aria-hidden className="pointer-events-none absolute inset-x-0 -top-8 h-8" style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--field) 0%, transparent), var(--field))" }} />
-            <div className="mx-auto flex max-w-[680px] gap-3">
+            <div className="mx-auto flex max-w-[680px] items-center gap-2">
               {main === "word" && coachWord && item ? (
-                // first: say the worst word again (the coach above shows how)
-                <button type="button" onClick={() => retryWord(coachIdx)} disabled={retry.state === "scoring"} className="press press-ink h-14 flex-[1.5] text-[15px]">
-                  <span ref={barRing} aria-hidden className="grid size-8 place-items-center rounded-full bg-(--paper) text-(--ink) will-change-transform">
+                // the main action: that sound, in its word (the card above shows how)
+                <button type="button" onClick={() => retryWord(coachIdx)} disabled={retry.state === "scoring"} className="press press-ink h-14 min-w-0 flex-1 text-[15px]">
+                  <span ref={barRing} aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-(--paper) text-(--ink) will-change-transform">
                     <IconMic size={16} />
                   </span>
                   {retry.state === "recording" ? (
@@ -1141,29 +1202,36 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
                   ) : retry.state === "scoring" ? (
                     "くらべています"
                   ) : (
-                    <span className="en">
+                    <span className="en truncate">
                       {(item.words[coachIdx]?.text ?? coachWord.text).replace(/[.,!?]/g, "")}
                       <span className="jp"> だけ言う</span>
                     </span>
                   )}
                 </button>
-              ) : null}
-              {main === "word" ? (
-                // the whole line again stays one tap away, quietly
-                <button type="button" onClick={onMic} aria-label="文をもう一度話す" className="press press-ghost h-14 flex-1 text-[15px]">
-                  <IconRetry size={16} />
-                  文ごと
+              ) : main === "again" ? (
+                <button type="button" onClick={onMic} aria-label="文をもう一度話す" className="press press-ink h-14 min-w-0 flex-1 text-[15px]">
+                  <IconMic size={20} />
+                  文でもう一度
                 </button>
               ) : (
-              <button type="button" onClick={onMic} className={`press ${main === "again" ? "press-ink" : "press-ghost"} h-14 flex-[1.25] text-[15px]`}>
-                <IconMic size={20} />
-                もう一度話す
-              </button>
+                <button type="button" onClick={onNext} className="press press-ink h-14 min-w-0 flex-1 text-[15px]">
+                  {!passed && attempt >= 3 ? "あとでもう一回" : "次へ"}
+                  <IconNext size={20} />
+                </button>
               )}
-              <button type="button" onClick={onNext} className={`press ${main === "next" ? "" : "press-ghost"} h-14 flex-1 text-[15px]`}>
-                {!passed && attempt >= 3 ? "あとでもう一回" : "次へ"}
-                <IconNext size={20} />
-              </button>
+              {/* the other two stay one tap away, quietly (text buttons, no frame) */}
+              {main !== "again" ? (
+                <button type="button" onClick={onMic} aria-label="文をもう一度話す" className="inline-flex h-14 shrink-0 items-center gap-1 px-2 text-[14px] font-bold">
+                  <IconRetry size={15} />
+                  文でもう一度
+                </button>
+              ) : null}
+              {main !== "next" ? (
+                <button type="button" onClick={onNext} className="inline-flex h-14 shrink-0 items-center gap-1 px-2 text-[14px] font-bold">
+                  {!passed && attempt >= 3 ? "あとで" : "次へ"}
+                  <IconNext size={16} />
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -1172,28 +1240,15 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
   );
 }
 
-/** the word with the worst flagged sound (lowest-scoring missed phone; first on a tie), -1 if none */
-function worstFlagged(words: WordScore[]): number {
-  let at = -1;
-  let low = Infinity;
-  words.forEach((w, i) => {
-    for (const p of w.phones)
-      if (mark(p) === "miss" && p.score < low) {
-        low = p.score;
-        at = i;
-      }
-  });
-  return at;
-}
-
 /**
  * The caption's size from the line's length, so even a 100-letter line leaves the lane and the mic on
- * a phone; while you speak it steps back to about 60 % (the words ride the band then).
+ * a phone; while you speak it steps back to about 60 % (the words ride the band then) — never under
+ * 22 px (the sentence stays readable type, not small print).
  */
 function captionSize(len: number, speaking: boolean): string {
-  const [vw, min, max] = len <= 15 ? [12.4, 40, 104] : len <= 26 ? [10.6, 36, 96] : len <= 40 ? [8.4, 30, 80] : len <= 64 ? [6.4, 24, 60] : len <= 96 ? [5.2, 20, 48] : [4.4, 17, 40];
+  const [vw, min, max] = len <= 15 ? [12.4, 40, 104] : len <= 26 ? [10.6, 36, 96] : len <= 40 ? [8.4, 30, 80] : len <= 64 ? [6.4, 24, 60] : len <= 96 ? [5.2, 22, 48] : [4.4, 22, 40];
   const k = speaking ? 0.6 : 1;
-  return `clamp(${Math.round(Math.max(15, min * k))}px, ${(vw * k).toFixed(2)}vw, ${Math.round(max * k)}px)`;
+  return `clamp(${Math.round(Math.max(22, min * k))}px, ${(vw * k).toFixed(2)}vw, ${Math.round(Math.max(22, max * k))}px)`;
 }
 
 /** the far end of the sound card's meter: what the AI heard for the worst sound */

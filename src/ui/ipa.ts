@@ -23,6 +23,8 @@ const WEAK = new Set([
   "i'm", "you're", "it's", "i'll", "we're", "they're", "let's", "i've", "i'd",
 ]);
 const unmark = (s: string) => s.replace(/[\u0301\u0300]/g, "");
+/** a weak function word (the, is, a, …): no stress mark in a line, little weight in the result */
+export const isWeakWord = (text: string) => WEAK.has(text.toLowerCase().replace(/[^a-z']/g, ""));
 
 /** the whole line: /ðə ráɪs iz rédi/ — the words' own ipa first; weak function words without marks */
 export function lineIpa(item: { words: { text?: string; phones: string[]; ipa?: string }[]; ipa?: string }): string {

@@ -1,19 +1,30 @@
 /**
  * The sound card's mouth: a professionally drawn mid-sagittal section (Wright & McCloy, CC0 — see
- * sagittal-data.ts and /credits), cut to the mouth. Only the tongue, jaw and lower lip move: they are
- * the blend of two drawings — the sound it was heard as and お手本's — and the card drags, springs
- * and plays them. Three marks at most: where the tongue must (●) or must not (✕) touch, the way to
- * move (an arrow in お手本's blue), and nothing else; the legend is inside the picture.
- * Colours: blue = お手本, amber = your recording, pink = the "don't".
+ * sagittal-data.ts and /credits), cut close around the mouth so the tongue's tip reads. Only the
+ * tongue, jaw and lower lip move: they are the blend of two drawings — the sound it was heard as and
+ * お手本's — and the card drags, springs and plays them.
+ *   - Yellow is your tongue and nothing else (the jaw, teeth and lips stay anatomy grey).
+ *   - お手本's tongue: a blue dashed line.
+ *   - ① the arrow from your tongue to お手本's (or the spot to touch, ●), ② the lips (r: rounded,
+ *     forward) — the same numbers as the steps under the picture; a pink ✕ where it must not touch.
+ *   - No words in the picture (the steps say it once); the legend sits under it, not on the drawing.
+ *   - Every line is 2 px or more; the picture is a rounded window, so nothing is cut square.
+ * Colours: blue = お手本, yellow = your recording, pink = the "don't".
  */
 import { SAGITTAL_STATIC } from "./sagittal-data";
-import { TIP, blend, closedPath, differingPath, outline, tipOf, type Pt, type ShapeKey } from "./geometry";
+import { TIP, blend, closedPath, outline, tipOf, tongueStart, type Pt, type ShapeKey } from "./geometry";
 
 export type SagittalRefs = {
   svg?: { current: SVGSVGElement | null };
+  /** your tongue (yellow) */
   body?: { current: SVGPathElement | null };
+  /** the line round your tongue */
+  bodyLine?: { current: SVGPathElement | null };
+  /** the moving anatomy (jaw, lower teeth and lip, tongue) in grey */
   edge?: { current: SVGPathElement | null };
   grip?: { current: SVGGElement | null };
+  /** ① the arrow from your tongue to お手本's */
+  arrow?: { current: SVGPathElement | null };
 };
 
 export type SagittalProps = {
@@ -21,45 +32,109 @@ export type SagittalProps = {
   target: ShapeKey;
   /** what it was heard as (null: お手本 only, nothing to drag) */
   heard: ShapeKey | null;
-  /** 0 = お手本 … 1 = what it was heard as: where the amber tongue is */
+  /** 0 = お手本 … 1 = what it was heard as: where the yellow tongue is */
   pos: number;
-  /** a clip plays: the part that moves glows */
+  /** a clip plays: お手本's line glows */
   active?: boolean;
   grip?: boolean;
   refs?: SagittalRefs;
   className?: string;
+  /** numbered marks (the numbers of the steps under the picture they show): the tongue's way, the lips */
+  marks?: { tongue?: 1 | 2; lips?: 1 | 2 };
 };
 
-const VIEW = { x: 84, y: 100, w: 92, h: 100 };
-const GREY = "#eceef4";
-const LINE = "#8f95ad";
+/** the window: the mouth from the back of the tongue to the lips */
+export const SAG_VIEW = { x: 102, y: 105, w: 70, h: 58 };
+const GREY = "#e3e6ef";
+const LINE = "#868ca6";
+const W_LINE = 0.46; // ≈ 2.1 px at the card's width
+const ROOT_Y = 168; // the tongue is drawn down to here (below the window)
+
+/** the tongue's part of every outline: from the floor behind the lower teeth, round the tip, to the root */
+export function tongueRange(target: ShapeKey, heard: ShapeKey | null): [number, number] {
+  const a = outline(target);
+  const ts = Math.max(tongueStart(a), heard ? tongueStart(outline(heard)) : 0);
+  const end = (o: Pt[]) => {
+    for (let i = TIP; i < o.length; i++) if (o[i][1] > ROOT_Y) return i;
+    return o.length - 1;
+  };
+  return [ts, Math.max(end(a), heard ? end(outline(heard)) : 0)];
+}
+
+/**
+ * your tongue as a filled shape (yellow): its outline, closed down below the window (so no closing
+ * edge is ever seen); the line round it is drawn separately (tongueLine)
+ */
+export function tonguePath(pts: Pt[], range: [number, number]): string {
+  const t = pts.slice(range[0], range[1] + 1);
+  const a = t[0];
+  const b = t[t.length - 1];
+  const low = SAG_VIEW.y + SAG_VIEW.h + 12;
+  return `${closedPath([...t, [b[0], low], [a[0] + 1.5, low]]).replace(/ Z$/, "")} Z`;
+}
+
+/** a tongue's outline as an open line, from just under its tip round its back */
+export function tongueLine(pts: Pt[], range: [number, number]): string {
+  return `M${pts
+    .slice(Math.max(range[0], TIP - 14), range[1] + 1)
+    .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+    .join(" L")}`;
+}
+
+/** where ① points: the tip for the tongue-tip sounds, the top of the tongue for the vowels and k */
+export function keyIndex(target: ShapeKey): number {
+  if (target === "r" || target === "t" || target === "th" || target === "s" || target === "sh" || target === "b" || target === "f") return TIP;
+  const o = outline(target);
+  let best = TIP;
+  for (let i = TIP; i < o.length && o[i][1] <= ROOT_Y; i++) if (o[i][1] < o[best][1] && o[i][0] > 112) best = i;
+  return best;
+}
+
+/** where the grip sits: on your tongue a little behind the tip (clear of the ✕ and the arrow's head) */
+export const GRIP = TIP + 15;
 
 /** the contact mark for お手本's sound: must touch (●) or must not touch (✕), and where */
-function contactFor(target: ShapeKey): { kind: "do" | "dont"; at: Pt; label: string } | null {
+function contactFor(target: ShapeKey): { kind: "do" | "dont"; at: Pt } | null {
   const tip = (k: ShapeKey) => tipOf(outline(k));
   switch (target) {
     case "r":
-      return { kind: "dont", at: tip("t"), label: "付けない" };
+      return { kind: "dont", at: tip("t") };
     case "t":
-      return { kind: "do", at: tip("t"), label: "付ける" };
+      return { kind: "do", at: tip("t") };
     case "th":
-      return { kind: "do", at: tip("th"), label: "歯の間" };
-    case "s":
-    case "sh":
-      return { kind: "dont", at: tip("t"), label: "付けない" };
+      return { kind: "do", at: tip("th") };
     case "f":
-      return { kind: "do", at: [157.4, 141.6], label: "唇に歯" };
+      return { kind: "do", at: [157.4, 141.6] };
     default:
       return null;
   }
 }
 
-/** which way the arrow says to go, in plain words (picture coordinates: y grows downward; front = right) */
-function wayJa(from: Pt, to: Pt): string {
-  const dx = to[0] - from[0];
-  const dy = to[1] - from[1];
-  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "前へ" : "奥へ";
-  return dy < 0 ? "上へ" : "下へ";
+/** ✕ on the ridge just above the spot where the tip would touch (clear of the arrow under it) */
+function xMark(at: Pt): string {
+  const c: Pt = [at[0] + 1.2, at[1] - 4.4];
+  const r = 1.6;
+  return `M${c[0] - r},${c[1] - r} L${c[0] + r},${c[1] + r} M${c[0] + r},${c[1] - r} L${c[0] - r},${c[1] + r}`;
+}
+
+/** ① as a path: a line with its head, from your tongue to お手本's */
+export function arrowPath(from: Pt, to: Pt): string {
+  const ang = Math.atan2(to[1] - from[1], to[0] - from[0]);
+  const l = 2.1;
+  const p1: Pt = [to[0] - l * Math.cos(ang - 0.55), to[1] - l * Math.sin(ang - 0.55)];
+  const p2: Pt = [to[0] - l * Math.cos(ang + 0.55), to[1] - l * Math.sin(ang + 0.55)];
+  const f = (p: Pt) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  return `M${f(from)} L${f(to)} M${f(p1)} L${f(to)} L${f(p2)}`;
+}
+
+/** ② the lips pushed forward and rounded (r, sh): the upper lip (fixed drawing) and your lower lip, moved */
+function lipsForward(lower: Pt[]): string {
+  const upper: Pt[] = [
+    [156.2, 137.0], [157.0, 137.1], [158.0, 137.0], [158.8, 136.6], [159.8, 135.9], [160.6, 134.8], [160.9, 134.2], [161.1, 132.9], [161.0, 130.8], [159.4, 124.4],
+  ];
+  const mv = (p: Pt, dx: number, dy: number): Pt => [p[0] + dx, p[1] + dy];
+  const f = (ps: Pt[]) => `M${ps.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" L")}`;
+  return `${f(upper.map((p) => mv(p, 2.6, 0.8)))} ${f(lower.map((p) => mv(p, 2.6, -0.8)))}`;
 }
 
 export function sagittalPoints(target: ShapeKey, heard: ShapeKey | null, pos: number): Pt[] {
@@ -67,112 +142,123 @@ export function sagittalPoints(target: ShapeKey, heard: ShapeKey | null, pos: nu
   return heard ? blend(a, outline(heard), pos) : a;
 }
 
-/** the grip and the arrow sit on the tongue's tip (the same index in every outline) */
-export const gripIndex = (): number => TIP;
+/** the grip sits on the tongue a little behind its tip (the same index in every outline) */
+export const gripIndex = (): number => GRIP;
 
-export default function Sagittal({ target, heard, pos, active, grip, refs, className }: SagittalProps) {
+/** a numbered badge (① ②): ink disc, white figure — the same as the steps' numbers */
+function Badge({ at, n }: { at: Pt; n: number }) {
+  return (
+    <g transform={`translate(${at[0].toFixed(2)},${at[1].toFixed(2)})`} aria-hidden>
+      <circle r="2.7" fill="var(--ink)" stroke="#fff" strokeWidth="0.55" />
+      <text y="1.25" fontSize="3.5" fontWeight="700" textAnchor="middle" fill="#fff" style={{ fontFamily: "system-ui, sans-serif" }}>
+        {n}
+      </text>
+    </g>
+  );
+}
+
+export default function Sagittal({ target, heard, pos, active, grip, refs, className, marks }: SagittalProps) {
   const a = outline(target);
-  const b = heard ? outline(heard) : null;
+  const range = tongueRange(target, heard);
   const now = sagittalPoints(target, heard, pos);
-  const gi = gripIndex();
   const contact = contactFor(target);
-  const from = b ? b[gi] : null;
-  const to = a[gi];
+  const ki = keyIndex(target);
+  const from = heard ? now[ki] : null;
+  const to = a[ki];
   const far = from ? Math.hypot(to[0] - from[0], to[1] - from[1]) : 0;
-  const goal = b ? differingPath(a, b) : "";
+  // ① sits beside the arrow's middle, on the side away from the roof of the mouth
+  const mid: Pt | null = from ? [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2] : null;
+  const tongueAt: Pt | null = marks?.tongue ? (contact && contact.kind === "do" && (!from || far < 1.5) ? [contact.at[0] - 4.2, contact.at[1] + 4.6] : mid && far >= 1.5 ? [mid[0] - 1.2, mid[1] + 5.2] : [to[0] - 4.2, to[1] + 4.6]) : null;
+  const lower = now.slice(57, 69);
+  const lipsAt: Pt | null = marks?.lips ? [166.4, 143.2] : null;
+  const fadeId = `sag-fade-${target}`;
   return (
     <svg
       ref={refs?.svg}
-      viewBox={`${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`}
+      viewBox={`${SAG_VIEW.x} ${SAG_VIEW.y} ${SAG_VIEW.w} ${SAG_VIEW.h}`}
       className={className}
       role="img"
-      aria-label={`口の断面図。黄色があなたの録音の舌、青の点線がお手本の舌${contact ? `。${contact.kind === "do" ? "ここに付ける" : "ここには付けない"}` : ""}`}
+      aria-label={`口の断面図。${heard ? "黄色があなたの録音の舌、" : ""}青の点線がお手本の舌${contact ? `。${contact.kind === "do" ? "●の所に付ける" : "✕の所には付けない"}` : ""}`}
     >
       <defs>
-        {/* your tongue in amber, fading out below so the chin and neck stay plain */}
-        <linearGradient id="sag-you" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#fff" />
-          <stop offset="0.5" stopColor="#fff" />
-          <stop offset="0.72" stopColor="#000" />
+        {/* your tongue: yellow, fading out toward the floor of the mouth */}
+        <linearGradient id={fadeId} x1="0" x2="0" y1={SAG_VIEW.y} y2={SAG_VIEW.y + SAG_VIEW.h} gradientUnits="userSpaceOnUse">
+          <stop offset="0.55" stopColor="var(--voice-fill)" stopOpacity="0.95" />
+          <stop offset="1" stopColor="var(--voice-fill)" stopOpacity="0.35" />
         </linearGradient>
-        <mask id="sag-you-mask" maskUnits="userSpaceOnUse" x={VIEW.x} y={VIEW.y} width={VIEW.w} height={VIEW.h}>
-          <rect x={VIEW.x} y={VIEW.y} width={VIEW.w} height={VIEW.h} fill="url(#sag-you)" />
-        </mask>
         <filter id="sag-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="1.4" />
+          <feGaussianBlur stdDeviation="1.1" />
         </filter>
       </defs>
 
       {/* the parts that never move */}
-      <path d={SAGITTAL_STATIC.path9} fill={GREY} stroke={LINE} strokeWidth="0.35" />
-      <path d={SAGITTAL_STATIC.path7} fill={GREY} stroke={LINE} strokeWidth="0.35" />
-      <path d={SAGITTAL_STATIC.path13} fill={GREY} stroke={LINE} strokeWidth="0.35" />
+      <path d={SAGITTAL_STATIC.path9} fill={GREY} stroke={LINE} strokeWidth={W_LINE} strokeLinejoin="round" />
+      <path d={SAGITTAL_STATIC.path7} fill={GREY} stroke={LINE} strokeWidth={W_LINE} strokeLinejoin="round" />
+      <path d={SAGITTAL_STATIC.path13} fill={GREY} stroke={LINE} strokeWidth={W_LINE} strokeLinejoin="round" />
 
-      {/* tongue, jaw and lower lip: the anatomy in grey, your tongue in amber over it */}
-      <path ref={refs?.edge} d={closedPath(now)} fill={GREY} stroke={LINE} strokeWidth="0.35" />
-      <path ref={refs?.body} d={closedPath(now)} fill="var(--voice-fill)" fillOpacity="0.92" mask="url(#sag-you-mask)" />
-      {/* お手本's tongue where it differs: blue, dashed; it glows while a clip plays */}
-      {goal ? (
+      {/* jaw, lower teeth and lip, tongue: anatomy grey; then your tongue alone in yellow */}
+      <path ref={refs?.edge} d={closedPath(now)} fill={GREY} stroke={LINE} strokeWidth={W_LINE} strokeLinejoin="round" />
+      {heard ? (
         <>
-          <path d={goal} fill="none" stroke="var(--guide)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" filter="url(#sag-glow)" style={{ opacity: active ? 0.9 : 0, transition: "opacity 160ms" }} />
-          <path d={goal} fill="none" stroke="var(--guide-ink)" strokeWidth="0.9" strokeDasharray="2 1.4" strokeLinecap="round" strokeLinejoin="round" />
+          <path ref={refs?.body} d={tonguePath(now, range)} fill={`url(#${fadeId})`} />
+          <path ref={refs?.bodyLine} d={tongueLine(now, range)} fill="none" stroke="var(--voice-ink)" strokeWidth={W_LINE} strokeLinejoin="round" strokeLinecap="round" />
         </>
       ) : null}
 
-      {/* mark 1: must / must not touch */}
+      {/* お手本's tongue: blue dashed (it glows while a clip plays); alone, it is filled lightly */}
+      {heard ? (
+        <>
+          <path d={tongueLine(a, range)} fill="none" stroke="var(--guide)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" filter="url(#sag-glow)" style={{ opacity: active ? 0.85 : 0, transition: "opacity 160ms" }} />
+          <path d={tongueLine(a, range)} fill="none" stroke="var(--guide-ink)" strokeWidth="0.62" strokeDasharray="1.9 1.3" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      ) : (
+        <>
+          <path d={tonguePath(a, range)} fill="color-mix(in srgb, var(--guide) 22%, white)" />
+          <path d={tongueLine(a, range)} fill="none" stroke="var(--guide-ink)" strokeWidth="0.62" strokeDasharray="1.9 1.3" strokeLinejoin="round" strokeLinecap="round" />
+        </>
+      )}
+
+      {/* ② the lips: rounded and pushed forward (r, sh) */}
+      {marks?.lips ? <path d={lipsForward(lower)} fill="none" stroke="var(--guide-ink)" strokeWidth="0.62" strokeDasharray="1.9 1.3" strokeLinecap="round" strokeLinejoin="round" /> : null}
+
+      {/* where it must touch (●) or must not (✕) */}
       {contact ? (
         <g data-mark="contact" className={active && contact.kind === "dont" ? "kara-blink" : undefined}>
           {contact.kind === "do" ? (
-            <circle cx={contact.at[0]} cy={contact.at[1]} r="1.8" fill="var(--guide-ink)" stroke="#fff" strokeWidth="0.6" />
+            <circle cx={contact.at[0]} cy={contact.at[1]} r="1.5" fill="var(--guide-ink)" stroke="#fff" strokeWidth="0.55" />
           ) : (
-            <g stroke="var(--miss)" strokeWidth="1.1" strokeLinecap="round">
-              <path d={`M${contact.at[0] - 1.8},${contact.at[1] - 1.8} L${contact.at[0] + 1.8},${contact.at[1] + 1.8} M${contact.at[0] + 1.8},${contact.at[1] - 1.8} L${contact.at[0] - 1.8},${contact.at[1] + 1.8}`} />
+            <g stroke="var(--miss)" strokeWidth="0.75" strokeLinecap="round">
+              <path d={xMark(contact.at)} stroke="#fff" strokeWidth="1.7" />
+              <path d={xMark(contact.at)} />
             </g>
           )}
-          {/* the label up and to the left of the spot, clear of the grip; a white halo keeps it legible on the tongue */}
-          <text x={contact.at[0] - 5.5} y={contact.at[1] - 7} fontSize="3.6" fontWeight="700" textAnchor="end" fill={contact.kind === "do" ? "var(--guide-ink)" : "var(--miss)"} stroke="#fff" strokeWidth="1.1" strokeLinejoin="round" paintOrder="stroke">
-            {contact.label}
-          </text>
         </g>
       ) : null}
 
-      {/* mark 2: the way to go, from your tongue to お手本's (blue) */}
-      {from && far > 2 ? (
-        <g stroke="var(--guide-ink)" strokeWidth="0.8" strokeLinecap="round" fill="none">
-          <path d={`M${from[0].toFixed(1)},${from[1].toFixed(1)} L${to[0].toFixed(1)},${to[1].toFixed(1)}`} />
-          <ArrowHead from={from} to={to} />
-          <title>{wayJa(from, to)}</title>
-        </g>
+      {/* ① the way to go, from your tongue to お手本's */}
+      {from ? (
+        <path
+          ref={refs?.arrow}
+          data-mark="arrow"
+          d={far >= 1.5 ? arrowPath(from, to) : ""}
+          fill="none"
+          stroke="var(--guide-ink)"
+          strokeWidth="0.62"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       ) : null}
+      {tongueAt && marks?.tongue ? <Badge at={tongueAt} n={marks.tongue} /> : null}
+      {lipsAt && marks?.lips ? <Badge at={lipsAt} n={marks.lips} /> : null}
 
-      {/* the grip on the part that moves (44 pt to touch) */}
+      {/* the grip on your tongue (the whole picture takes the finger; this shows where to pull) */}
       {grip && heard ? (
-        <g ref={refs?.grip} data-grip transform={`translate(${now[gi][0].toFixed(2)},${now[gi][1].toFixed(2)})`} style={{ cursor: "grab" }}>
-          <circle r="6.5" fill="transparent" />
-          <circle r="2.6" fill="#fff" stroke="var(--ink)" strokeWidth="0.7" />
-          <path d="M-1.1,-0.7 L-1.8,0 L-1.1,0.7 M1.1,-0.7 L1.8,0 L1.1,0.7" fill="none" stroke="var(--ink)" strokeWidth="0.45" strokeLinecap="round" strokeLinejoin="round" />
+        <g ref={refs?.grip} data-grip transform={`translate(${now[GRIP][0].toFixed(2)},${now[GRIP][1].toFixed(2)})`} style={{ cursor: "grab" }}>
+          <circle r="5" fill="transparent" />
+          <circle r="2.3" fill="#fff" stroke="var(--ink)" strokeWidth="0.5" />
+          <path d="M-0.9,-0.65 L-1.55,0 L-0.9,0.65 M0.9,-0.65 L1.55,0 L0.9,0.65" fill="none" stroke="var(--ink)" strokeWidth="0.42" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       ) : null}
-
-      {/* the legend, inside the picture */}
-      <g fontSize="3.6" fontWeight="600" fill="var(--ink)">
-        <path d={`M${VIEW.x + 3},${VIEW.y + VIEW.h - 9} l6,0`} stroke="var(--guide-ink)" strokeWidth="0.9" strokeDasharray="2 1.4" />
-        <text x={VIEW.x + 11} y={VIEW.y + VIEW.h - 7.8}>
-          お手本
-        </text>
-        <rect x={VIEW.x + 3} y={VIEW.y + VIEW.h - 5.6} width="6" height="3" rx="0.8" fill="var(--voice-fill)" />
-        <text x={VIEW.x + 11} y={VIEW.y + VIEW.h - 3.0}>
-          あなたの録音
-        </text>
-      </g>
     </svg>
   );
-}
-
-function ArrowHead({ from, to }: { from: Pt; to: Pt }) {
-  const ang = Math.atan2(to[1] - from[1], to[0] - from[0]);
-  const l = 2.2;
-  const p1: Pt = [to[0] - l * Math.cos(ang - 0.5), to[1] - l * Math.sin(ang - 0.5)];
-  const p2: Pt = [to[0] - l * Math.cos(ang + 0.5), to[1] - l * Math.sin(ang + 0.5)];
-  return <path d={`M${p1[0].toFixed(2)},${p1[1].toFixed(2)} L${to[0].toFixed(2)},${to[1].toFixed(2)} L${p2[0].toFixed(2)},${p2[1].toFixed(2)}`} />;
 }

@@ -50,8 +50,9 @@
   --edge: 5px;
   --telop-stroke: 0.32em;
 
-  /* Japanese UI text: a medium-weight gothic from the system (no download); palt tightens kana and brackets */
-  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  /* Japanese UI text: a medium-weight gothic from the system (no download); palt tightens kana and brackets.
+     Latin letters inside it (「舌を付ける l」) come from the app's one Latin face, so l never reads as I. */
+  font-family: var(--font-latin-ja, "Hiragino Sans"), "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
   font-weight: 500;
   font-feature-settings: "palt" 1;
   color: var(--field-ink);
@@ -325,13 +326,13 @@ button.telop-word::before {
   }
 }
 
-/* the sounds, dictionary-style IPA (/ðə ráɪs/): a face with every IPA letter, so no glyph falls back alone */
-/* THE one style for sounds in the whole app (every screen, every corner): dictionary IPA in
-   Gentium Plus — upright, full IPA coverage, an l that never reads as I or |. Use class="ipa". */
+/* THE one style for sounds in the whole app (every screen, every corner): dictionary IPA (/ðə ráɪs/)
+   in the app's one Latin face (Andika-based: every IPA letter, accents placed on ɚ ɪ ʌ, a double-story
+   a that never reads as ɑ, a tailed l that never reads as I or |), at the UI gothic's weight. */
 .ipa {
-  font-family: var(--font-ipa), "Gentium Plus", "Charis SIL", "Doulos SIL", "Noto Serif", "Times New Roman", serif;
+  font-family: var(--font-latin, "Andika"), "Andika", "Charis SIL", "Doulos SIL", sans-serif;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 500;
   font-feature-settings: normal;
   letter-spacing: 0.01em;
 }
@@ -339,7 +340,7 @@ button.telop-word::before {
 /* English text everywhere: the Latin face (tailed l, open shapes) */
 .kara .en,
 .kara .telop.en {
-  font-family: var(--font-latin), "Atkinson Hyperlegible", system-ui, sans-serif;
+  font-family: var(--font-latin, "Andika"), "Andika", system-ui, sans-serif;
   font-feature-settings: normal;
 }
 
@@ -496,13 +497,13 @@ button.telop-word::before {
 }
 
 /* ---------- home: the syllable blocks — plain type, strength by size and weight only;
-   three stacked copies: the fill, then お手本's cyan and your yellow wiping in per block (--p) */
+   three stacked copies: the ink line, then one colour painting in per block (--p): お手本's light
+   (which also dims again, --o) and your voice */
 .kara .hero-block {
   display: inline-block;
   vertical-align: baseline;
   white-space: pre;
-  /* room between the letters, so one letter's outline never runs into the next one's fill */
-  letter-spacing: 0.05em;
+  letter-spacing: 0.012em;
   --p: 0;
 }
 .kara .hero-fill .hero-block {
@@ -512,10 +513,11 @@ button.telop-word::before {
 .kara .hero-voice .hero-block {
   clip-path: inset(-0.3em calc(100% - var(--p) * (100% + 0.3em) + 0.3em) -0.3em -0.3em);
 }
-/* on the white card: the on-white blue and amber */
+/* on the white card: one colour for the light and for your voice */
 .kara .hero-guide .hero-block {
   color: var(--guide-ink);
+  opacity: var(--o, 1);
 }
 .kara .hero-voice .hero-block {
-  color: var(--voice-ink);
+  color: var(--guide-ink);
 }

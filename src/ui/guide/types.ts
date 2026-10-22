@@ -30,6 +30,9 @@ export type GuideProps = {
   /** the model's syllables for this voice and speed (KaraokeJudge's bars) */
   syllables: readonly GuideBar[];
   words: readonly { text: string; start: number; end: number }[];
+  /** optional: each word split into its syllables (strong = the sentence's stressed one, drawn a
+   *  size up). Used only where the pieces spell the word exactly; otherwise the word is drawn whole. */
+  pieces?: readonly (readonly { text: string; strong: boolean }[])[] | null;
   live: { current: GuideLive };
   /** after the take: your contour on the guide timeline (compareProsody's userOnRefTime) */
   overlay?: readonly ContourPoint[] | null;

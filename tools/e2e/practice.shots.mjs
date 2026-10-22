@@ -6,8 +6,9 @@
  *
  * Fake microphone files (Chrome restarts the file at every capture, so one file can serve a
  * sentence take and a later one-word retry):
- *   home  — 0.3 s of room tone, then the am_michael reference of "hotel": the home card's own
- *           listen → say loop (the shot is taken while your yellow is painting over お手本's cyan)
+ *   home  — 0.3 s of room tone, then the am_michael reference of the home line: the home card
+ *           as it opens (the light running over the syllables: ours-home.png) and while you speak
+ *           (タップして話す, your voice painting the syllables: ours-home-speaking.png)
  *   sing  — the am_michael reference of a long line at 0.65× (u10-l4-05, 3.4 s) for the mid-take shot
  *   card  — 0.25 s: "rice" cut from the am_michael reference of u03-l1-07 (heard by the one-word
  *           retry, which starts at 0 and stops by itself), then at 2.05 s macOS `say -v Kyoko`
@@ -101,13 +102,27 @@ async function phonePage(browser) {
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// 1. home (fresh device: nothing practised yet), mid-loop: お手本 has painted the blocks, your voice is painting over them
+// 1. home (fresh device: nothing practised yet): as the card opens, the light runs over the syllables
+//    once (ours-home); then タップして話す, and your voice paints them (ours-home-speaking)
 {
   const b = await browserWith(homeWav);
   const page = await phonePage(b);
   await page.goto(`${BASE}/home`, { waitUntil: "networkidle0" });
-  await sleep(800);
-  await page.evaluate(() => document.querySelector('section[aria-label="次に言う文"] button')?.click());
+  const swept = await page
+    .waitForFunction(
+      () => {
+        const os = [...document.querySelectorAll(".hero-guide .hero-block")].map((e) => parseFloat(e.style.getPropertyValue("--o") || "0"));
+        const lit = os.filter((o) => o > 0.9).length;
+        return os.length > 2 && lit >= 1 && os[os.length - 1] < 0.5 && os.slice(0, 2).some((o) => o < 0.9);
+      },
+      { timeout: 15000, polling: 16 },
+    )
+    .then(() => true)
+    .catch(() => false);
+  if (!swept) console.log("home: the light did not run (shot taken anyway)");
+  await page.screenshot({ path: join(OUT, "ours-home.png") });
+  await sleep(2600);
+  await page.evaluate(() => [...document.querySelectorAll('section[aria-label="次に言う文"] button')].find((x) => x.textContent?.includes("タップして話す"))?.click());
   const painting = await page
     .waitForFunction(
       () => {
@@ -119,8 +134,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     )
     .then(() => true)
     .catch(() => false);
-  if (!painting) console.log("home: the yellow did not start (shot taken anyway)");
-  await page.screenshot({ path: join(OUT, "ours-home.png") });
+  if (!painting) console.log("home: your voice did not paint (shot taken anyway)");
+  await page.screenshot({ path: join(OUT, "ours-home-speaking.png") });
   await b.close();
 }
 
@@ -169,35 +184,21 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await sleep(2400);
   const r = await page.evaluate(() => window.__practice.result);
   console.log("card take:", r.total.toFixed(3), JSON.stringify(r.words), r.flagged.join(" "));
-  // the card on the result moves between the line's mistakes: pick the r / l one (right, else light)
+  // the card on the result opens on the mistake that matters most: make sure it is the r / l one
   console.log("coached first:", r.coach >= 0 ? r.words[r.coach][0] : "-");
   const wi = ["right", "light"].map((t) => r.words.findIndex((w) => w[0].toLowerCase() === t)).find((k) => k >= 0 && r.flagged.some((f) => f.startsWith(`${r.words[k][0]}.`) && /\.(R|L):/.test(f)));
   if (wi === undefined) throw new Error("neither right nor light was heard wrong: no r / l card");
-  const picked = await page.evaluate((t) => {
-    const tab = [...document.querySelectorAll('#coach [role="tab"]')].find((x) => x.textContent?.trim().toLowerCase().endsWith(t));
-    tab?.click();
-    return !!tab || document.querySelector("#coach")?.textContent?.toLowerCase().includes(t);
-  }, r.words[wi][0].toLowerCase());
-  if (!picked) throw new Error("the r / l word is not on the card");
-  await sleep(900); // the pair recording (rice / lice) arrives
-  // drag the grip on the tongue toward the ridge (the contact mark): the tongue springs over
-  const pt = await page.evaluate(() => {
-    document.getElementById("coach")?.scrollIntoView({ block: "start" });
-    const g = document.querySelector("#coach [data-grip]")?.getBoundingClientRect();
-    const m = document.querySelector('#coach [data-mark="contact"]')?.getBoundingClientRect();
-    if (!g || !m) return null;
-    return { a: { x: g.x + g.width / 2, y: g.y + g.height / 2 }, b: { x: m.x + m.width / 2, y: m.y + m.height / 2 } };
-  });
-  if (pt) {
-    await page.mouse.move(pt.a.x, pt.a.y);
-    await page.mouse.down();
-    for (let k = 1; k <= 10; k++) {
-      await page.mouse.move(pt.a.x + ((pt.b.x - pt.a.x) * k) / 10, pt.a.y + ((pt.b.y - pt.a.y) * k) / 10);
-      await sleep(30);
-    }
-    await page.mouse.up();
-    await sleep(700);
-  } else console.log("card: no grip to drag");
+  if (r.coach !== wi) {
+    const picked = await page.evaluate((t) => {
+      [...document.querySelectorAll("#coach button")].find((x) => x.textContent?.startsWith("ほかに"))?.click();
+      const tab = [...document.querySelectorAll('#coach [role="tab"]')].find((x) => x.textContent?.trim().toLowerCase().endsWith(t));
+      tab?.click();
+      return !!tab;
+    }, r.words[wi][0].toLowerCase());
+    if (!picked) throw new Error("the r / l word is not on the card");
+  }
+  await sleep(900); // the pair recording (right / light) arrives
+  // the card as it opens: your tongue (the sound it was heard as), お手本's dashed, ① the way, ② the lips
   await page.evaluate(() => document.getElementById("coach")?.scrollIntoView({ block: "start" }));
   await sleep(150);
   await page.screenshot({ path: join(OUT, "ours-card.png") });

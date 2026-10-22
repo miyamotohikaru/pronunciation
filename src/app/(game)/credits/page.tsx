@@ -35,7 +35,15 @@ const CREDITS: Credit[] = [
   },
   { what: "発音辞書", name: "CMU Pronouncing Dictionary（CMUdict）", by: "Carnegie Mellon University（Copyright 1993–2014）", license: "自由に利用可（出典の明記）", url: "https://github.com/cmusphinx/cmudict" },
   { what: "ブラウザでの推論", name: "ONNX Runtime Web", by: "Microsoft", license: "MIT License", url: "https://github.com/microsoft/onnxruntime" },
-  { what: "書体", name: "M PLUS Rounded 1c ／ Atkinson Hyperlegible Next ／ Gentium Plus", by: "M+ FONTS PROJECT ／ Braille Institute ／ SIL International", license: "SIL Open Font License 1.1", url: "https://fonts.google.com/" },
+  {
+    what: "書体（英文・発音記号・日本語の中の英字）",
+    name: "Hatsuon IPA（Andika 7.000 の改変版）",
+    by: "SIL Global（原作 Andika）",
+    license: "SIL Open Font License 1.1",
+    url: "https://software.sil.org/andika/",
+    note: "このアプリで使う文字だけに減らし、a を2階建て、l を尾の付いた形にしています。OFL では改変版に「Andika」「SIL」の名前を使えないため、名前を変えています。",
+  },
+  { what: "書体（字幕・点数）", name: "M PLUS Rounded 1c", by: "M+ FONTS PROJECT", license: "SIL Open Font License 1.1", url: "https://fonts.google.com/specimen/M+PLUS+Rounded+1c" },
 ];
 
 /** /credits — the open work this app is built on, with its licences */
@@ -61,7 +69,16 @@ export default function Page() {
               <p className="en mt-1 text-[16px] font-bold leading-snug">{c.name}</p>
               <p className="mt-1 text-[14px] font-medium leading-snug">{c.by}</p>
               <p className="mt-1 text-[14px] font-bold">{c.license}</p>
-              {c.note ? <p className="jp mt-2 text-[14px] font-medium leading-relaxed opacity-90">{c.note}</p> : null}
+              {c.note ? (
+                <p className="jp mt-2 text-[14px] font-medium leading-relaxed opacity-90">
+                  {/* one sentence per line (break at 。, not wherever the box ends) */}
+                  {c.note.split(/(?<=。)/).map((line, i) => (
+                    <span key={i} className="block">
+                      {line}
+                    </span>
+                  ))}
+                </p>
+              ) : null}
               <a href={c.url} target="_blank" rel="noreferrer" className="en mt-2 inline-block break-all text-[13px] font-medium underline underline-offset-2">
                 {c.url}
               </a>

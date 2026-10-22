@@ -4,7 +4,8 @@
  * The top of the result: the total as a whole number — "65" with a small "/100" (no decimals:
  * they read as a bug or as meaningless precision) — a karaoke-machine counter that stays readable
  * while it runs (each digit slides in its own window, ~600 ms, settles with a small spring); the
- * change since the last attempt; the verdict big.
+ * change since the last attempt; under it the score's band — the scale 0–100 in its five verdicts, the
+ * band it fell in raised and the verdict standing over it (「伝わります」 is where 71 is).
  * PartsRow: the three parts as integers that visibly add up to it (音 /50 + リズム /25 + 抑揚 /25).
  *
  * Per frame: only transforms on five digit strips (no React state, no layout).
@@ -115,7 +116,7 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
           {total >= 100 ? <Digit refFn={(el) => (strips.current[0] = el)} big /> : null}
           <Digit refFn={(el) => (strips.current[1] = el)} big hidden={total < 10} />
           <Digit refFn={(el) => (strips.current[2] = el)} big />
-          <span className="num mb-[16px] ml-[8px] text-[22px] font-black md:mb-[20px] md:text-[26px]">/100</span>
+          <span className="num mb-[14px] ml-[8px] text-[22px] font-black md:mb-[20px] md:text-[26px]">/100</span>
         </div>
         {delta !== null && done ? (
           <span
@@ -127,12 +128,49 @@ export default function ScoreHead({ scores, run, skip, onProgress, onDone, verdi
           </span>
         ) : null}
       </div>
-      {/* the verdict, under the score and never bigger than the diagnosis that follows */}
-      <p className={`mt-1 min-h-[32px] font-black leading-tight ${celebrate ? "text-[28px] md:text-[34px]" : "text-[22px] md:text-[28px]"}`} aria-live="polite">
-        {done ? verdict : ""}
-        <span className="sr-only">{done ? `${total}点。` : ""}</span>
-      </p>
+      {/* the verdict over its own band of the scale, pointing at the score */}
+      <BandScale total={total} verdict={verdict} done={done} celebrate={celebrate} />
     </section>
+  );
+}
+
+/** the verdicts' bands on 0–100 (the same cuts as score.ts verdict()) */
+const BANDS = [
+  { from: 0, to: 60 },
+  { from: 60, to: 75 },
+  { from: 75, to: 90 },
+  { from: 90, to: 95 },
+  { from: 95, to: 100.01 },
+];
+
+function BandScale({ total, verdict, done, celebrate }: { total: number; verdict: string; done: boolean; celebrate: boolean }) {
+  const at = Math.max(0, Math.min(100, total));
+  const shift = at < 16 ? -6 : at > 84 ? -94 : -50;
+  return (
+    <div className="mt-2 w-full" style={{ opacity: done ? 1 : 0, transition: "opacity 200ms" }}>
+      <div className="relative h-[34px]" aria-live="polite">
+        <p className={`absolute bottom-[8px] whitespace-nowrap font-black leading-none ${celebrate ? "text-[26px] md:text-[32px]" : "text-[22px] md:text-[28px]"}`} style={{ left: `${at}%`, transform: `translateX(${shift}%)` }}>
+          {done ? verdict : ""}
+          <span className="sr-only">{done ? `${total}点。` : ""}</span>
+        </p>
+      </div>
+      <div aria-hidden className="relative">
+        <div className="flex h-[10px] gap-[3px]">
+          {BANDS.map((b) => {
+            const here = at >= b.from && at < b.to;
+            return <span key={b.from} className="rounded-full" style={{ flex: `${b.to - b.from} 0 0`, background: here ? "var(--paper)" : "color-mix(in srgb, var(--field-ink) 26%, transparent)" }} />;
+          })}
+        </div>
+        <span className="absolute top-1/2 size-[16px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-(--ink) bg-(--paper)" style={{ left: `${at}%` }} />
+        <div className="num relative mt-[6px] h-[12px] text-[11px] font-bold leading-none opacity-80">
+          {[60, 75, 90].map((n) => (
+            <span key={n} className="absolute -translate-x-1/2" style={{ left: `${n}%` }}>
+              {n}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -161,7 +199,7 @@ export function PartsRow({ scores }: { scores: Scores }) {
 function Digit({ refFn, big, hidden }: { refFn: (el: HTMLSpanElement | null) => void; big?: boolean; hidden?: boolean }) {
   return (
     <span
-      className={`relative inline-block overflow-hidden ${big ? "telop text-[88px] md:text-[116px]" : ""}`}
+      className={`relative inline-block overflow-hidden ${big ? "telop text-[76px] md:text-[108px]" : ""}`}
       // wide enough that two digits' outlines never touch
       style={{ width: big ? "0.74em" : "0.6em", height: big ? "1.16em" : "1.1em", visibility: hidden ? "hidden" : undefined }}
     >
