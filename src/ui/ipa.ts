@@ -3,8 +3,10 @@
  * (src/engine/scoring/ipa.ts, dictionary style: /ráɪs/) and in the data (item.ipa, words[].ipa);
  * this file only picks the data first and adds the short Japanese name shown under a chip.
  */
+import { lineMarks } from "./marks/lineMarks";
 import { ipaChip, ipaLine, ipaSegments } from "@/engine/scoring/ipa.ts";
 import { HEARD_LABELS } from "@/engine/scoring/heard-labels.ts";
+import { isFunctionWord } from "@/engine/prosody/syllables.ts";
 
 /** a chip: /ð/ */
 export const chipIpa = ipaChip;
@@ -14,26 +16,25 @@ export function wordIpa(phones: readonly string[], data?: string): string {
   return data ? data.replace(/^\/|\/$/g, "") : ipaSegments(phones).join("");
 }
 
-/** weak function words: in a line their stress marks go (a dictionary marks each word, a sentence does not) */
-const WEAK = new Set([
-  "a", "an", "the", "to", "of", "and", "or", "but", "in", "on", "at", "for", "with", "from", "by", "as", "than",
-  "is", "are", "am", "was", "were", "be", "been", "do", "does", "did", "have", "has", "had", "can", "could",
-  "will", "would", "shall", "should", "may", "might", "must", "i", "you", "he", "she", "it", "we", "they",
-  "me", "him", "her", "us", "them", "my", "your", "his", "its", "our", "their", "that", "there", "some", "so",
-  "i'm", "you're", "it's", "i'll", "we're", "they're", "let's", "i've", "i'd",
-]);
 const unmark = (s: string) => s.replace(/[\u0301\u0300]/g, "");
-/** a weak function word (the, is, a, …): no stress mark in a line, little weight in the result */
-export const isWeakWord = (text: string) => WEAK.has(text.toLowerCase().replace(/[^a-z']/g, ""));
+/**
+ * a weak function word (the, is, a, …): no ● over it, no stress mark in a line (a dictionary marks each
+ * word, a sentence does not), little weight in the result. The engine's list, so ● and the marks agree.
+ */
+export const isWeakWord = isFunctionWord;
 
-/** the whole line: /ðə ráɪs iz rédi/ — the words' own ipa first; weak function words without marks */
-export function lineIpa(item: { words: { text?: string; phones: string[]; ipa?: string }[]; ipa?: string }): string {
+/**
+ * the whole line: /aɪ hæv‿ən‿aɪdíːə/ — the words' own ipa first; weak function words without marks;
+ * where two words run on (src/ui/marks, the engine's findLinks) a ‿ instead of the space
+ */
+export function lineIpa(item: { text?: string; words: { text?: string; phones: string[]; ipa?: string }[]; ipa?: string }): string {
   if (item.words.every((w) => w.ipa && w.text !== undefined)) {
     const parts = item.words.map((w) => {
       const body = (w.ipa ?? "").replace(/^\/|\/$/g, "");
-      return WEAK.has((w.text ?? "").toLowerCase()) ? unmark(body) : body;
+      return isFunctionWord(w.text ?? "") ? unmark(body) : body;
     });
-    return `/${parts.join(" ")}/`;
+    const link = item.text ? lineMarks(item.text, item.words as { text: string; phones: string[] }[]).link : [];
+    return `/${parts.map((p, i) => (i ? (link[i - 1] ? "‿" : " ") : "") + p).join("")}/`;
   }
   if (item.ipa) return item.ipa.startsWith("/") ? item.ipa : `/${item.ipa}/`;
   return ipaLine(item.words.map((w) => w.phones));

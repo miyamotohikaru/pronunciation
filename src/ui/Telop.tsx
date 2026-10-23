@@ -5,6 +5,9 @@
  * wiping to the unit's colour as the model sings it. Two lines stagger like a karaoke
  * caption (first line from the left, second line to the right).
  *
+ * karaoke mode with `marks`: ● over each word's strong syllable and ‿ under the gap where a word
+ * runs on (src/ui/marks) — painted with the word; a ‿ never at a line's end (the lines are known here).
+ *
  * result mode: each word fills with its judgement colour (left → right, driven by `reveal`),
  * and every sound gets a mark under its own letters: ● hit / ▲ near / ▬ miss (an underline bar)
  * — shape first, colour second, so it reads in greyscale. Words become buttons.
@@ -14,6 +17,8 @@ import type { Clock } from "./lane/PitchLane";
 import type { PhoneScore, WordScore, WordSpan } from "./types";
 import { JUDGEMENT_LABEL, JUDGEMENT_VAR, judge, mark, type Mark } from "./score";
 import { heardLine } from "./copy";
+import { MarkedWord } from "./marks/Marked";
+import type { LineMarks } from "./marks/lineMarks";
 
 export type TelopProps = {
   /** the line as shown, punctuation included */
@@ -30,11 +35,19 @@ export type TelopProps = {
   className?: string;
   /** karaoke: per word 0..1, how far it is painted gold — your voice in the band, left to right */
   hits?: { current: number[] };
+  /** karaoke: the line's marks (● strong syllables, ‿ links) */
+  marks?: LineMarks | null;
 };
 
 const useIso = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, className, hits }: TelopProps) {
+/** karaoke: a word's own room (no outline to make room for) and the gap to the next — an ordinary space */
+const KARAOKE_PAD = 0.02;
+const KARAOKE_GAP = 0.25;
+/** with marks: the extra room between lines (line-height 1.14 + 0.58 = 1.72 em, as .mk-lines) */
+const MK_ROW_GAP = 0.58;
+
+function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, className, hits, marks }: TelopProps) {
   const display = text.split(/\s+/).filter(Boolean);
   const tokens = words.map((w, i) => display[i] ?? w.text);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -127,6 +140,9 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
 
   const groups = lines ?? [tokens.map((_, i) => i)];
   const single = groups.length === 1;
+  // marks only in karaoke, only when they belong to this line; a ‿ only inside a line
+  const mk = mode === "karaoke" && marks && marks.strong.length === tokens.length ? marks : null;
+  const lineEnd = new Set(lines ? lines.map((g) => g[g.length - 1]) : tokens.map((_, i) => i));
 
   return (
     <div
@@ -134,13 +150,13 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
       className={`telop en relative w-full ${className ?? ""}`}
       data-mode={mode}
       // room under the last line for descenders + outline, and for the sound marks in result mode
-      style={{ paddingBottom: mode === "result" ? "0.42em" : "0.14em" }}
+      style={{ paddingTop: mk ? "0.14em" : undefined, paddingBottom: mode === "result" ? "0.42em" : "0.14em", ["--mk-gap" as string]: `${2 * KARAOKE_PAD + KARAOKE_GAP}em` }}
     >
       {/* measuring row: same font, never seen, never widens the page */}
       <div aria-hidden className="pointer-events-none invisible absolute left-0 top-0 h-0 w-0 overflow-hidden">
         <div ref={measureRef} className="w-max whitespace-pre">
           {tokens.map((t, i) => (
-            <span key={i} style={{ paddingInline: "0.12em" }}>
+            <span key={i} style={{ paddingInline: mode === "karaoke" ? `${KARAOKE_PAD}em` : "0.12em" }}>
               {t}
             </span>
           ))}
@@ -155,13 +171,18 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
           aria-hidden={mode === "karaoke" ? true : undefined}
           // karaoke: one axis — every line from the same left edge (the IPA and the meaning below follow it)
           className={`flex ${mode === "karaoke" ? (!lines ? "flex-wrap justify-start" : "justify-start") : !lines ? "flex-wrap justify-center" : single ? "justify-center" : li % 2 === 0 ? "justify-start" : "justify-end"}`}
-          style={{ columnGap: mode === "karaoke" ? "0.26em" : "0.24em", marginTop: li ? (mode === "result" ? "0.32em" : "0.06em") : 0 }}
+          // karaoke with marks: lines 1.72 em apart (1.14 + 0.58), so each ● sits with its own line
+          style={{ columnGap: mode === "karaoke" ? `${KARAOKE_GAP}em` : "0.24em", rowGap: mk ? `${MK_ROW_GAP}em` : undefined, marginTop: li ? (mode === "result" ? "0.32em" : mk ? `${MK_ROW_GAP}em` : "0.06em") : 0 }}
         >
           {g.map((i) => (
             <Word
               key={i}
               i={i}
               token={tokens[i]}
+              pad={mode === "karaoke" ? KARAOKE_PAD : 0.12}
+              strong={mk ? mk.strong[i] : null}
+              link={!!mk?.link[i] && !lineEnd.has(i)}
+              marked={!!mk}
               result={mode === "result" ? results?.[i] : undefined}
               dim={selected != null && selected !== i}
               selected={selected === i}
@@ -180,6 +201,10 @@ function Telop({ text, words, mode, clock, results, reveal, selected, onSelect, 
 function Word({
   i,
   token,
+  pad,
+  strong,
+  link,
+  marked,
   result,
   dim,
   selected,
@@ -188,6 +213,10 @@ function Word({
 }: {
   i: number;
   token: string;
+  pad: number;
+  strong: [number, number] | null;
+  link: boolean;
+  marked: boolean;
   result?: WordScore;
   dim: boolean;
   selected: boolean;
@@ -196,19 +225,21 @@ function Word({
 }) {
   const j = result ? judge(result.score) : null;
   const style = {
-    paddingInline: "0.12em",
+    paddingInline: `${pad}em`,
     ...(j ? { "--tl-sung": JUDGEMENT_VAR[j] } : {}),
     // only when another word is selected; otherwise the stylesheet decides (karaoke: dim until reached)
     ...(dim ? { opacity: 0.5 } : {}),
   } as CSSProperties;
 
+  // karaoke with marks: the word with its ● and ‿, in both layers (so the gold paints them too)
+  const body = marked && !result ? <MarkedWord token={token} strong={strong} link={link} index={i} /> : null;
   const layers = (
     <>
       <span className="tl tl-a" aria-hidden>
-        {letters(token, result?.phones, false)}
+        {body ?? letters(token, result?.phones, false)}
       </span>
       <span className="tl tl-b" aria-hidden>
-        {letters(token, result?.phones, false)}
+        {body ?? letters(token, result?.phones, false)}
       </span>
       {result ? (
         <span className="tl" aria-hidden style={{ color: "transparent" }}>

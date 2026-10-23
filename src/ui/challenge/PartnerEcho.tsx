@@ -8,6 +8,7 @@ import { audioCore } from "@/engine/audio/context.ts";
 import { fetchItem, guideFor } from "../practice/content";
 import { PlayGlyph } from "./common/bits";
 import { myVoice, otherVoice, play, useNowPlaying } from "./common/listen";
+import { LineById } from "../marks/Marked";
 import RoleChip from "./RoleChip";
 
 export default function PartnerEcho({ turn }: { turn: { id: string; text: string; ready: boolean } }) {
@@ -22,7 +23,9 @@ export default function PartnerEcho({ turn }: { turn: { id: string; text: string
   return (
     <div className="flex items-center gap-2">
       <RoleChip role="partner" />
-      <p className="en line-clamp-2 min-w-0 flex-1 text-[15px] font-bold leading-snug opacity-90">{turn.text}</p>
+      <p className="en line-clamp-2 min-w-0 flex-1 text-[15px] font-bold leading-snug opacity-90">
+        <LineById id={turn.id} text={turn.text} ready={turn.ready} />
+      </p>
       {turn.ready ? (
         <button
           type="button"

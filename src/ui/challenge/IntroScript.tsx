@@ -11,7 +11,7 @@ import BreakText from "@/components/BreakText";
 import type { FieldClass } from "../practice/fields";
 import { BestMark, PageHeader, flow } from "./common/bits";
 import { averageOf, useBest } from "./common/useBest";
-import { MARKER, SwapText, type Swap } from "./Swap";
+import { MARKER, SwapLine, type Swap } from "./Swap";
 import { useRunBest } from "./runStore";
 
 export type IntroScriptProps = {
@@ -60,7 +60,7 @@ export default function IntroScript({ field, script }: IntroScriptProps) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="en text-[18px] font-bold leading-[1.4]">
-                    <SwapText text={l.text} swaps={l.swaps} />
+                    <SwapLine id={l.id} text={l.text} swaps={l.swaps} ready={l.ready} />
                   </p>
                   <p className="jp mt-1 text-[13px] font-medium leading-snug opacity-75">{l.ja.replace(/\n/g, "")}</p>
                   {l.swaps.length ? (

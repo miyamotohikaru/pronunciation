@@ -6,6 +6,7 @@
  * recording is not built yet gets a 準備中 screen instead of the practice screen.
  * Used by チャレンジ (長い文・自己紹介), 発音記号 (each sound's sentences) and アルファベット.
  */
+import { LineById } from "../../marks/Marked";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -117,7 +118,9 @@ export function NotReady({ field, index, total, backHref, item, onNext }: { fiel
       <TopBar backHref={backHref} index={index + 1} total={total} />
       <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col px-4 pb-[max(18px,calc(env(safe-area-inset-bottom)+10px))]">
         <div className="flex flex-1 flex-col justify-center">
-          <p className="en text-[clamp(28px,7.6vw,56px)] font-bold leading-[1.15]">{item.text}</p>
+          <p className="en text-[clamp(28px,7.6vw,56px)] font-bold leading-[1.3]">
+            <LineById id={item.id} text={item.text} ready={item.ready} />
+          </p>
           <p className="jp mt-3 text-[15px] font-medium leading-snug">
             <BreakText text={item.ja.replace(/\n/g, "◆")} />
           </p>
@@ -178,7 +181,9 @@ function ChainSummary({
             return (
               <li key={it.id} className="flex min-h-[64px] items-center gap-3 border-b border-[#e6e8f1] px-4 py-3 last:border-b-0">
                 <span className="min-w-0 flex-1">
-                  <span className="en block text-[16px] font-bold leading-snug">{it.text}</span>
+                  <span className="en block text-[16px] font-bold leading-snug">
+                    <LineById id={it.id} text={it.text} ready={it.ready} />
+                  </span>
                   {scores[it.id] === undefined && s !== undefined ? <span className="block text-[13px] font-medium opacity-70">前回までのいちばん</span> : null}
                 </span>
                 <BestMark score={s} />

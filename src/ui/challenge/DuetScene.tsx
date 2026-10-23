@@ -23,6 +23,7 @@ import { loadClip, myVoice, otherVoice, play, useNowPlaying } from "./common/lis
 import { useBest } from "./common/useBest";
 import { NotReady } from "./common/PracticeChain";
 import PartnerTurn from "./PartnerTurn";
+import { LineById } from "../marks/Marked";
 import PartnerEcho from "./PartnerEcho";
 import RoleChip from "./RoleChip";
 
@@ -171,7 +172,9 @@ function SceneIntro({ field, scene, onStart }: { field: FieldClass; scene: DuetS
                 <span className="flex items-center gap-2">
                   <RoleChip role={t.role} />
                 </span>
-                <p className="en mt-2 text-[17px] font-bold leading-snug">{t.text}</p>
+                <p className="en mt-2 text-[17px] font-bold leading-snug">
+                  <LineById id={t.id} text={t.text} ready={t.ready} />
+                </p>
                 <p className="jp mt-1 text-[13px] font-medium leading-snug opacity-75">{t.ja.replace(/\n/g, "")}</p>
               </div>
             </li>
@@ -243,7 +246,9 @@ function SceneSummary({ field, scene, scores, next, onAgain }: { field: FieldCla
                   <span className="mb-1 flex">
                     <RoleChip role={t.role} />
                   </span>
-                  <span className="en block text-[16px] font-bold leading-snug">{t.text}</span>
+                  <span className="en block text-[16px] font-bold leading-snug">
+                    <LineById id={t.id} text={t.text} ready={t.ready} />
+                  </span>
                 </span>
                 {t.role === "you" ? <BestMark score={s} /> : null}
               </li>

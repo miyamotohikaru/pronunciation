@@ -38,7 +38,7 @@ const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k 
 type Pop = { word: number; grade: WordGrade; late: boolean; at: number };
 const POP_MS = 1000;
 type SmPt = { t: number; st: number | null; inBand: boolean; brk?: boolean };
-type Part = { text: string; size: number; w: number };
+type Part = { text: string; size: number; w: number; strong?: boolean };
 type Placed = { x: number; w: number; parts: Part[] };
 
 /** the words' size: ≥ 22 px on the practice lane, smaller only in the result's small chart */
@@ -259,7 +259,7 @@ function WaveGuide(props: GuideProps) {
       if (key === layKey) return;
       layKey = key;
       const n = p.words.length;
-      const parts: Part[][] = meas.parts.map((list) => list.map((x) => ({ text: x.text, size: x.size * sc, w: x.w * sc })));
+      const parts: Part[][] = meas.parts.map((list) => list.map((x) => ({ text: x.text, size: x.size * sc, w: x.w * sc, strong: x.strong })));
       const widths: number[] = meas.widths.map((w) => w * sc);
       const gap = Math.round(size * 0.55);
       const off: number[] = [];
@@ -551,6 +551,13 @@ function WaveGuide(props: GuideProps) {
               font = f;
             }
             ctx.fillText(part.text, x, base);
+            // the app's mark for a strong syllable: ● over the middle of its letters
+            if (part.strong) {
+              ctx.beginPath();
+              const r = Math.max(1.75, part.size * 0.08);
+              ctx.arc(x + part.w / 2, base - part.size * 0.95 - r, r, 0, Math.PI * 2);
+              ctx.fill();
+            }
             x += part.w;
           }
         };
@@ -722,6 +729,7 @@ function median(xs: number[]): number {
 function splitWord(text: string, pcs: readonly { text: string; strong: boolean }[] | null | undefined, size: number, big: number): Part[] {
   const letters = (x: string) => x.replace(/[^A-Za-z']/g, "");
   if (!pcs || !pcs.length || pcs.map((x) => letters(x.text)).join("") !== letters(text)) return [{ text, size, w: 0 }];
+  if (pcs.length === 1) return [{ text, size: pcs[0].strong ? big : size, w: 0, strong: pcs[0].strong }];
   const out: Part[] = [];
   let at = 0;
   for (let k = 0; k < pcs.length; k++) {
@@ -733,7 +741,7 @@ function splitWord(text: string, pcs: readonly { text: string; strong: boolean }
       end++;
     }
     // leading punctuation of the next piece stays with this one
-    out.push({ text: text.slice(at, end), size: pcs[k].strong ? big : size, w: 0 });
+    out.push({ text: text.slice(at, end), size: pcs[k].strong ? big : size, w: 0, strong: pcs[k].strong });
     at = end;
   }
   return out.filter((x) => x.text.length > 0);

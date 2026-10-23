@@ -21,6 +21,7 @@ import { fetchItem, guideFor, type GuideTake } from "../practice/content";
 import { newRecorder, onScoringStatus, scoringStatus, startScoring, warmRecorder } from "../practice/audio";
 import type { FieldClass } from "../practice/fields";
 import { Guide, freshLive, type GuideLive } from "../guide";
+import { lineMarks } from "../marks/lineMarks";
 import { lineIpa } from "../ipa";
 import TopBar from "../TopBar";
 import MicButton from "../MicButton";
@@ -31,7 +32,7 @@ import { buzz, sfx } from "../sfx";
 import { BestMark, PlayGlyph, captionSize } from "./common/bits";
 import { myVoice, play, stopListening, useNowPlaying } from "./common/listen";
 import RunCaption from "./RunCaption";
-import { SwapText, type Swap } from "./Swap";
+import { SwapLine, type Swap } from "./Swap";
 import { saveRunBest } from "./runStore";
 
 const COUNT_IN = 1.65;
@@ -355,7 +356,7 @@ export default function ScriptRun({ field, script, backHref }: ScriptRunProps) {
             <p className="pb-2 text-[14px] font-bold opacity-90">
               通しで言う<span className="num ml-2 font-medium">{`${cur + 1}/${script.lines.length}`}</span>
             </p>
-            <div style={{ fontSize: size }}>{g ? <RunCaption key={cur} text={line.text} words={g.words} swap={swaps?.[cur] ?? new Set()} clock={clock} /> : <p className="en font-bold leading-[1.14]">{line.text}</p>}</div>
+            <div style={{ fontSize: size }}>{g ? <RunCaption key={cur} text={line.text} words={g.words} swap={swaps?.[cur] ?? new Set()} clock={clock} marks={item ? lineMarks(item.text, item.words) : null} /> : <p className="en font-bold leading-[1.14]">{line.text}</p>}</div>
             {item ? <p className="ipa mt-1 text-[15px] leading-snug opacity-90 md:text-[17px]">{lineIpa(item)}</p> : null}
             {busy ? null : (
               <p className="jp mt-2 text-[15px] font-medium leading-snug md:text-[18px]">
@@ -447,7 +448,7 @@ function RunResult({ field, script, results, guides, backHref, onAgain }: { fiel
               <li key={l.id} className="border-b border-[#e6e8f1] px-4 py-3 last:border-b-0">
                 <div className="flex items-start gap-3">
                   <p className="en min-w-0 flex-1 text-[16px] font-bold leading-snug">
-                    <SwapText text={l.text} swaps={l.swaps} />
+                    <SwapLine id={l.id} text={l.text} swaps={l.swaps} />
                   </p>
                   {r.score !== null ? <BestMark score={r.score} /> : <span className="shrink-0 text-[13px] font-bold opacity-70">{r.clip ? "聞こえませんでした" : "—"}</span>}
                 </div>

@@ -249,7 +249,8 @@ html:has(.field-shell) {
 }
 .telop[data-mode="karaoke"] .tl-b {
   color: var(--voice);
-  clip-path: inset(-0.3em calc(100% - var(--g, 0) * (100% + 0.3em) + 0.3em) -0.3em -0.3em);
+  /* past the word's end once it is all painted, so the ‿ after it is painted too */
+  clip-path: inset(-0.3em calc(100% + 0.3em - var(--g, 0) * (100% + 0.9em)) -0.3em -0.3em);
 }
 .telop[data-mode="karaoke"] .telop-word {
   transition: opacity 120ms linear;
@@ -335,6 +336,71 @@ button.telop-word::before {
   font-weight: 500;
   font-feature-settings: normal;
   letter-spacing: 0.01em;
+}
+
+/* ---------- marks on English lines (src/ui/marks): ● over each word's strong syllable, ‿ under the
+   gap where a word runs on into the next. One rule for the whole app. In the text's own colour (a
+   wipe paints them with the letters), absolutely placed (no letter or gap moves), placed from the
+   Latin face's metrics: an inline span's box top is 1.22 em over the baseline, ascenders reach 0.79,
+   an i's dot 0.76, descenders 0.24 under it.
+   The ● sit in one row at a fixed height, 0.95–1.11 em: a ● clear of an i's dot (a gap the size of
+   the ●), and lines 1.72 em apart (.mk-lines), so a ● is twice as far from the line above as from
+   its own letters — it never reads as a mark on the line above. */
+.mk-lines {
+  line-height: 1.72;
+}
+.mk-w,
+.mk-s {
+  position: relative;
+}
+.mk-s::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  /* its bottom at 0.95 em over the baseline (the box is 1.61 em tall, its top 1.22 em up); at least
+     3.5 px across, growing upwards, so small text keeps a dot you can see */
+  bottom: calc(100% - 0.27em);
+  width: max(3.5px, 0.16em);
+  height: max(3.5px, 0.16em);
+  margin-left: calc(max(3.5px, 0.16em) / -2);
+  border-radius: 50%;
+  background: currentColor;
+  opacity: var(--mk-opacity, 1);
+  pointer-events: none;
+}
+.mk-arc {
+  position: absolute;
+  left: calc(100% - 0.07em);
+  top: 1.24em;
+  width: calc(var(--mk-gap, 0.27em) + 0.14em);
+  /* a wider gap gets a deeper arc, so it stays a ‿ and never flattens into an underline */
+  height: calc(0.07em + var(--mk-gap, 0.27em) * 0.36);
+  box-sizing: border-box;
+  border-bottom: max(1.5px, 0.065em) solid currentColor;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  opacity: var(--mk-opacity, 1);
+  pointer-events: none;
+}
+/* where the line breaks between the two words, no arc hangs off the end */
+[data-mk-wrap] > .mk-arc {
+  display: none;
+}
+/* the legend's two samples */
+.mk-demo-dot {
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: currentColor;
+}
+.mk-demo-arc {
+  display: inline-block;
+  width: 1.15em;
+  height: 0.5em;
+  margin-top: -0.25em;
+  box-sizing: border-box;
+  border-bottom: 2px solid currentColor;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
 }
 
 /* English text everywhere: the Latin face (tailed l, open shapes) */
@@ -511,7 +577,8 @@ button.telop-word::before {
 }
 .kara .hero-guide .hero-block,
 .kara .hero-voice .hero-block {
-  clip-path: inset(-0.3em calc(100% - var(--p) * (100% + 0.3em) + 0.3em) -0.3em -0.3em);
+  /* reaches past the block's end once it is painted: the ‿ after a word is painted with it */
+  clip-path: inset(-0.3em calc(100% + 0.3em - var(--p) * (100% + 1em)) -0.3em -0.3em);
 }
 /* on the white card: one colour for the light and for your voice */
 .kara .hero-guide .hero-block {

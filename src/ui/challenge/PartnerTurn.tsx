@@ -12,6 +12,7 @@ import type { ItemData } from "@/data/schema";
 import type { FieldClass } from "../practice/fields";
 import { fetchItem, guideFor, type GuideTake } from "../practice/content";
 import { Guide, freshLive, type GuideLive } from "../guide";
+import { useLineMarks } from "../marks/Marked";
 import { lineIpa } from "../ipa";
 import Telop from "../Telop";
 import TopBar from "../TopBar";
@@ -70,6 +71,8 @@ export default function PartnerTurn({ field, turn, index, total, backHref, last,
   }, [turn.id, turn.ready]);
 
   const guide: GuideTake | null = useMemo(() => (item ? guideFor(item, voice, speed) : null), [item, voice, speed]);
+  // the line's marks (● strong syllables, ‿ where words run on)
+  const marks = useLineMarks(item);
 
   const cancelRing = () => {
     if (ringTimer.current) clearTimeout(ringTimer.current);
@@ -149,7 +152,7 @@ export default function PartnerTurn({ field, turn, index, total, backHref, last,
               <span className="opacity-90">{playing ? "話しています" : plays ? "相手のせりふ" : autoplay ? "これから話します" : "「聞く」で再生"}</span>
             </p>
             <div style={{ fontSize: size }}>
-              {guide ? <Telop text={turn.text} words={guide.words} mode="karaoke" clock={clock} /> : <p className="en font-bold leading-[1.14]">{turn.text}</p>}
+              {guide ? <Telop text={turn.text} words={guide.words} mode="karaoke" clock={clock} marks={marks} /> : <p className="en font-bold leading-[1.14]">{turn.text}</p>}
             </div>
             {/* the same order as your turn: the sentence, its sounds right under it, the meaning */}
             {item ? <p className="ipa mt-1 text-[15px] leading-snug opacity-90 md:text-[17px]">{lineIpa(item)}</p> : null}

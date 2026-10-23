@@ -10,6 +10,7 @@ import BreakText from "@/components/BreakText";
 import TelopText from "../TelopText";
 import { IconCheck, IconClose, IconStar } from "../icons";
 import Practice from "./Practice";
+import { LineById } from "../marks/Marked";
 import { allBest, starsFor } from "./progress";
 import type { FieldClass } from "./fields";
 
@@ -110,7 +111,9 @@ export default function LessonFlow({ field, unit, lesson, next, initialIndex, pa
           {items.map((it, i) => (
             <li key={it.id} className="flex items-baseline gap-3 rounded-[14px] bg-(--paper) px-4 py-3 text-(--ink)">
               <span className="num w-5 shrink-0 text-[13px] font-bold opacity-60">{i + 1}</span>
-              <span className="en text-[15px] font-bold leading-snug">{it.text}</span>
+              <span className="en text-[15px] font-bold leading-snug">
+                <LineById id={it.id} text={it.text} />
+              </span>
             </li>
           ))}
         </ol>
@@ -161,7 +164,9 @@ function Summary({
             const stars = s !== undefined ? starsFor(s) : 0;
             return (
               <li key={it.id} className="flex min-h-[52px] items-center gap-3 border-b-2 border-(--field-deep) last:border-b-0">
-                <span className="en flex-1 text-[18px] font-bold">{it.text}</span>
+                <span className="en flex-1 text-[18px] font-bold leading-snug">
+                  <LineById id={it.id} text={it.text} />
+                </span>
                 <span className="flex items-center gap-[2px]" aria-label={`星 ${stars} / 3`}>
                   {[0, 1, 2].map((i) => (
                     <IconStar key={i} size={18} filled={i < stars} />

@@ -4,8 +4,11 @@
  * The caption of 通しで言う: the practice screen's karaoke type (tokens.css .telop karaoke — white,
  * the words not reached yet dimmed), with the parts you make your own underlined in yellow
  * (yellow is "you"). Each word changes state as the clock reaches it; written to the DOM directly.
+ * With `marks`: the app's ● over strong syllables and ‿ where words run on (src/ui/marks).
  */
 import { useEffect, useRef } from "react";
+import { MarkedWord, useLinkWraps } from "../marks/Marked";
+import type { LineMarks } from "../marks/lineMarks";
 
 export type RunCaptionProps = {
   text: string;
@@ -13,11 +16,19 @@ export type RunCaptionProps = {
   /** word indices you say your own way */
   swap: Set<number>;
   clock: { current: number | null };
+  /** the line's marks (● strong syllables, ‿ links) */
+  marks?: LineMarks | null;
 };
 
-export default function RunCaption({ text, words, swap, clock }: RunCaptionProps) {
+const PAD = 0.04;
+const GAP = 0.26;
+
+export default function RunCaption({ text, words, swap, clock, marks }: RunCaptionProps) {
   const tokens = text.split(/\s+/).filter(Boolean);
   const refs = useRef<(HTMLSpanElement | null)[]>([]);
+  const box = useRef<HTMLDivElement>(null);
+  const mk = marks && marks.strong.length === tokens.length ? marks : null;
+  useLinkWraps(box, mk);
 
   useEffect(() => {
     let raf = 0;
@@ -40,9 +51,10 @@ export default function RunCaption({ text, words, swap, clock }: RunCaptionProps
   }, [words, clock]);
 
   return (
-    <div className="telop en relative w-full" data-mode="karaoke" style={{ paddingBottom: "0.14em" }}>
+    <div className="telop en relative w-full" data-mode="karaoke" style={{ paddingTop: mk ? "0.14em" : undefined, paddingBottom: "0.14em", ["--mk-gap" as string]: `${2 * PAD + GAP}em` }}>
       <span className="sr-only">{text}</span>
-      <div aria-hidden className="flex flex-wrap" style={{ columnGap: "0.26em" }}>
+      {/* with marks, lines 1.72 em apart (1.14 + 0.58): each ● sits with its own line */}
+      <div ref={box} aria-hidden className="flex flex-wrap" style={{ columnGap: `${GAP}em`, rowGap: mk ? "0.58em" : undefined }}>
         {tokens.map((tok, i) => (
           <span
             key={i}
@@ -50,9 +62,9 @@ export default function RunCaption({ text, words, swap, clock }: RunCaptionProps
               refs.current[i] = el;
             }}
             className="telop-word"
-            style={{ paddingInline: "0.04em" }}
+            style={{ paddingInline: `${PAD}em` }}
           >
-            <span className="tl tl-a">{tok}</span>
+            <span className="tl tl-a">{mk ? <MarkedWord token={tok} strong={mk.strong[i]} link={!!mk.link[i] && i < tokens.length - 1} index={i} /> : tok}</span>
             {swap.has(i) ? <span aria-hidden className="pointer-events-none absolute inset-x-[0.02em] bottom-[0.04em] h-[0.09em] rounded-full bg-(--voice)" /> : null}
           </span>
         ))}

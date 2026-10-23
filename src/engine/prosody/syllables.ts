@@ -28,7 +28,10 @@ const ONSETS = new Set(
   ],
 );
 
-/** 文の中では弱く読むのが普通の語（表示の太さに使う。採点はお手本の実測で行う）。 */
+/**
+ * 文の中では弱く読むのが普通の語（● を付けず、文の発音記号から強勢の印を外す。採点はお手本の実測で行う）。
+ * 否定の短縮形（don't, can't）は強く読むので入れない。
+ */
 const FUNCTION_WORDS = new Set([
   "a", "an", "the", "to", "of", "and", "or", "but", "in", "on", "at", "for", "with", "from", "by", "as", "than",
   "is", "are", "am", "was", "were", "be", "been", "do", "does", "did", "have", "has", "had",
@@ -36,7 +39,13 @@ const FUNCTION_WORDS = new Set([
   "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
   "my", "your", "his", "its", "our", "their", "that", "there", "some", "just", "so",
   "i'm", "you're", "it's", "i'll", "we're", "they're", "let's",
+  // 代名詞＋助動詞の短縮形
+  "i've", "i'd", "you've", "you'll", "you'd", "he's", "he'll", "he'd", "she's", "she'll", "she'd", "it'll",
+  "we've", "we'll", "we'd", "they've", "they'll", "they'd", "that's", "that'll", "there's",
 ]);
+
+/** 文の中で弱く読む語か（語に付いた記号は見ない: "I," "it."） */
+export const isFunctionWord = (text: string) => FUNCTION_WORDS.has(text.toLowerCase().replace(/[^a-z']/g, ""));
 
 /**
  * 音素列を単語ごとに音節へ分ける。
@@ -77,7 +86,7 @@ function syllabifyWord(phones: PhoneSpan[], from: number, to: number, word: numb
     starts.push(cut);
   }
 
-  const fn = FUNCTION_WORDS.has(text.toLowerCase().replace(/[^a-z']/g, ""));
+  const fn = isFunctionWord(text);
   return nuclei.map((nuc, n) => {
     const lexicalStress = stressOf(phones[nuc].phone);
     const single = nuclei.length === 1;

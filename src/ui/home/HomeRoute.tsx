@@ -20,6 +20,7 @@ import { fieldFor } from "../practice/fields";
 import { fetchItem, refFor } from "../practice/content";
 import { lineIpa } from "../ipa";
 import { piecesFor } from "./stress";
+import { useLineMarks, useLinkWraps } from "../marks/Marked";
 
 export type HomeUnitView = { id: string; titleJa: string; subtitleJa: string; lessons: { id: string; titleJa: string; href: string; items: string[]; boss?: boolean }[] };
 
@@ -274,6 +275,10 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
   const voice = useMemo(() => loadSettings().voice, []);
   const pieces = useMemo(() => (item ? piecesFor(item, voice) : null), [item, voice]);
   const flat = useMemo(() => (pieces ? pieces.flat() : []), [pieces]);
+  // where words run on (‿ under the gap); the strong syllables are the pieces' own
+  const marks = useLineMarks(item);
+  const heroRef = useRef<HTMLParagraphElement>(null);
+  useLinkWraps(heroRef, pieces && marks ? `${item?.id}|${pieces.length}` : null);
   const span = flat.length ? { a: flat[0].start, b: flat[flat.length - 1].end } : { a: 0, b: 1 };
   const guideRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const voiceRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -470,17 +475,22 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
       {/* the syllable blocks: the ink line, then the one colour painting over it (light / your voice) */}
       <div className="mt-4">
         {pieces && item ? (
-          <p className="hero en relative grid leading-[1.15]" style={{ fontSize: fit }}>
+          <p ref={heroRef} className="hero en relative grid leading-[1.15]" style={{ fontSize: fit }}>
             <span className="sr-only">{`${item.text}。強く読むところ：${flat.filter((s) => s.strong).map((s) => s.text.toLowerCase()).join("、")}`}</span>
             {(["fill", "guide", "voice"] as const).map((layer) => {
               let k = 0;
               return (
-                // syllables of a word close together, words well apart (the gap between words is 2× and more)
-                <span key={layer} aria-hidden className={`hero-layer hero-${layer} flex flex-wrap items-baseline gap-x-[0.36em] gap-y-[0.34em] pb-[0.36em]`} style={{ gridArea: "1 / 1" }}>
+                // syllables of a word close together, words well apart; the app's one rule for the marks:
+                // ● over the strong syllable (nothing on the weak ones), ‿ under the gap where words run on
+                <span key={layer} aria-hidden className={`hero-layer hero-${layer} flex flex-wrap items-baseline gap-x-[0.36em] gap-y-[0.58em] pb-[0.2em] pt-[0.14em]`} style={{ gridArea: "1 / 1" }}>
                   {pieces.map((w, wi) => (
                     <span key={wi} className="inline-flex items-baseline">
-                      {w.map((s) => {
+                      {w.map((s, si) => {
                         const i = k++;
+                        const scale = s.strong ? 1 : 0.7;
+                        const last = si === w.length - 1;
+                        const link = last && wi < pieces.length - 1 && !!marks?.link[wi];
+                        const text = s.strong ? <span className="mk-s">{s.text}</span> : s.text;
                         return (
                           // each block keeps the line's own strut: big and small blocks share a baseline
                           <span key={i} className="relative inline-block" style={s.dot ? { marginRight: "0.02em" } : undefined}>
@@ -497,21 +507,19 @@ function NowCard({ unitId, lessonTitle, item, index, count, href, lessonMin }: {
                                     : undefined
                               }
                               className="hero-block"
-                              style={{ fontSize: s.strong ? "1em" : "0.7em", fontWeight: s.strong ? 700 : 600 }}
+                              data-mk-start={si === 0 ? wi : undefined}
+                              style={{ fontSize: `${scale}em`, fontWeight: s.strong ? 700 : 600 }}
                             >
-                              {s.text}
+                              {last ? (
+                                // the word's end carries its ‿ (the gap in this block's own em)
+                                <span className="mk-w" data-mk-w={wi} data-mk-l={link ? "" : undefined} style={{ ["--mk-gap" as string]: `${(0.36 / scale).toFixed(3)}em` }}>
+                                  {text}
+                                  {link ? <span aria-hidden className="mk-arc" /> : null}
+                                </span>
+                              ) : (
+                                text
+                              )}
                             </span>
-                            {layer === "fill" ? (
-                              // the stress pattern under its block, one colour: ● strong (2.5× and filled), ○ weak
-                              <span
-                                className="absolute left-1/2 top-full -translate-x-1/2 rounded-full"
-                                style={
-                                  s.strong
-                                    ? { width: "0.24em", height: "0.24em", marginTop: "0.02em", background: "var(--ink)" }
-                                    : { width: "0.096em", height: "0.096em", marginTop: "0.09em", boxShadow: "inset 0 0 0 max(1.5px, 0.022em) var(--ink)" }
-                                }
-                              />
-                            ) : null}
                           </span>
                         );
                       })}

@@ -14,6 +14,7 @@ import { clipUrl, myVoice, play, useNowPlaying, warmClips } from "../challenge/c
 import { useBest } from "../challenge/common/useBest";
 import type { VoiceId } from "../practice/content";
 import type { FieldClass } from "../practice/fields";
+import { LineById } from "../marks/Marked";
 import { IconMic } from "../icons";
 import IpaTip from "./IpaTip";
 import SoundSection from "./SoundSection";
@@ -194,7 +195,9 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
               <li key={x.id} className="border-b border-[#eceef5] last:border-b-0">
                 <Link href={`${practiceHref}?i=${i}`} className="flex min-h-[60px] items-center gap-3 px-1 py-2" aria-disabled={!x.ready}>
                   <span className="min-w-0 flex-1">
-                    <span className="en block text-[17px] font-bold leading-snug">{x.text}</span>
+                    <span className="en block text-[17px] font-bold leading-snug">
+                      <LineById id={x.id} text={x.text} ready={x.ready} />
+                    </span>
                     <span className="jp block text-[13px] font-medium opacity-70">{x.ja.replace(/\n/g, "")}</span>
                   </span>
                   {x.ready ? <BestMark score={best?.[x.id]} /> : <span className="shrink-0 rounded-full bg-[#eef0f6] px-2 py-1 text-[12px] font-bold">準備中</span>}

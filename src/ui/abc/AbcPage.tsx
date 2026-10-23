@@ -16,7 +16,7 @@ import type { VoiceId } from "../practice/content";
 import { IconCheck, IconClose } from "../icons";
 import IpaTip from "../sounds/IpaTip";
 import type { AbcSet, Confusion, Letter } from "./data.server";
-import { SpellText } from "./SpellText";
+import { SpellLine } from "./SpellText";
 
 export default function AbcPage({ letters, confusions, sets }: { letters: Letter[]; confusions: Confusion[]; sets: AbcSet[] }) {
   const best = useBest();
@@ -151,7 +151,7 @@ export default function AbcPage({ letters, confusions, sets }: { letters: Letter
                       <Link href={`/abc/${s.id}?i=${i}`} className="flex min-h-[58px] items-center gap-3 py-2">
                         <span className="min-w-0 flex-1">
                           <span className="en block text-[17px] font-bold leading-snug">
-                            <SpellText text={l.text} spell={l.spell} />
+                            <SpellLine id={l.id} text={l.text} spell={l.spell} ready={l.ready} />
                           </span>
                           <span className="jp block text-[13px] font-medium opacity-70">{l.ja.replace(/\n/g, "")}</span>
                         </span>

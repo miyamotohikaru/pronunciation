@@ -68,3 +68,16 @@ export function hintSeen(): boolean {
 export function markHintSeen() {
   write(KEY_HINT, 1);
 }
+
+/** the marks' legend (● 強く ‿ つなげて) under the line: shown on the first practice only */
+const KEY_MARKS = "kara.v1.marks-legend";
+export function marksLegendSeen(): boolean {
+  try {
+    return localStorage.getItem(KEY_MARKS) === "1";
+  } catch {
+    return true;
+  }
+}
+export function markMarksLegendSeen() {
+  write(KEY_MARKS, 1);
+}

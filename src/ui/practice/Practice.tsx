@@ -44,7 +44,8 @@ import type { PhoneScore, ProsodyNote, Scores, WordScore } from "../types";
 import { SPEEDS, VOICES, fetchItem, guideFor, keepItems, speedsFor, type GuideTake, type Speed, type VoiceId } from "./content";
 import { getPlayer, keepBuffers, loadBuffer, newRecorder, newWordRecorder, onScoringStatus, playableTake, scoringStatus, startScoring, warmRecorder } from "./audio";
 import { alignLetters } from "./letters";
-import { DEFAULT_SETTINGS, bestOf, hintSeen, loadSettings, markHintSeen, saveBest, saveSettings, type Settings } from "./progress";
+import { DEFAULT_SETTINGS, bestOf, hintSeen, loadSettings, markHintSeen, markMarksLegendSeen, marksLegendSeen, saveBest, saveSettings, type Settings } from "./progress";
+import { MarksLegend, useLineMarks } from "../marks/Marked";
 import type { FieldClass } from "./fields";
 
 const COUNT_IN = 1.65; // 3 beats
@@ -177,6 +178,11 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
   const guide: GuideTake | null = useMemo(() => (item ? guideFor(item, settings.voice, settings.speed) : null), [item, settings.voice, settings.speed]);
   // the words' syllables for the lane (the strong one a size up)
   const pieces = useMemo(() => (item ? piecesFor(item, settings.voice).map((ws) => ws.map((x) => ({ text: x.text, strong: x.strong }))) : null), [item, settings.voice]);
+  // the line's marks: ● strong syllables, ‿ where words run on (once per line)
+  const marks = useLineMarks(item);
+  // how to read them: once, on the first practice (until the first take is over)
+  const [legend, setLegend] = useState(false);
+  useEffect(() => setLegend(!marksLegendSeen()), []);
   const speeds = useMemo(() => (item ? speedsFor(item, settings.voice) : (["native"] as Speed[])), [item, settings.voice]);
   const clock = useMemo(
     () => ({
@@ -476,6 +482,8 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
   const finishTake = async (take: Take, judge: KaraokeJudge, g: GuideTake, n: number) => {
     cancelAnimationFrame(raf.current);
     markHintSeen();
+    markMarksLegendSeen();
+    setLegend(false);
     getPlayer().stop();
     const summary = judge.finish();
     const l = live.current;
@@ -938,6 +946,7 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
                   text={item.text}
                   words={result.words}
                   weights={result.weights}
+                  marks={marks}
                   onOpen={(i) => {
                     if (i !== coachIdx) pickCoach(i);
                     document.getElementById("coach")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1064,12 +1073,13 @@ export default function Practice({ itemId, item: itemProp, nextItemId, field, in
               {/* the caption fits its length (a 100-letter line keeps the lane and the mic on screen) and
                   steps back while you speak: the sentence then rides the band below */}
               <div className="mx-auto w-full max-w-[1040px] px-1" style={{ fontSize: captionSize(item?.text.length ?? 0, fold) }}>
-                {item && guide ? <Telop text={item.text} words={guide.words} mode="karaoke" clock={clock} reveal={reveal} selected={null} hits={hits} /> : <div className="h-[1.3em]" aria-hidden />}
+                {item && guide ? <Telop text={item.text} words={guide.words} mode="karaoke" clock={clock} reveal={reveal} selected={null} hits={hits} marks={marks} /> : <div className="h-[1.3em]" aria-hidden />}
               </div>
               {item ? (
                 <div className="mx-auto w-full max-w-[1040px] px-1">
                   {/* English → its sounds right under it → the meaning */}
                   <p className="ipa mt-1 text-[15px] leading-snug opacity-90 md:text-[17px]">{lineIpa(item)}</p>
+                  {legend && marks ? <MarksLegend className="mt-2 opacity-90" /> : null}
                   {fold ? null : (
                     <p className="jp mt-2 text-[15px] font-medium leading-snug md:mt-3 md:text-[18px]">
                       <BreakText text={item.ja.replace(/\n/g, "◆")} />
