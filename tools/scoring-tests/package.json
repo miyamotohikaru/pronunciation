@@ -1,0 +1,20 @@
+{
+  "name": "scoring-tests",
+  "private": true,
+  "type": "module",
+  "description": "Node tests and benchmarks for src/engine/scoring (own deps; never shares node_modules with the app).",
+  "scripts": {
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scoring.test.mts",
+    "wavs": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON run-wavs.mts",
+    "parity": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON parity.mts",
+    "fuzz": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON align-fuzz.mts && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON regressor-fuzz.mts",
+    "bench": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON bench.mts",
+    "serve": "node serve.mjs 3017",
+    "bench:web": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON bench-web.mts"
+  },
+  "dependencies": {
+    "onnxruntime-node": "1.30.0",
+    "onnxruntime-web": "1.30.0",
+    "puppeteer-core": "25.12.0"
+  }
+}

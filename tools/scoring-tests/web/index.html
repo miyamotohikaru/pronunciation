@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scorer Bench</title>
+<style>
+  :root { --bg: #fff; --fg: #111; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111; --fg: #eee; } }
+  :root[data-theme="dark"] { --bg: #111; --fg: #eee; }
+  body { background: var(--bg); color: var(--fg); font: 13px/1.5 ui-monospace, Menlo, monospace; margin: 16px; }
+  pre { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>onnxruntime-web scorer bench</h1>
+<p>crossOriginIsolated: <b id="coi"></b> · WebGPU: <b id="gpu"></b> · cores: <b id="cores"></b></p>
+<pre id="out">running…</pre>
+<script type="module" src="./bench.js"></script>
+</body>
+</html>

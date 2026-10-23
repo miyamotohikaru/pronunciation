@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* 仮の版面。見た目はデザインチームがあとで作る（docs/design-brief.md）。 */
+:root {
+  --pt-paper: #ffffff;
+  --pt-ink: #16151a;
+  --pt-soft: #5d5b66;
+  --pt-line: #d9d7e0;
+}
+
+@theme inline {
+  --color-paper: var(--pt-paper);
+  --color-ink: var(--pt-ink);
+  --color-soft: var(--pt-soft);
+  --color-line: var(--pt-line);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--pt-paper);
+  color: var(--pt-ink);
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 和文の折り方（MobileBreak / BreakText） ---------- */
+.mobile-break {
+  display: none;
+}
+@media screen and (max-width: 620px) {
+  .mobile-break {
+    display: inline;
+  }
+}
