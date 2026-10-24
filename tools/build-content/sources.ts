@@ -2,7 +2,8 @@
  * Every recorded line of content/ as one list, whichever file it comes from:
  *   curriculum.json  units[].lessons[].items[] (v1 words / pairs, v2 sentences, boss lessons) + placement[]
  *   challenge.json   long[] sentences, intro[] scripts, dialogues[] scenes (partner / you lines)
- *   phonemes.json    each phoneme's practice sentences (its examples / pairs are listen-only words)
+ *   phonemes.json    each phoneme's practice sentences; its examples / pairs are the "w-<word>" words
+ *                    (one item per recorded word, src/data/word-clips.ts), scored on the sounds page
  *   alphabet.json    practice lines with letter tokens ("My name is Ken. K, E, N.")
  * A line is any object with a string id and text, found by walking the file (so a new grouping
  * level or key needs no code here); listen-only reference parts are skipped by key. A line's
@@ -12,6 +13,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ItemType } from "../../src/data/schema.ts";
+import { wordClips, type PhonemeWords } from "../../src/data/word-clips.ts";
 
 export type CFocus = { word: string; phone: string; watch_for: string[]; tip_ja?: string; tag?: string };
 export type CItem = { id: string; type: ItemType; text: string; ja: string; pair?: string; tts_text?: string; focus: CFocus[]; difficulty: number };
@@ -113,6 +115,21 @@ export function linesOfFile(source: string, data: unknown): { lines: SourceLine[
   return { lines, sets: [...sets.values()] };
 }
 
+/** 単語の行: id は録音した名前（src/data/word-clips.ts）、focus はその語で練習する音 */
+function wordLines(phonemes: PhonemeWords[]): SourceLine[] {
+  const watch = new Map(phonemes.map((p) => [p.id, p.watch_for ?? []]));
+  return [...wordClips(phonemes).values()].map((c) => ({
+    id: c.id,
+    text: c.word,
+    ja: "",
+    focus: c.phones.map((phone) => ({ word: c.word, phone, watch_for: watch.get(phone) ?? [] })),
+    difficulty: 0,
+    type: "word" as ItemType,
+    unit: "phonemes",
+    lesson: "words",
+  }));
+}
+
 export function loadSources(contentDir: string, curriculumPath = join(contentDir, "curriculum.json")) {
   const curriculum = JSON.parse(readFileSync(curriculumPath, "utf8")) as Curriculum;
   const lines: SourceLine[] = [
@@ -129,6 +146,10 @@ export function loadSources(contentDir: string, curriculumPath = join(contentDir
     lines.push(...r.lines);
     sets.push(...r.sets);
   }
+  // 発音記号のページの単語（例と最小対）: 1語ずつ録音済みの w-…。その場で録音して確かめられるように item にする
+  // （どのレッスン・set にも入れない）
+  const phonemesPath = join(contentDir, "phonemes.json");
+  if (existsSync(phonemesPath)) lines.push(...wordLines(JSON.parse(readFileSync(phonemesPath, "utf8")).phonemes ?? []));
   const seen = new Set<string>();
   for (const l of lines) {
     if (seen.has(l.id)) throw new Error(`duplicate line id ${l.id}`);

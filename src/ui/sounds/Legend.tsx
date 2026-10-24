@@ -20,7 +20,7 @@ export default function Legend({ groups, styleJa }: { groups: LegendGroup[]; sty
   useEffect(() => setVoice(myVoice()), []);
   return (
     <div className="kara field-calm flex min-h-dvh flex-col">
-      <PageHeader backHref="/sounds" backLabel="発音記号の一覧にもどる" title="記号の読み方" />
+      <PageHeader backHref="/sounds" backLabel="発音一覧にもどる" title="記号の読み方" />
       <main className="mx-auto w-full max-w-[720px] flex-1 px-4 [padding-bottom:max(32px,calc(env(safe-area-inset-bottom)+20px))]">
         <p className="jp mt-1 text-[15px] font-medium leading-relaxed text-[color-mix(in_srgb,var(--ink)_80%,transparent)]">
           <BreakText text={flow(styleJa)} />

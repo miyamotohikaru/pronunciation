@@ -16,7 +16,7 @@ import { Player, type Playable, type PlayheadEvent } from "@/engine/audio/player
 import { loadSettings } from "../../practice/progress";
 import type { VoiceId } from "../../practice/content";
 
-export type ClipSpeed = "" | ".slow";
+export type ClipSpeed = "" | ".slow" | ".slower";
 
 export const clipUrl = (clip: string, voice: VoiceId, speed: ClipSpeed = "") => `/audio/${voice}/${clip}${speed}.mp3`;
 

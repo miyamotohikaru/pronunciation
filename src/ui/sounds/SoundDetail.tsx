@@ -81,7 +81,7 @@ export default function SoundDetail({ s, field }: { s: SoundView; field: FieldCl
 
   return (
     <div className="kara field-calm flex min-h-dvh flex-col">
-      <PageHeader backHref="/sounds" backLabel="発音記号の一覧にもどる" title="発音記号" />
+      <PageHeader backHref={`/sounds?s=${s.slug}`} backLabel="発音一覧にもどる" title="発音記号" />
       <main className="mx-auto w-full max-w-[720px] flex-1 px-4">
         {/* the sound itself, as large as it gets; the one thing to do under it */}
         <section aria-labelledby="sound-name" className={`${field} rounded-[26px] bg-(--field) px-5 pb-5 pt-4 text-(--field-ink)`}>

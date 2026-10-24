@@ -199,6 +199,62 @@ function contrastOf(pr: CPair): SoundPair["other"] {
   return q ? { ipa: q.ipa, shape: shapeFor(q.arpabet) } : null;
 }
 
+// ---------------------------------------------------------------- 発音一覧 (one screen)
+
+/** one sound as the 発音一覧 needs it (lean: the whole list goes to the page) */
+export type BoardSound = {
+  slug: string;
+  /** content's id ("IY", "AH0") and the scorer's phone ("AH" with stress 0 for ə) */
+  id: string;
+  arpabet: string;
+  ipa: string;
+  name: { text: string; symbol: string };
+  group: "vowel" | "diphthong" | "consonant";
+  /** how a consonant is made (the list's small headings) */
+  manner: string;
+  tipJa: string;
+  howJa: string;
+  examples: { word: string; marked?: string; ipa: string; clip: string | null }[];
+  pairs: { a: string; b: string; aClip: string | null; bClip: string | null; other: { ipa: string; arpabet: string; shape: ShapeKey | null } | null }[];
+  mouth: { target: ShapeKey; glideTo: ShapeKey | null } | null;
+  practice: { count: number; ready: boolean };
+};
+
+/** the 42 for the 発音一覧, in the list's order (母音, 二重母音, 子音 by how they are made) */
+export function boardSounds(): BoardSound[] {
+  const order = ["stop", "affricate", "fricative", "nasal", "liquid", "glide", "allophone"];
+  const groupOf = (cat: string): BoardSound["group"] => (cat === "diphthong" ? "diphthong" : cat === "vowel" || cat === "r-colored vowel" ? "vowel" : "consonant");
+  const rank = (p: CPhoneme) => {
+    const g = groupOf(p.category);
+    return g === "vowel" ? 0 : g === "diphthong" ? 1 : 2 + Math.max(0, order.indexOf(p.category));
+  };
+  return [...phonemes]
+    .map((p, i) => ({ p, i }))
+    .sort((x, y) => rank(x.p) - rank(y.p) || x.i - y.i)
+    .map(({ p }) => {
+      const m = mouthOf(p);
+      return {
+        slug: slugOf(p.id),
+        id: p.id,
+        arpabet: p.arpabet,
+        ipa: p.ipa,
+        name: nameParts(p),
+        group: groupOf(p.category),
+        manner: MANNER[p.category] ?? "",
+        tipJa: p.tip_ja,
+        howJa: p.how_ja,
+        examples: p.examples.map((e) => ({ word: e.word, marked: e.marked, ipa: e.ipa, clip: clipOrNull(e.word, e.ipa) })),
+        pairs: p.pairs.map((pr) => {
+          const o = contrastOf(pr);
+          const q = o ? bySymbol.get(o.ipa) : undefined;
+          return { a: pr.a, b: pr.b, aClip: clipOrNull(pr.a, pr.a_ipa), bClip: clipOrNull(pr.b, pr.b_ipa), other: o && q ? { ipa: o.ipa, arpabet: q.id, shape: o.shape } : null };
+        }),
+        mouth: m ? { target: m.target, glideTo: m.glideTo } : null,
+        practice: { count: p.practice.length, ready: p.practice.some((x) => itemReady(x.id)) },
+      };
+    });
+}
+
 // ---------------------------------------------------------------- the legend
 
 const KIND_JA: Record<string, string> = { vowel: "母音", diphthong: "二重母音", consonant: "子音", mark: "記号" };

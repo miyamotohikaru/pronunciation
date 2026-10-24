@@ -188,7 +188,7 @@ export default function HomeRoute({ units }: { units: HomeUnitView[] }) {
 
 const CORNERS = [
   { href: "/challenge", mark: "Go", title: "チャレンジ", sub: "長い文・自己紹介・会話" },
-  { href: "/sounds", mark: "/ð/", title: "発音記号", sub: "42の音を1つずつ" },
+  { href: "/sounds", mark: "/ð/", title: "発音一覧", sub: "舌の位置・音・録音を1か所で" },
   { href: "/abc", mark: "Aa", title: "アルファベット", sub: "26文字と、つづりの伝え方" },
 ];
 

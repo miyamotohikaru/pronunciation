@@ -55,7 +55,7 @@ export type SoundCoachProps = {
 };
 
 /** which of the two steps the picture can show, and with which mark */
-function marksFor(phone: string): { tongue?: 1 | 2; lips?: 1 | 2 } {
+export function marksFor(phone: string): { tongue?: 1 | 2; lips?: 1 | 2 } {
   const b = phone.replace(/[0-2]$/, "");
   if (b === "R" || b === "ER") return { tongue: 1, lips: 2 };
   if (b === "SH" || b === "ZH" || b === "CH" || b === "JH") return { lips: 1 };

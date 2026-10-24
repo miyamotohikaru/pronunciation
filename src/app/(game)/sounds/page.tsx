@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import SoundsGrid from "@/ui/sounds/SoundsGrid";
-import { soundGroups } from "@/ui/sounds/data.server";
+import SoundBoard from "@/ui/sounds/SoundBoard";
+import { boardSounds } from "@/ui/sounds/data.server";
 
-export const metadata: Metadata = { title: "発音記号｜発音カラオケ" };
+export const metadata: Metadata = { title: "発音一覧｜発音カラオケ" };
 export const viewport: Viewport = { themeColor: "#f4f5fa" };
 
-/** /sounds — the 42 sounds (content/phonemes.json) grouped 母音 / 二重母音 / 子音. */
+/**
+ * /sounds — 発音一覧: the 42 sounds (content/phonemes.json) on one screen; pressing a sound changes
+ * the viewer in place (tongue, sound, a word to say and check). /sounds?s=IY opens that sound.
+ */
 export default function Page() {
-  return <SoundsGrid groups={soundGroups()} />;
+  return <SoundBoard sounds={boardSounds()} />;
 }

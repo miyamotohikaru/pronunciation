@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * The sound card's mouth: a professionally drawn mid-sagittal section (Wright & McCloy, CC0 — see
  * sagittal-data.ts and /credits), cut close around the mouth so the tongue's tip reads. Only the
@@ -10,9 +12,19 @@
  *   - No words in the picture (the steps say it once); the legend sits under it, not on the drawing.
  *   - Every line is 2 px or more; the picture is a rounded window, so nothing is cut square.
  * Colours: blue = お手本, yellow = your recording, pink = the "don't".
+ *
+ * With お手本 only (`heard` null) the tongue is blue and moves by itself: to a new `target` (from the
+ * one before, ~250 ms), and on `api.morph(shape)` to another sound and back (a pair's other word, a
+ * diphthong's glide) — drawn from refs, no React render per frame.
  */
-import { SAGITTAL_STATIC } from "./sagittal-data";
+import { useLayoutEffect, useRef } from "react";
+import { SAGITTAL_SHAPES, SAGITTAL_STATIC } from "./sagittal-data";
 import { TIP, blend, closedPath, outline, tipOf, tongueStart, type Pt, type ShapeKey } from "./geometry";
+
+export type SagittalApi = {
+  /** お手本's tongue moves to `to`'s shape (null: back to the target's), over `ms` */
+  morph: (to: ShapeKey | null, ms?: number) => void;
+};
 
 export type SagittalRefs = {
   svg?: { current: SVGSVGElement | null };
@@ -41,6 +53,10 @@ export type SagittalProps = {
   className?: string;
   /** numbered marks (the numbers of the steps under the picture they show): the tongue's way, the lips */
   marks?: { tongue?: 1 | 2; lips?: 1 | 2 };
+  /** お手本 only: moves the tongue to another sound and back (see SagittalApi) */
+  api?: { current: SagittalApi | null };
+  /** お手本 only: how long a change of `target` takes (ms; 0 = at once) */
+  morphMs?: number;
 };
 
 /** the window: the mouth from the back of the tongue to the lips */
@@ -59,6 +75,20 @@ export function tongueRange(target: ShapeKey, heard: ShapeKey | null): [number, 
     return o.length - 1;
   };
   return [ts, Math.max(end(a), heard ? end(outline(heard)) : 0)];
+}
+
+/** お手本 alone: one tongue range for every shape, so any two can be blended and drawn alike */
+let modelRange: [number, number] | null = null;
+function modelRangeOf(): [number, number] {
+  if (modelRange) return modelRange;
+  let ts = 0;
+  let re = 0;
+  for (const k of Object.keys(SAGITTAL_SHAPES) as ShapeKey[]) {
+    const [a, b] = tongueRange(k, null);
+    ts = Math.max(ts, a);
+    re = Math.max(re, b);
+  }
+  return (modelRange = [ts, re]);
 }
 
 /**
@@ -157,9 +187,58 @@ function Badge({ at, n }: { at: Pt; n: number }) {
   );
 }
 
-export default function Sagittal({ target, heard, pos, active, grip, refs, className, marks }: SagittalProps) {
+export default function Sagittal({ target, heard, pos, active, grip, refs, className, marks, api, morphMs = 250 }: SagittalProps) {
   const a = outline(target);
-  const range = tongueRange(target, heard);
+  const range = heard ? tongueRange(target, heard) : modelRangeOf();
+  // お手本 alone: its tongue's paths, drawn from refs while it moves
+  const mEdge = useRef<SVGPathElement>(null);
+  const mFill = useRef<SVGPathElement>(null);
+  const mLine = useRef<SVGPathElement>(null);
+  const mMark = useRef<SVGGElement>(null);
+  const cur = useRef<Pt[] | null>(null);
+  const raf = useRef(0);
+  const shown = useRef<ShapeKey>(target);
+  useLayoutEffect(() => {
+    if (heard) {
+      cancelAnimationFrame(raf.current);
+      cur.current = null;
+      if (api) api.current = null;
+      return;
+    }
+    const R = modelRangeOf();
+    const draw = (pts: Pt[]) => {
+      mEdge.current?.setAttribute("d", closedPath(pts));
+      mFill.current?.setAttribute("d", tonguePath(pts, R));
+      mLine.current?.setAttribute("d", tongueLine(pts, R));
+    };
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const go = (to: ShapeKey, ms: number) => {
+      cancelAnimationFrame(raf.current);
+      const dest = outline(to);
+      const from = cur.current ?? dest;
+      if (mMark.current) mMark.current.style.opacity = to === target ? "1" : "0";
+      if (reduce || ms <= 0 || from === dest) {
+        cur.current = dest;
+        draw(dest);
+        return;
+      }
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const k = Math.min(1, (now - t0) / ms);
+        cur.current = k < 1 ? blend(from, dest, 1 - Math.pow(1 - k, 3)) : dest;
+        draw(cur.current);
+        if (k < 1) raf.current = requestAnimationFrame(step);
+      };
+      draw(from); // before the first paint: the old shape, then it moves
+      raf.current = requestAnimationFrame(step);
+    };
+    // a new sound: from the tongue as it was to the new one
+    if (shown.current !== target || !cur.current) go(target, cur.current ? morphMs : 0);
+    shown.current = target;
+    if (api) api.current = { morph: (to, ms = 320) => go(to ?? target, ms) };
+    return () => cancelAnimationFrame(raf.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, heard]);
   const now = sagittalPoints(target, heard, pos);
   const contact = contactFor(target);
   const ki = keyIndex(target);
@@ -197,7 +276,7 @@ export default function Sagittal({ target, heard, pos, active, grip, refs, class
       <path d={SAGITTAL_STATIC.path13} fill={GREY} stroke={LINE} strokeWidth={W_LINE} strokeLinejoin="round" />
 
       {/* jaw, lower teeth and lip, tongue: anatomy grey; then your tongue alone in yellow */}
-      <path ref={refs?.edge} d={closedPath(now)} fill={GREY} stroke={LINE} strokeWidth={W_LINE} strokeLinejoin="round" />
+      <path ref={heard ? refs?.edge : mEdge} d={closedPath(now)} fill={GREY} stroke={LINE} strokeWidth={W_LINE} strokeLinejoin="round" />
       {heard ? (
         <>
           <path ref={refs?.body} d={tonguePath(now, range)} fill={`url(#${fadeId})`} />
@@ -213,8 +292,8 @@ export default function Sagittal({ target, heard, pos, active, grip, refs, class
         </>
       ) : (
         <>
-          <path d={tonguePath(a, range)} fill="color-mix(in srgb, var(--guide) 22%, white)" />
-          <path d={tongueLine(a, range)} fill="none" stroke="var(--guide-ink)" strokeWidth="0.62" strokeDasharray="1.9 1.3" strokeLinejoin="round" strokeLinecap="round" />
+          <path ref={mFill} d={tonguePath(a, range)} fill="color-mix(in srgb, var(--guide) 22%, white)" />
+          <path ref={mLine} d={tongueLine(a, range)} fill="none" stroke="var(--guide-ink)" strokeWidth="0.62" strokeDasharray="1.9 1.3" strokeLinejoin="round" strokeLinecap="round" />
         </>
       )}
 
@@ -223,7 +302,7 @@ export default function Sagittal({ target, heard, pos, active, grip, refs, class
 
       {/* where it must touch (●) or must not (✕) */}
       {contact ? (
-        <g data-mark="contact" className={active && contact.kind === "dont" ? "kara-blink" : undefined}>
+        <g ref={heard ? undefined : mMark} data-mark="contact" className={active && contact.kind === "dont" ? "kara-blink" : undefined} style={{ transition: "opacity 140ms" }}>
           {contact.kind === "do" ? (
             <circle cx={contact.at[0]} cy={contact.at[1]} r="1.5" fill="var(--guide-ink)" stroke="#fff" strokeWidth="0.55" />
           ) : (
