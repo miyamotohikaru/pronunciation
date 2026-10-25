@@ -1,0 +1,746 @@
+{
+  "version": 1,
+  "style_ja": "発音記号は英和辞典と同じ書き方です。\n´ は強く言う音節、` は2番目に強い音節、ː は長くのばす音を表します。",
+  "symbols": [
+    {
+      "symbol": "iː",
+      "kind": "vowel",
+      "name_ja": "長い i",
+      "how_ja": "口を横に強く引いた、\n長い「イー」。",
+      "examples": [
+        "see",
+        "eat"
+      ],
+      "example_ipa": [
+        "/síː/",
+        "/íːt/"
+      ]
+    },
+    {
+      "symbol": "i",
+      "kind": "vowel",
+      "name_ja": "短い i",
+      "how_ja": "力を抜いた短い「イ」。\n少し「エ」寄り。\n弱い音節では、\nhappy の最後の軽い「イ」も表します。",
+      "examples": [
+        "sit",
+        "happy"
+      ],
+      "example_ipa": [
+        "/sít/",
+        "/hǽpi/"
+      ]
+    },
+    {
+      "symbol": "e",
+      "kind": "vowel",
+      "name_ja": "e",
+      "how_ja": "日本語の「エ」に近い、\n短い音。",
+      "examples": [
+        "bed",
+        "said"
+      ],
+      "example_ipa": [
+        "/béd/",
+        "/séd/"
+      ]
+    },
+    {
+      "symbol": "æ",
+      "kind": "vowel",
+      "name_ja": "エの口の a",
+      "how_ja": "「エ」の口のまま「ア」と言う音。",
+      "examples": [
+        "cat",
+        "apple"
+      ],
+      "example_ipa": [
+        "/kǽt/",
+        "/ǽpəl/"
+      ]
+    },
+    {
+      "symbol": "ɑ",
+      "kind": "vowel",
+      "name_ja": "あくびの a",
+      "how_ja": "口を縦に大きく開けた「ア」。",
+      "examples": [
+        "hot",
+        "stop"
+      ],
+      "example_ipa": [
+        "/hɑ́t/",
+        "/stɑ́p/"
+      ]
+    },
+    {
+      "symbol": "ɑːr",
+      "kind": "vowel",
+      "name_ja": "a と r",
+      "how_ja": "口を大きく開けた「アー」のあと、\n舌を奥へ引いて r の響きで終わります。",
+      "examples": [
+        "car",
+        "park"
+      ],
+      "example_ipa": [
+        "/kɑ́ːr/",
+        "/pɑ́ːrk/"
+      ]
+    },
+    {
+      "symbol": "ɔː",
+      "kind": "vowel",
+      "name_ja": "長い o",
+      "how_ja": "口を縦に開け、\n少し丸めた長い音。",
+      "examples": [
+        "walk",
+        "call"
+      ],
+      "example_ipa": [
+        "/wɔ́ːk/",
+        "/kɔ́ːl/"
+      ]
+    },
+    {
+      "symbol": "ɔːr",
+      "kind": "vowel",
+      "name_ja": "o と r",
+      "how_ja": "口を開けた「オー」のあと、\n舌を奥へ引いて r の響きで終わります。",
+      "examples": [
+        "more",
+        "door"
+      ],
+      "example_ipa": [
+        "/mɔ́ːr/",
+        "/dɔ́ːr/"
+      ]
+    },
+    {
+      "symbol": "u",
+      "kind": "vowel",
+      "name_ja": "短い u",
+      "how_ja": "くちびるを軽く丸めるだけの、\n短くゆるい「ウ」。",
+      "examples": [
+        "book",
+        "good"
+      ],
+      "example_ipa": [
+        "/búk/",
+        "/gúd/"
+      ]
+    },
+    {
+      "symbol": "uː",
+      "kind": "vowel",
+      "name_ja": "長い u",
+      "how_ja": "くちびるを突き出した、\n長い「ウー」。",
+      "examples": [
+        "food",
+        "too"
+      ],
+      "example_ipa": [
+        "/fúːd/",
+        "/túː/"
+      ]
+    },
+    {
+      "symbol": "ʌ",
+      "kind": "vowel",
+      "name_ja": "短く軽い a",
+      "how_ja": "口を小さく開けた、\n短く軽い「ア」。\n強い音節に出ます。",
+      "examples": [
+        "cup",
+        "love"
+      ],
+      "example_ipa": [
+        "/kʌ́p/",
+        "/lʌ́v/"
+      ]
+    },
+    {
+      "symbol": "ə",
+      "kind": "vowel",
+      "name_ja": "あいまい母音",
+      "how_ja": "力を抜いた、\nごく短い弱い音。\n強くない音節に出ます。",
+      "examples": [
+        "about",
+        "lemon"
+      ],
+      "example_ipa": [
+        "/əbáʊt/",
+        "/lémən/"
+      ]
+    },
+    {
+      "symbol": "ɚ",
+      "kind": "vowel",
+      "name_ja": "弱い r の母音",
+      "how_ja": "舌を奥へ引いて、\n短く響かせる弱い音。",
+      "examples": [
+        "teacher",
+        "water"
+      ],
+      "example_ipa": [
+        "/tíːtʃɚ/",
+        "/wɔ́ːtɚ/"
+      ]
+    },
+    {
+      "symbol": "ɚː",
+      "kind": "vowel",
+      "name_ja": "強い r の母音",
+      "how_ja": "舌を奥へ引いたまま、\nこもった音を長めに響かせます。\n強い音節では ɚ́ː と書きます。",
+      "examples": [
+        "bird",
+        "work"
+      ],
+      "example_ipa": [
+        "/bɚ́ːd/",
+        "/wɚ́ːk/"
+      ]
+    },
+    {
+      "symbol": "iɚ",
+      "kind": "vowel",
+      "name_ja": "i と r",
+      "how_ja": "「イ」から、\n舌を奥へ引いて r の響きへ。",
+      "examples": [
+        "here",
+        "near"
+      ],
+      "example_ipa": [
+        "/híɚ/",
+        "/níɚ/"
+      ]
+    },
+    {
+      "symbol": "eɚ",
+      "kind": "vowel",
+      "name_ja": "e と r",
+      "how_ja": "「エ」から、\n舌を奥へ引いて r の響きへ。",
+      "examples": [
+        "hair",
+        "there"
+      ],
+      "example_ipa": [
+        "/héɚ/",
+        "/ðéɚ/"
+      ]
+    },
+    {
+      "symbol": "uɚ",
+      "kind": "vowel",
+      "name_ja": "u と r",
+      "how_ja": "「ウ」から、\n舌を奥へ引いて r の響きへ。",
+      "examples": [
+        "sure",
+        "tour"
+      ],
+      "example_ipa": [
+        "/ʃúɚ/",
+        "/túɚ/"
+      ]
+    },
+    {
+      "symbol": "eɪ",
+      "kind": "diphthong",
+      "name_ja": "エイ",
+      "how_ja": "「エ」から「イ」へ動く音。\n「エー」と伸ばしません。",
+      "examples": [
+        "make",
+        "day"
+      ],
+      "example_ipa": [
+        "/méɪk/",
+        "/déɪ/"
+      ]
+    },
+    {
+      "symbol": "aɪ",
+      "kind": "diphthong",
+      "name_ja": "アイ",
+      "how_ja": "「ア」を強く、\n「イ」を軽く添える1つの音。",
+      "examples": [
+        "time",
+        "my"
+      ],
+      "example_ipa": [
+        "/táɪm/",
+        "/máɪ/"
+      ]
+    },
+    {
+      "symbol": "ɔɪ",
+      "kind": "diphthong",
+      "name_ja": "オイ",
+      "how_ja": "「オ」から「イ」へ動く1つの音。",
+      "examples": [
+        "boy",
+        "voice"
+      ],
+      "example_ipa": [
+        "/bɔ́ɪ/",
+        "/vɔ́ɪs/"
+      ]
+    },
+    {
+      "symbol": "aʊ",
+      "kind": "diphthong",
+      "name_ja": "アウ",
+      "how_ja": "「ア」から、\nくちびるを丸めて「ウ」へ動く音。",
+      "examples": [
+        "now",
+        "house"
+      ],
+      "example_ipa": [
+        "/náʊ/",
+        "/háʊs/"
+      ]
+    },
+    {
+      "symbol": "oʊ",
+      "kind": "diphthong",
+      "name_ja": "オウ",
+      "how_ja": "「オ」から、\nくちびるをすぼめて「ウ」へ動く音。\n「オー」と伸ばしません。",
+      "examples": [
+        "go",
+        "home"
+      ],
+      "example_ipa": [
+        "/góʊ/",
+        "/hóʊm/"
+      ]
+    },
+    {
+      "symbol": "aɪɚ",
+      "kind": "diphthong",
+      "name_ja": "アイと r",
+      "how_ja": "aɪ のあと、\n舌を奥へ引いて r の響きへ。",
+      "examples": [
+        "fire",
+        "tired"
+      ],
+      "example_ipa": [
+        "/fáɪɚ/",
+        "/táɪɚd/"
+      ]
+    },
+    {
+      "symbol": "aʊɚ",
+      "kind": "diphthong",
+      "name_ja": "アウと r",
+      "how_ja": "aʊ のあと、\n舌を奥へ引いて r の響きへ。",
+      "examples": [
+        "hour",
+        "our"
+      ],
+      "example_ipa": [
+        "/áʊɚ/",
+        "/áʊɚ/"
+      ]
+    },
+    {
+      "symbol": "p",
+      "kind": "consonant",
+      "name_ja": "p",
+      "how_ja": "くちびるを閉じて、\n息を強く破裂させます。",
+      "examples": [
+        "park",
+        "stop"
+      ],
+      "example_ipa": [
+        "/pɑ́ːrk/",
+        "/stɑ́p/"
+      ]
+    },
+    {
+      "symbol": "b",
+      "kind": "consonant",
+      "name_ja": "b",
+      "how_ja": "くちびるを閉じて、\n声を出して開きます。",
+      "examples": [
+        "big",
+        "job"
+      ],
+      "example_ipa": [
+        "/bíg/",
+        "/dʒɑ́b/"
+      ]
+    },
+    {
+      "symbol": "t",
+      "kind": "consonant",
+      "name_ja": "t",
+      "how_ja": "舌先を歯ぐきの一点に当てて離します。\n米国英語では、\n母音にはさまれると ɾ（はじく音）になります。",
+      "examples": [
+        "time",
+        "eat"
+      ],
+      "example_ipa": [
+        "/táɪm/",
+        "/íːt/"
+      ]
+    },
+    {
+      "symbol": "d",
+      "kind": "consonant",
+      "name_ja": "d",
+      "how_ja": "舌先を歯ぐきに当てて、\n声を出して離します。",
+      "examples": [
+        "day",
+        "good"
+      ],
+      "example_ipa": [
+        "/déɪ/",
+        "/gúd/"
+      ]
+    },
+    {
+      "symbol": "k",
+      "kind": "consonant",
+      "name_ja": "k",
+      "how_ja": "舌の奥を上あごに付けて、\n息で離します。",
+      "examples": [
+        "key",
+        "book"
+      ],
+      "example_ipa": [
+        "/kíː/",
+        "/búk/"
+      ]
+    },
+    {
+      "symbol": "g",
+      "kind": "consonant",
+      "name_ja": "g",
+      "how_ja": "舌の奥を上あごに付けて、\n声を出して離します。",
+      "examples": [
+        "go",
+        "big"
+      ],
+      "example_ipa": [
+        "/góʊ/",
+        "/bíg/"
+      ]
+    },
+    {
+      "symbol": "tʃ",
+      "kind": "consonant",
+      "name_ja": "ch",
+      "how_ja": "舌先を付けてから、\nくちびるを突き出して息を出します。",
+      "examples": [
+        "check",
+        "much"
+      ],
+      "example_ipa": [
+        "/tʃék/",
+        "/mʌ́tʃ/"
+      ]
+    },
+    {
+      "symbol": "dʒ",
+      "kind": "consonant",
+      "name_ja": "j",
+      "how_ja": "舌先を付けてから、\nくちびるを突き出して声を出します。",
+      "examples": [
+        "job",
+        "page"
+      ],
+      "example_ipa": [
+        "/dʒɑ́b/",
+        "/péɪdʒ/"
+      ]
+    },
+    {
+      "symbol": "f",
+      "kind": "consonant",
+      "name_ja": "f",
+      "how_ja": "上の歯を下くちびるに乗せて、\n息だけを通します。",
+      "examples": [
+        "fine",
+        "half"
+      ],
+      "example_ipa": [
+        "/fáɪn/",
+        "/hǽf/"
+      ]
+    },
+    {
+      "symbol": "v",
+      "kind": "consonant",
+      "name_ja": "v",
+      "how_ja": "上の歯を下くちびるに乗せて、\n声を出します。",
+      "examples": [
+        "very",
+        "love"
+      ],
+      "example_ipa": [
+        "/véri/",
+        "/lʌ́v/"
+      ]
+    },
+    {
+      "symbol": "θ",
+      "kind": "consonant",
+      "name_ja": "息の th",
+      "how_ja": "舌先を前歯に軽く当てて、\n息だけを通します。",
+      "examples": [
+        "think",
+        "mouth"
+      ],
+      "example_ipa": [
+        "/θíŋk/",
+        "/máʊθ/"
+      ]
+    },
+    {
+      "symbol": "ð",
+      "kind": "consonant",
+      "name_ja": "声の th",
+      "how_ja": "舌先を前歯に軽く当てて、\n声を出します。",
+      "examples": [
+        "this",
+        "mother"
+      ],
+      "example_ipa": [
+        "/ðís/",
+        "/mʌ́ðɚ/"
+      ]
+    },
+    {
+      "symbol": "s",
+      "kind": "consonant",
+      "name_ja": "s",
+      "how_ja": "歯を近づけて、\n細く強い息を出します。",
+      "examples": [
+        "see",
+        "bus"
+      ],
+      "example_ipa": [
+        "/síː/",
+        "/bʌ́s/"
+      ]
+    },
+    {
+      "symbol": "z",
+      "kind": "consonant",
+      "name_ja": "z",
+      "how_ja": "s の形のまま、\n声を出します。\n舌先は付けません。",
+      "examples": [
+        "zoo",
+        "busy"
+      ],
+      "example_ipa": [
+        "/zúː/",
+        "/bízi/"
+      ]
+    },
+    {
+      "symbol": "ʃ",
+      "kind": "consonant",
+      "name_ja": "sh",
+      "how_ja": "くちびるを突き出して、\n広い息を出します。",
+      "examples": [
+        "she",
+        "wash"
+      ],
+      "example_ipa": [
+        "/ʃíː/",
+        "/wɑ́ʃ/"
+      ]
+    },
+    {
+      "symbol": "ʒ",
+      "kind": "consonant",
+      "name_ja": "声の sh",
+      "how_ja": "ʃ の形のまま、\n声を出します。\n舌先は付けません。",
+      "examples": [
+        "usually",
+        "measure"
+      ],
+      "example_ipa": [
+        "/júːʒəli/",
+        "/méʒɚ/"
+      ]
+    },
+    {
+      "symbol": "h",
+      "kind": "consonant",
+      "name_ja": "h",
+      "how_ja": "のどの奥から、\n息だけを出します。",
+      "examples": [
+        "hat",
+        "who"
+      ],
+      "example_ipa": [
+        "/hǽt/",
+        "/húː/"
+      ]
+    },
+    {
+      "symbol": "m",
+      "kind": "consonant",
+      "name_ja": "m",
+      "how_ja": "くちびるを閉じたまま、\n鼻に響かせます。",
+      "examples": [
+        "make",
+        "home"
+      ],
+      "example_ipa": [
+        "/méɪk/",
+        "/hóʊm/"
+      ]
+    },
+    {
+      "symbol": "n",
+      "kind": "consonant",
+      "name_ja": "n",
+      "how_ja": "舌先を歯ぐきに付けたまま、\n鼻に響かせます。",
+      "examples": [
+        "name",
+        "sun"
+      ],
+      "example_ipa": [
+        "/néɪm/",
+        "/sʌ́n/"
+      ]
+    },
+    {
+      "symbol": "ŋ",
+      "kind": "consonant",
+      "name_ja": "ng",
+      "how_ja": "舌の奥を付けて、\n鼻に響かせます。\ng は言いません。",
+      "examples": [
+        "sing",
+        "long"
+      ],
+      "example_ipa": [
+        "/síŋ/",
+        "/lɔ́ːŋ/"
+      ]
+    },
+    {
+      "symbol": "l",
+      "kind": "consonant",
+      "name_ja": "l",
+      "how_ja": "舌先を前歯の付け根に付けたまま、\n声を出します。",
+      "examples": [
+        "light",
+        "feel"
+      ],
+      "example_ipa": [
+        "/láɪt/",
+        "/fíːl/"
+      ]
+    },
+    {
+      "symbol": "r",
+      "kind": "consonant",
+      "name_ja": "r",
+      "how_ja": "舌をどこにも付けず、\nくちびるを丸めて声を出します。",
+      "examples": [
+        "red",
+        "car"
+      ],
+      "example_ipa": [
+        "/réd/",
+        "/kɑ́ːr/"
+      ]
+    },
+    {
+      "symbol": "w",
+      "kind": "consonant",
+      "name_ja": "w",
+      "how_ja": "くちびるをすぼめてから、\nゆるめて次の母音へ。",
+      "examples": [
+        "water",
+        "woman"
+      ],
+      "example_ipa": [
+        "/wɔ́ːtɚ/",
+        "/wúmən/"
+      ]
+    },
+    {
+      "symbol": "j",
+      "kind": "consonant",
+      "name_ja": "y の音",
+      "how_ja": "舌を上あごに近づけてから、\n次の母音へすべらせます。\ny のつづりでも j と書きます。",
+      "examples": [
+        "yes",
+        "year"
+      ],
+      "example_ipa": [
+        "/jés/",
+        "/jíɚ/"
+      ]
+    },
+    {
+      "symbol": "ɾ",
+      "kind": "consonant",
+      "name_ja": "はじく t",
+      "how_ja": "舌先で一回だけ軽くはじく音。\n辞書では t と書かれ、\n米国英語で母音にはさまれた t がこの音になります。",
+      "examples": [
+        "water",
+        "city"
+      ],
+      "example_ipa": [
+        "/wɔ́ːtɚ/",
+        "/síti/"
+      ]
+    },
+    {
+      "symbol": "´",
+      "kind": "mark",
+      "name_ja": "第1強勢",
+      "how_ja": "この記号が付いた母音の音節を、\nいちばん強く、\n高く、\n長く言います。",
+      "examples": [
+        "about",
+        "hotel"
+      ],
+      "example_ipa": [
+        "/əbáʊt/",
+        "/hoʊtél/"
+      ]
+    },
+    {
+      "symbol": "`",
+      "kind": "mark",
+      "name_ja": "第2強勢",
+      "how_ja": "この記号が付いた母音の音節を、\n2番目に強く言います。",
+      "examples": [
+        "okay",
+        "everything"
+      ],
+      "example_ipa": [
+        "/òʊkéɪ/",
+        "/évriθìŋ/"
+      ]
+    },
+    {
+      "symbol": "ː",
+      "kind": "mark",
+      "name_ja": "長音",
+      "how_ja": "前の母音を長くのばします。",
+      "examples": [
+        "see",
+        "food"
+      ],
+      "example_ipa": [
+        "/síː/",
+        "/fúːd/"
+      ]
+    },
+    {
+      "symbol": "/ /",
+      "kind": "mark",
+      "name_ja": "発音記号のくくり",
+      "how_ja": "/ と / の間が、\nその単語の発音です。",
+      "examples": [
+        "rice"
+      ],
+      "example_ipa": [
+        "/ráɪs/"
+      ]
+    }
+  ]
+}

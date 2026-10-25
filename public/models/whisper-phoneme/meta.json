@@ -1,0 +1,498 @@
+{
+ "schema": 1,
+ "id": "whisper-base-en-phoneme-ctc",
+ "source": "vb223/whisper-base-en-phoneme-ctc (Whisper base.en encoder by OpenAI + CTC head + GOP regressor), trained on speechocean762 (Zhang et al., CC BY 4.0)",
+ "license": "MIT",
+ "files": {
+  "onnx": {
+   "int8w": "model.int8w.onnx"
+  },
+  "defaultOnnx": "int8w",
+  "hash": {
+   "int8w": "a79272819f3e14a7"
+  },
+  "sessionConfig": {
+   "int8w": {
+    "session.disable_quant_qdq": "1"
+   }
+  },
+  "regressor": "regressor.json",
+  "melFilters": "mel_filters_80.json"
+ },
+ "frontEnd": {
+  "type": "whisper-log-mel",
+  "sampleRate": 16000,
+  "nFft": 400,
+  "hop": 160,
+  "nMels": 80,
+  "tailPadSeconds": 0.5,
+  "minSeconds": 0.0
+ },
+ "onnx": {
+  "input": "mel",
+  "output": "log_probs",
+  "logSoftmax": true,
+  "frameRate": 50,
+  "samplesPerFrame": 320,
+  "maxFrames": 1500
+ },
+ "vocab": [
+  "<pad>",
+  "<unk>",
+  "AA",
+  "AA0",
+  "AA1",
+  "AA2",
+  "AE",
+  "AE0",
+  "AE1",
+  "AE2",
+  "AH",
+  "AH0",
+  "AH1",
+  "AH2",
+  "AO",
+  "AO0",
+  "AO1",
+  "AO2",
+  "AW",
+  "AW0",
+  "AW1",
+  "AW2",
+  "AY",
+  "AY0",
+  "AY1",
+  "AY2",
+  "B",
+  "CH",
+  "D",
+  "DH",
+  "EH",
+  "EH0",
+  "EH1",
+  "EH2",
+  "ER",
+  "ER0",
+  "ER1",
+  "ER2",
+  "EY",
+  "EY0",
+  "EY1",
+  "EY2",
+  "F",
+  "G",
+  "HH",
+  "IH",
+  "IH0",
+  "IH1",
+  "IH2",
+  "IY",
+  "IY0",
+  "IY1",
+  "IY2",
+  "JH",
+  "K",
+  "L",
+  "M",
+  "N",
+  "NG",
+  "OW",
+  "OW0",
+  "OW1",
+  "OW2",
+  "OY",
+  "OY0",
+  "OY1",
+  "OY2",
+  "P",
+  "R",
+  "S",
+  "SH",
+  "T",
+  "TH",
+  "UH",
+  "UH0",
+  "UH1",
+  "UH2",
+  "UW",
+  "UW0",
+  "UW1",
+  "UW2",
+  "V",
+  "W",
+  "Y",
+  "Z",
+  "ZH"
+ ],
+ "vocabSize": 87,
+ "blank": 0,
+ "units": {
+  "AA": [
+   2,
+   3,
+   4,
+   5
+  ],
+  "AE": [
+   6,
+   7,
+   8,
+   9
+  ],
+  "AH": [
+   10,
+   11,
+   12,
+   13
+  ],
+  "AO": [
+   14,
+   15,
+   16,
+   17
+  ],
+  "AW": [
+   18,
+   19,
+   20,
+   21
+  ],
+  "AY": [
+   22,
+   23,
+   24,
+   25
+  ],
+  "B": [
+   26
+  ],
+  "CH": [
+   27
+  ],
+  "D": [
+   28
+  ],
+  "DH": [
+   29
+  ],
+  "EH": [
+   30,
+   31,
+   32,
+   33
+  ],
+  "ER": [
+   34,
+   35,
+   36,
+   37
+  ],
+  "EY": [
+   38,
+   39,
+   40,
+   41
+  ],
+  "F": [
+   42
+  ],
+  "G": [
+   43
+  ],
+  "HH": [
+   44
+  ],
+  "IH": [
+   45,
+   46,
+   47,
+   48
+  ],
+  "IY": [
+   49,
+   50,
+   51,
+   52
+  ],
+  "JH": [
+   53
+  ],
+  "K": [
+   54
+  ],
+  "L": [
+   55
+  ],
+  "M": [
+   56
+  ],
+  "N": [
+   57
+  ],
+  "NG": [
+   58
+  ],
+  "OW": [
+   59,
+   60,
+   61,
+   62
+  ],
+  "OY": [
+   63,
+   64,
+   65,
+   66
+  ],
+  "P": [
+   67
+  ],
+  "R": [
+   68
+  ],
+  "S": [
+   69
+  ],
+  "SH": [
+   70
+  ],
+  "T": [
+   71
+  ],
+  "TH": [
+   72
+  ],
+  "UH": [
+   73,
+   74,
+   75,
+   76
+  ],
+  "UW": [
+   77,
+   78,
+   79,
+   80
+  ],
+  "V": [
+   81
+  ],
+  "W": [
+   82
+  ],
+  "Y": [
+   83
+  ],
+  "Z": [
+   84
+  ],
+  "ZH": [
+   85
+  ]
+ },
+ "regressor": {
+  "features": [
+   "gop",
+   "logp_target",
+   "logp_competitor",
+   "logp_target_min",
+   "n_frames"
+  ],
+  "oneHotSize": 87,
+  "classOf": {
+   "AA": 3,
+   "AE": 7,
+   "AH": 11,
+   "AO": 15,
+   "AW": 19,
+   "AY": 23,
+   "B": 26,
+   "CH": 27,
+   "D": 28,
+   "DH": 29,
+   "EH": 31,
+   "ER": 35,
+   "EY": 39,
+   "F": 42,
+   "G": 43,
+   "HH": 44,
+   "IH": 46,
+   "IY": 50,
+   "JH": 53,
+   "K": 54,
+   "L": 55,
+   "M": 56,
+   "N": 57,
+   "NG": 58,
+   "OW": 60,
+   "OY": 64,
+   "P": 67,
+   "R": 68,
+   "S": 69,
+   "SH": 70,
+   "T": 71,
+   "TH": 72,
+   "UH": 74,
+   "UW": 78,
+   "V": 81,
+   "W": 82,
+   "Y": 83,
+   "Z": 84,
+   "ZH": 85
+  },
+  "range": [
+   0,
+   2
+  ]
+ },
+ "calibration": {
+  "knots": [
+   [
+    0.0,
+    0.0
+   ],
+   [
+    0.6,
+    20.0
+   ],
+   [
+    1.0,
+    40.0
+   ],
+   [
+    1.4,
+    70.0
+   ],
+   [
+    1.7,
+    90.0
+   ],
+   [
+    1.85,
+    97.0
+   ],
+   [
+    1.95,
+    100.0
+   ]
+  ]
+ },
+ "diagnosis": {
+  "confusions": {
+   "R": [
+    "L",
+    "D",
+    "W"
+   ],
+   "L": [
+    "R"
+   ],
+   "TH": [
+    "S",
+    "T",
+    "F"
+   ],
+   "DH": [
+    "Z",
+    "D"
+   ],
+   "V": [
+    "B",
+    "F",
+    "W"
+   ],
+   "F": [
+    "HH",
+    "P"
+   ],
+   "S": [
+    "SH",
+    "TH"
+   ],
+   "SH": [
+    "S"
+   ],
+   "Z": [
+    "JH",
+    "S"
+   ],
+   "ZH": [
+    "JH",
+    "SH"
+   ],
+   "W": [
+    "UW"
+   ],
+   "HH": [
+    "F"
+   ],
+   "N": [
+    "NG"
+   ],
+   "NG": [
+    "N"
+   ],
+   "AE": [
+    "AH",
+    "EH",
+    "AA"
+   ],
+   "AH": [
+    "AA",
+    "AE"
+   ],
+   "AA": [
+    "AH",
+    "AO",
+    "OW"
+   ],
+   "AO": [
+    "OW"
+   ],
+   "IH": [
+    "IY"
+   ],
+   "IY": [
+    "IH"
+   ],
+   "UH": [
+    "UW"
+   ],
+   "UW": [
+    "UH"
+   ],
+   "ER": [
+    "AA",
+    "AH"
+   ],
+   "EY": [
+    "EH"
+   ],
+   "OW": [
+    "AO"
+   ]
+  },
+  "epentheticVowels": [
+   "UW",
+   "UH",
+   "OW",
+   "AO",
+   "IH",
+   "IY",
+   "AH"
+  ],
+  "substitutionPenalty": 2.0,
+  "pairPenalty": {
+   "N>NG": 4.5,
+   "NG>N": 4.5
+  },
+  "insertionPenalty": 0.5,
+  "deletionPenalty": 6.0,
+  "minInsertionFrames": 1,
+  "distortionBelow": 60,
+  "substitutionCap": 35,
+  "deletionCap": 30,
+  "insertionScore": 35,
+  "worstPhoneMargin": 20
+ }
+}

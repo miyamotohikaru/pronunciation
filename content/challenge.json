@@ -1,0 +1,3084 @@
+{
+  "version": 1,
+  "long": [
+    {
+      "id": "long-01",
+      "text": "I usually take the train to work, but today I walked because the weather was nice.",
+      "ja": "いつもは電車で通勤していますが、\n今日は天気がよかったので歩きました。",
+      "focus": [
+        {
+          "word": "usually",
+          "phone": "ZH",
+          "watch_for": [
+            "JH"
+          ],
+          "tip_ja": "usu の s は、\n声を出した「シュ」。\n舌をどこにも付けません。",
+          "ipa": "/júːʒəwəli/"
+        },
+        {
+          "word": "train",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "t のすぐあとに、\n舌を付けない r。",
+          "ipa": "/tréɪn/"
+        },
+        {
+          "word": "walked",
+          "phone": "T",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "walked の最後は小さな t だけ。",
+          "ipa": "/wɔ́ːkt/"
+        },
+        {
+          "word": "weather",
+          "phone": "DH",
+          "watch_for": [
+            "Z",
+            "D"
+          ],
+          "tip_ja": "舌先を前歯に軽く当てたまま声を出します。",
+          "ipa": "/wéðɚ/"
+        }
+      ],
+      "difficulty": 3
+    },
+    {
+      "id": "long-02",
+      "text": "Could you tell me how long it takes to get to the station from here?",
+      "ja": "ここから駅まで、\nどのくらいかかるか教えてもらえますか？",
+      "focus": [
+        {
+          "word": "tell",
+          "phone": "L",
+          "watch_for": [
+            "R"
+          ],
+          "tip_ja": "tell の l は舌先を前歯の付け根に。",
+          "ipa": "/tél/"
+        },
+        {
+          "word": "long",
+          "phone": "NG",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "long は舌の奥で止めます。",
+          "ipa": "/lɔ́ːŋ/"
+        },
+        {
+          "word": "get",
+          "phone": "T",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "get to は t を一つにつなげます。",
+          "ipa": "/gét/"
+        },
+        {
+          "word": "here",
+          "phone": "R",
+          "watch_for": [],
+          "tip_ja": "here の最後に r の響き。",
+          "ipa": "/híɚ/"
+        }
+      ],
+      "difficulty": 3
+    },
+    {
+      "id": "long-03",
+      "text": "We're having a small party this weekend, and we'd love it if you could come.",
+      "ja": "今週末に小さな集まりを開くので、\n来てもらえたらうれしいです。",
+      "focus": [
+        {
+          "word": "party",
+          "phone": "T",
+          "watch_for": [],
+          "tip_ja": "party の t はラ行のように軽く。",
+          "ipa": "/pɑ́ːrti/",
+          "ipa_note_ja": "米国英語では、\nこの t は舌先で軽くはじく音（ラ行に近い音）になります。"
+        },
+        {
+          "word": "this",
+          "phone": "DH",
+          "watch_for": [
+            "Z",
+            "D"
+          ],
+          "tip_ja": "this は舌先を前歯に。",
+          "ipa": "/ðís/"
+        },
+        {
+          "word": "love",
+          "phone": "V",
+          "watch_for": [
+            "B",
+            "EPEN"
+          ],
+          "tip_ja": "love の v は歯を下くちびるに当てたまま it へ。",
+          "ipa": "/lʌ́v/"
+        }
+      ],
+      "difficulty": 3
+    },
+    {
+      "id": "long-04",
+      "text": "I'm sorry I'm late; the traffic was terrible and I couldn't find a place to park.",
+      "ja": "遅れてすみません。\n渋滞がひどくて、\n車を止める場所が見つかりませんでした。",
+      "focus": [
+        {
+          "word": "sorry",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "sorry の r は舌を付けずに。",
+          "ipa": "/sɑ́ri/"
+        },
+        {
+          "word": "late",
+          "phone": "L",
+          "watch_for": [
+            "R"
+          ],
+          "tip_ja": "late は舌先を付けて。",
+          "ipa": "/léɪt/"
+        },
+        {
+          "word": "traffic",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "traffic の r も舌を付けずに。",
+          "ipa": "/trǽfik/"
+        },
+        {
+          "word": "place",
+          "phone": "L",
+          "watch_for": [
+            "R"
+          ],
+          "tip_ja": "p のすぐあとに、\n舌先を付けて l。",
+          "ipa": "/pléɪs/"
+        }
+      ],
+      "difficulty": 3
+    },
+    {
+      "id": "long-05",
+      "text": "Thank you for your help this week; I really couldn't have finished it without you.",
+      "ja": "今週は手伝ってくれてありがとう。\nあなたがいなかったら、\n本当に終わらせられませんでした。",
+      "focus": [
+        {
+          "word": "thank",
+          "phone": "TH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "舌先を前歯に軽く当てて、\n息だけ。",
+          "ipa": "/θǽŋk/"
+        },
+        {
+          "word": "help",
+          "phone": "L",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "help の l のあとに母音を入れず、\nすぐ p へ。",
+          "ipa": "/hélp/"
+        },
+        {
+          "word": "really",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "really は R、\nL の順です。",
+          "ipa": "/ríli/"
+        },
+        {
+          "word": "finished",
+          "phone": "F",
+          "watch_for": [
+            "HH"
+          ],
+          "tip_ja": "finished は歯を下くちびるに当てて。",
+          "ipa": "/fíniʃt/"
+        }
+      ],
+      "difficulty": 3
+    },
+    {
+      "id": "long-06",
+      "text": "My brother lives in a big city, but he visits our parents every summer.",
+      "ja": "兄は大都市に住んでいますが、\n毎年夏には両親に会いに来ます。",
+      "focus": [
+        {
+          "word": "brother",
+          "phone": "DH",
+          "watch_for": [
+            "Z",
+            "D"
+          ],
+          "tip_ja": "brother の th は声を出す th。",
+          "ipa": "/brʌ́ðɚ/"
+        },
+        {
+          "word": "city",
+          "phone": "T",
+          "watch_for": [],
+          "tip_ja": "city の t は軽くはじきます。",
+          "ipa": "/síti/",
+          "ipa_note_ja": "米国英語では、\nこの t は舌先で軽くはじく音（ラ行に近い音）になります。"
+        },
+        {
+          "word": "visits",
+          "phone": "V",
+          "watch_for": [
+            "B"
+          ],
+          "tip_ja": "visits は歯を下くちびるに当てて。",
+          "ipa": "/vízits/"
+        },
+        {
+          "word": "summer",
+          "phone": "ER",
+          "watch_for": [
+            "AA",
+            "AH"
+          ],
+          "tip_ja": "summer の er は短く響かせます。",
+          "ipa": "/sʌ́mɚ/"
+        }
+      ],
+      "difficulty": 4
+    },
+    {
+      "id": "long-07",
+      "text": "If it rains tomorrow, we'll stay home and watch a movie instead of going to the beach.",
+      "ja": "明日雨が降ったら、\n海に行くのはやめて、\n家で映画を見ます。",
+      "focus": [
+        {
+          "word": "rains",
+          "phone": "EY",
+          "watch_for": [
+            "EH"
+          ],
+          "tip_ja": "rains は「エイ」と口を動かします。",
+          "ipa": "/réɪnz/"
+        },
+        {
+          "word": "home",
+          "phone": "OW",
+          "watch_for": [
+            "AO"
+          ],
+          "tip_ja": "home は「オウ」と最後にすぼめます。",
+          "ipa": "/hóʊm/"
+        },
+        {
+          "word": "movie",
+          "phone": "V",
+          "watch_for": [
+            "B"
+          ],
+          "tip_ja": "movie の v は歯を下くちびるに。",
+          "ipa": "/múːvi/"
+        },
+        {
+          "word": "beach",
+          "phone": "IY",
+          "watch_for": [
+            "IH"
+          ],
+          "tip_ja": "beach は口を横に引いた長い「イー」。",
+          "ipa": "/bíːtʃ/"
+        }
+      ],
+      "difficulty": 4
+    },
+    {
+      "id": "long-08",
+      "text": "The doctor said I should get more sleep and drink less coffee during the week.",
+      "ja": "医者に、\n平日はもっと睡眠をとって、\n珈琲を減らすように言われました。",
+      "focus": [
+        {
+          "word": "doctor",
+          "phone": "AA",
+          "watch_for": [
+            "AO",
+            "OW"
+          ],
+          "tip_ja": "doc は縦に大きく開けて。",
+          "ipa": "/dɑ́ktɚ/"
+        },
+        {
+          "word": "sleep",
+          "phone": "S",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "sl を母音なしで。",
+          "ipa": "/slíːp/"
+        },
+        {
+          "word": "coffee",
+          "phone": "F",
+          "watch_for": [
+            "HH"
+          ],
+          "tip_ja": "coffee の f は歯を下くちびるに。",
+          "ipa": "/kɑ́fi/"
+        }
+      ],
+      "difficulty": 4
+    },
+    {
+      "id": "long-09",
+      "text": "I've been learning English for three years, and I still find the pronunciation hard.",
+      "ja": "英語を3年間勉強していますが、\nまだ発音が難しいと感じます。",
+      "focus": [
+        {
+          "word": "learning",
+          "phone": "ER",
+          "watch_for": [
+            "AA",
+            "AH"
+          ],
+          "tip_ja": "learn は ER の音。",
+          "ipa": "/lɚ́ːniŋ/"
+        },
+        {
+          "word": "three",
+          "phone": "TH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "three は th のすぐあとに r。",
+          "ipa": "/θríː/"
+        },
+        {
+          "word": "years",
+          "phone": "Y",
+          "watch_for": [],
+          "tip_ja": "years は「イ」の前に、\n舌を上あごに近づけた y を入れます。",
+          "ipa": "/jíɚz/"
+        },
+        {
+          "word": "still",
+          "phone": "L",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "still の最後は舌先を付けて止めます。",
+          "ipa": "/stíl/"
+        }
+      ],
+      "difficulty": 4
+    },
+    {
+      "id": "long-10",
+      "text": "Let's meet in front of the bookstore at a quarter to seven, and then grab dinner.",
+      "ja": "7時15分前に本屋の前で会って、\nそれから夕食にしましょう。",
+      "focus": [
+        {
+          "word": "front",
+          "phone": "F",
+          "watch_for": [
+            "HH"
+          ],
+          "tip_ja": "front は歯を下くちびるに当ててから r。",
+          "ipa": "/frʌ́nt/"
+        },
+        {
+          "word": "bookstore",
+          "phone": "UH",
+          "watch_for": [
+            "UW"
+          ],
+          "tip_ja": "book は短くゆるい「ウ」。",
+          "ipa": "/búkstɔ̀ːr/"
+        },
+        {
+          "word": "quarter",
+          "phone": "T",
+          "watch_for": [],
+          "tip_ja": "quarter の t は軽くはじきます。",
+          "ipa": "/kwɔ́ːrtɚ/",
+          "ipa_note_ja": "米国英語では、\nこの t は舌先で軽くはじく音（ラ行に近い音）になります。"
+        },
+        {
+          "word": "grab",
+          "phone": "AE",
+          "watch_for": [
+            "AA",
+            "AH"
+          ],
+          "tip_ja": "grab は「エ」の口で「ア」。",
+          "ipa": "/grǽb/"
+        }
+      ],
+      "difficulty": 4
+    },
+    {
+      "id": "long-11",
+      "text": "Would you mind turning the music down a little? I'm trying to finish this report.",
+      "ja": "音楽を少し小さくしてもらえますか？ この報告書を仕上げようとしているんです。",
+      "focus": [
+        {
+          "word": "would",
+          "phone": "W",
+          "watch_for": [],
+          "tip_ja": "would はくちびるをすぼめてから。",
+          "ipa": "/wúd/"
+        },
+        {
+          "word": "turning",
+          "phone": "ER",
+          "watch_for": [
+            "AA",
+            "AH"
+          ],
+          "tip_ja": "turn は ER の音。",
+          "ipa": "/tɚ́ːniŋ/"
+        },
+        {
+          "word": "music",
+          "phone": "Z",
+          "watch_for": [
+            "JH"
+          ],
+          "tip_ja": "music の s は声を出す s。\n「ジ」にしません。",
+          "ipa": "/mjúːzik/"
+        },
+        {
+          "word": "little",
+          "phone": "T",
+          "watch_for": [],
+          "tip_ja": "little の t は軽くはじきます。",
+          "ipa": "/lítəl/",
+          "ipa_note_ja": "米国英語では、\nこの t は舌先で軽くはじく音（ラ行に近い音）になります。"
+        }
+      ],
+      "difficulty": 4
+    },
+    {
+      "id": "long-12",
+      "text": "She asked whether we wanted to sit outside, but it was a little too cold for that.",
+      "ja": "外の席がいいか聞かれましたが、\nそれには少し寒すぎました。",
+      "focus": [
+        {
+          "word": "she",
+          "phone": "SH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "she はくちびるを突き出して。",
+          "ipa": "/ʃíː/"
+        },
+        {
+          "word": "asked",
+          "phone": "T",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "asked は skt を母音なしで。",
+          "ipa": "/ǽskt/"
+        },
+        {
+          "word": "sit",
+          "phone": "S",
+          "watch_for": [
+            "SH"
+          ],
+          "tip_ja": "sit の s は「シ」にしません。",
+          "ipa": "/sít/"
+        },
+        {
+          "word": "cold",
+          "phone": "OW",
+          "watch_for": [
+            "AO"
+          ],
+          "tip_ja": "cold は「オウ」と動かします。",
+          "ipa": "/kóʊld/"
+        }
+      ],
+      "difficulty": 4
+    },
+    {
+      "id": "long-13",
+      "text": "Honestly, I thought the first half of the movie was boring, but the ending was wonderful.",
+      "ja": "正直、\n映画の前半は退屈だと思いましたが、\n結末はすばらしかったです。",
+      "focus": [
+        {
+          "word": "thought",
+          "phone": "TH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "thought は舌先を前歯に当てて息だけ。",
+          "ipa": "/θɔ́ːt/"
+        },
+        {
+          "word": "first",
+          "phone": "ER",
+          "watch_for": [
+            "AA",
+            "AH"
+          ],
+          "tip_ja": "first は ER の音。",
+          "ipa": "/fɚ́ːst/"
+        },
+        {
+          "word": "half",
+          "phone": "F",
+          "watch_for": [
+            "HH",
+            "EPEN"
+          ],
+          "tip_ja": "half の最後は歯を下くちびるに当てて息だけ。",
+          "ipa": "/hǽf/"
+        },
+        {
+          "word": "wonderful",
+          "phone": "W",
+          "watch_for": [],
+          "tip_ja": "wonderful はくちびるをすぼめてから。",
+          "ipa": "/wʌ́ndɚfəl/"
+        }
+      ],
+      "difficulty": 5
+    },
+    {
+      "id": "long-14",
+      "text": "We should probably leave a little earlier than usual, because the roads get crowded around five.",
+      "ja": "5時ごろは道が混むので、\nいつもより少し早めに出たほうがよさそうです。",
+      "focus": [
+        {
+          "word": "probably",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "probably は r、\nl の順です。",
+          "ipa": "/prɑ́bəblìː/"
+        },
+        {
+          "word": "earlier",
+          "phone": "ER",
+          "watch_for": [
+            "AA",
+            "AH"
+          ],
+          "tip_ja": "earlier は ER で始めます。",
+          "ipa": "/ɚ́ːliɚ/"
+        },
+        {
+          "word": "usual",
+          "phone": "ZH",
+          "watch_for": [
+            "JH"
+          ],
+          "tip_ja": "usual の s は声を出した「シュ」。",
+          "ipa": "/júːʒəwəl/"
+        },
+        {
+          "word": "crowded",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "k のすぐあとに、\n舌を付けない r。",
+          "ipa": "/kráʊdəd/"
+        }
+      ],
+      "difficulty": 5
+    },
+    {
+      "id": "long-15",
+      "text": "I wasn't sure which train to take, so I asked a woman at the ticket gate for help.",
+      "ja": "どの電車に乗ればいいかわからなかったので、\n改札の女性に助けを求めました。",
+      "focus": [
+        {
+          "word": "sure",
+          "phone": "SH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "sure はくちびるを突き出した sh。",
+          "ipa": "/ʃúɚ/"
+        },
+        {
+          "word": "train",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "train の r は舌を付けずに。",
+          "ipa": "/tréɪn/"
+        },
+        {
+          "word": "woman",
+          "phone": "W",
+          "watch_for": [],
+          "tip_ja": "woman はくちびるをすぼめてから。",
+          "ipa": "/wúmən/"
+        },
+        {
+          "word": "ticket",
+          "phone": "T",
+          "watch_for": [
+            "CH"
+          ],
+          "tip_ja": "ticket は「チ」にしません。",
+          "ipa": "/tíkət/"
+        }
+      ],
+      "difficulty": 5
+    },
+    {
+      "id": "long-16",
+      "text": "There are three things I always check before a big meeting: the time, the room, and the slides.",
+      "ja": "大事な会議の前に、\n必ず確かめることが3つあります。\n時間と、\n部屋と、\n資料です。",
+      "focus": [
+        {
+          "word": "three",
+          "phone": "TH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "three は舌先を前歯に当ててから r。",
+          "ipa": "/θríː/"
+        },
+        {
+          "word": "things",
+          "phone": "TH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "things も th。",
+          "ipa": "/θíŋz/"
+        },
+        {
+          "word": "room",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "room の r は舌を付けずに。",
+          "ipa": "/rúːm/"
+        },
+        {
+          "word": "slides",
+          "phone": "L",
+          "watch_for": [
+            "R"
+          ],
+          "tip_ja": "slides は並べる最後なので下げて終わります。",
+          "ipa": "/sláɪdz/"
+        }
+      ],
+      "difficulty": 5
+    },
+    {
+      "id": "long-17",
+      "text": "Thanks to everyone who worked so hard this year; we couldn't have reached our goal without you.",
+      "ja": "今年がんばってくれた皆さん、\nありがとうございます。\n皆さんがいなければ、\n目標には届きませんでした。",
+      "focus": [
+        {
+          "word": "thanks",
+          "phone": "TH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "thanks は舌先を前歯に当てて。",
+          "ipa": "/θǽŋks/"
+        },
+        {
+          "word": "worked",
+          "phone": "ER",
+          "watch_for": [
+            "AA",
+            "AO"
+          ],
+          "tip_ja": "worked は ER の音。\nwalked にしません。",
+          "ipa": "/wɚ́ːkt/"
+        },
+        {
+          "word": "year",
+          "phone": "Y",
+          "watch_for": [],
+          "tip_ja": "year は y から始めます。\near にしません。",
+          "ipa": "/jíɚ/"
+        },
+        {
+          "word": "goal",
+          "phone": "L",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "goal の最後は舌先を付けて止めます。",
+          "ipa": "/góʊl/"
+        }
+      ],
+      "difficulty": 5
+    },
+    {
+      "id": "long-18",
+      "text": "If I had known the store closed at nine, I would have gone there right after work.",
+      "ja": "お店が9時に閉まると知っていたら、\n仕事のあとすぐに行ったのに。",
+      "focus": [
+        {
+          "word": "known",
+          "phone": "OW",
+          "watch_for": [
+            "AO"
+          ],
+          "tip_ja": "known は「オウ」と動かします。",
+          "ipa": "/nóʊn/"
+        },
+        {
+          "word": "closed",
+          "phone": "Z",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "closed の最後は zd を母音なしで。",
+          "ipa": "/klóʊzd/"
+        },
+        {
+          "word": "would",
+          "phone": "W",
+          "watch_for": [],
+          "tip_ja": "would はくちびるをすぼめてから。",
+          "ipa": "/wúd/"
+        },
+        {
+          "word": "right",
+          "phone": "R",
+          "watch_for": [
+            "L"
+          ],
+          "tip_ja": "right の r は舌を付けずに。",
+          "ipa": "/ráɪt/"
+        }
+      ],
+      "difficulty": 5
+    },
+    {
+      "id": "long-19",
+      "text": "I'd like to change my reservation from the twelfth to the fifteenth, if there's still a room available.",
+      "ja": "まだ部屋が空いていれば、\n予約を12日から15日に変更したいのですが。",
+      "focus": [
+        {
+          "word": "twelfth",
+          "phone": "TH",
+          "watch_for": [
+            "S",
+            "EPEN"
+          ],
+          "tip_ja": "twelfth は lfth を母音なしで。\n最後は舌先を前歯に。",
+          "ipa": "/twélfθ/"
+        },
+        {
+          "word": "fifteenth",
+          "phone": "TH",
+          "watch_for": [
+            "S"
+          ],
+          "tip_ja": "fifteenth の最後も th。",
+          "ipa": "/fiftíːnθ/"
+        },
+        {
+          "word": "there's",
+          "phone": "DH",
+          "watch_for": [
+            "Z",
+            "D"
+          ],
+          "tip_ja": "there's は舌先を前歯に軽く当てて。",
+          "ipa": "/ðéɚz/"
+        },
+        {
+          "word": "available",
+          "phone": "V",
+          "watch_for": [
+            "B"
+          ],
+          "tip_ja": "available の v は歯を下くちびるに。",
+          "ipa": "/əvéɪləbəl/"
+        }
+      ],
+      "difficulty": 5
+    },
+    {
+      "id": "long-20",
+      "text": "Whether you're working from home or at the office, try to stand up, stretch, and walk around every hour.",
+      "ja": "在宅でも職場でも、\n1時間ごとに立ち上がって、\n体を伸ばして、\n少し歩きましょう。",
+      "focus": [
+        {
+          "word": "whether",
+          "phone": "DH",
+          "watch_for": [
+            "Z",
+            "D"
+          ],
+          "tip_ja": "whether の th は声を出す th。",
+          "ipa": "/wéðɚ/"
+        },
+        {
+          "word": "working",
+          "phone": "ER",
+          "watch_for": [
+            "AA",
+            "AO"
+          ],
+          "tip_ja": "work は ER の音。",
+          "ipa": "/wɚ́ːkiŋ/"
+        },
+        {
+          "word": "office",
+          "phone": "F",
+          "watch_for": [
+            "HH"
+          ],
+          "tip_ja": "office の f は歯を下くちびるに。",
+          "ipa": "/ɔ́ːfis/"
+        },
+        {
+          "word": "stretch",
+          "phone": "S",
+          "watch_for": [
+            "EPEN"
+          ],
+          "tip_ja": "str を一息で。",
+          "ipa": "/strétʃ/"
+        }
+      ],
+      "difficulty": 5
+    }
+  ],
+  "intro": [
+    {
+      "id": "intro-1",
+      "title_ja": "はじめて会う人に",
+      "situation_ja": "初対面のあいさつで、\n名前、\n出身、\n仕事、\n趣味を伝えます。",
+      "note_ja": "Ken は自分の名前に、\nOsaka と Tokyo は自分の出身地と住んでいる町に、\n仕事と趣味の部分も自分のことに変えて使えます。",
+      "lines": [
+        {
+          "id": "intro-1-01",
+          "text": "Hi, I'm Ken. It's nice to meet you.",
+          "ja": "こんにちは、\nKen です。\nはじめまして。",
+          "swap": [
+            {
+              "word": "Ken",
+              "note_ja": "自分の名前に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "nice",
+              "phone": "AY",
+              "watch_for": [],
+              "tip_ja": "nice と meet を強く、\nto は弱く。",
+              "ipa": "/náɪs/"
+            },
+            {
+              "word": "meet",
+              "phone": "IY",
+              "watch_for": [
+                "IH"
+              ],
+              "tip_ja": "meet は長い「イー」。",
+              "ipa": "/míːt/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "intro-1-02",
+          "text": "I'm from Osaka, but I live in Tokyo now.",
+          "ja": "出身は大阪ですが、\n今は東京に住んでいます。",
+          "swap": [
+            {
+              "word": "Osaka",
+              "note_ja": "出身地に変えます。"
+            },
+            {
+              "word": "Tokyo",
+              "note_ja": "住んでいる町に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "from",
+              "phone": "AH",
+              "watch_for": [
+                "AO"
+              ],
+              "tip_ja": "from は弱く短く。",
+              "ipa": "/frəm/"
+            },
+            {
+              "word": "live",
+              "phone": "IH",
+              "watch_for": [
+                "IY"
+              ],
+              "tip_ja": "live は短くゆるい「イ」。\nleave にしません。",
+              "ipa": "/lív/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-1-03",
+          "text": "I work for a small company that makes kitchen tools.",
+          "ja": "台所用品を作る小さな会社で働いています。",
+          "swap": [
+            {
+              "word": "kitchen tools",
+              "note_ja": "自分の会社が作っているものに変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "work",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AO"
+              ],
+              "tip_ja": "work は ER の音。\nwalk にしません。",
+              "ipa": "/wɚ́ːk/"
+            },
+            {
+              "word": "company",
+              "phone": "AH",
+              "watch_for": [
+                "AA"
+              ],
+              "tip_ja": "com は小さく短い「ア」。",
+              "ipa": "/kʌ́mpənìː/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-1-04",
+          "text": "In my free time, I like cooking and walking by the river.",
+          "ja": "時間があるときは、\n料理や川沿いの散歩を楽しんでいます。",
+          "swap": [
+            {
+              "word": "cooking and walking by the river",
+              "note_ja": "自分の趣味に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "free",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "f のすぐあとに、\n舌を付けない r。",
+              "ipa": "/fríː/"
+            },
+            {
+              "word": "river",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "river は r で始めて、\n最後の er を響かせます。",
+              "ipa": "/rívɚ/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "intro-1-05",
+          "text": "I'm still learning English, so please speak slowly if I miss something.",
+          "ja": "まだ英語を勉強中なので、\n聞き取れなかったらゆっくり話してください。",
+          "focus": [
+            {
+              "word": "learning",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "learn は ER の音。",
+              "ipa": "/lɚ́ːniŋ/"
+            },
+            {
+              "word": "slowly",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "sl を母音なしで、\nl は舌先を付けて。",
+              "ipa": "/slóʊli/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "intro-2",
+      "title_ja": "新しい職場の仲間に",
+      "situation_ja": "新しい部署に入った日に、\nみんなの前であいさつします。",
+      "note_ja": "Aki は自分の名前に、\nsales team と bank は自分の部署と前の職場に変えて使えます。",
+      "lines": [
+        {
+          "id": "intro-2-01",
+          "text": "Good morning, everyone. I'm Aki, and I just joined the sales team.",
+          "ja": "皆さん、\nおはようございます。\nAki です。\n営業部に入りました。",
+          "swap": [
+            {
+              "word": "Aki",
+              "note_ja": "自分の名前に変えます。"
+            },
+            {
+              "word": "sales team",
+              "note_ja": "自分の部署に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "everyone",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "everyone の v は歯を下くちびるに。",
+              "ipa": "/évriwʌ̀n/"
+            },
+            {
+              "word": "joined",
+              "phone": "D",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "joined の最後は d で止めます。",
+              "ipa": "/dʒɔ́ɪnd/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-2-02",
+          "text": "Before this, I worked at a bank for five years.",
+          "ja": "以前は銀行で5年間働いていました。",
+          "swap": [
+            {
+              "word": "a bank",
+              "note_ja": "前の職場に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "worked",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AO"
+              ],
+              "tip_ja": "worked は ER の音。",
+              "ipa": "/wɚ́ːkt/"
+            },
+            {
+              "word": "five",
+              "phone": "V",
+              "watch_for": [
+                "B",
+                "EPEN"
+              ],
+              "tip_ja": "five の最後は v。",
+              "ipa": "/fáɪv/"
+            },
+            {
+              "word": "years",
+              "phone": "Y",
+              "watch_for": [],
+              "tip_ja": "years は y から始めます。",
+              "ipa": "/jíɚz/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-2-03",
+          "text": "I'm really looking forward to working with all of you.",
+          "ja": "皆さんと一緒に働けるのを、\nとても楽しみにしています。",
+          "focus": [
+            {
+              "word": "really",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "really は R、\nL の順。",
+              "ipa": "/ríli/"
+            },
+            {
+              "word": "forward",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "forward は歯を下くちびるに当てて。",
+              "ipa": "/fɔ́ːrwɚd/"
+            },
+            {
+              "word": "all",
+              "phone": "L",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "all of you は l を of にくっつけます。",
+              "ipa": "/ɔ́ːl/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "intro-2-04",
+          "text": "If you have any questions about the numbers, feel free to ask me.",
+          "ja": "数字のことで質問があれば、\n気軽に聞いてください。",
+          "focus": [
+            {
+              "word": "numbers",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "numbers の er は短く響かせます。",
+              "ipa": "/nʌ́mbɚz/"
+            },
+            {
+              "word": "feel",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "feel free は f が2つ。\n歯を下くちびるに。",
+              "ipa": "/fíːl/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "intro-3",
+      "title_ja": "web 会議で",
+      "situation_ja": "画面越しの会議で、\n最初に音の確認とあいさつをします。",
+      "note_ja": "Ken は自分の名前に、\nlast month's survey は今日話す内容に変えて使えます。",
+      "lines": [
+        {
+          "id": "intro-3-01",
+          "text": "Hi, can everyone hear me okay?",
+          "ja": "こんにちは、\n皆さん聞こえていますか？",
+          "focus": [
+            {
+              "word": "hear",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "hear の最後に r の響き。",
+              "ipa": "/híɚ/"
+            },
+            {
+              "word": "okay",
+              "phone": "EY",
+              "watch_for": [
+                "EH"
+              ],
+              "tip_ja": "okay は質問なので、\n最後を上げます。",
+              "ipa": "/òʊkéɪ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "intro-3-02",
+          "text": "My name is Ken, and I'm calling in from our office in Japan.",
+          "ja": "Ken です。\n日本の事務所から参加しています。",
+          "swap": [
+            {
+              "word": "Ken",
+              "note_ja": "自分の名前に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "calling",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "calling の l は舌先を付けて。",
+              "ipa": "/kɔ́ːliŋ/"
+            },
+            {
+              "word": "office",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "office の f は歯を下くちびるに。",
+              "ipa": "/ɔ́ːfis/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-3-03",
+          "text": "I'll be sharing the results of last month's survey today.",
+          "ja": "今日は先月の調査の結果をお伝えします。",
+          "swap": [
+            {
+              "word": "last month's survey",
+              "note_ja": "今日話す内容に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "sharing",
+              "phone": "SH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "sharing はくちびるを突き出して。",
+              "ipa": "/ʃériŋ/"
+            },
+            {
+              "word": "results",
+              "phone": "Z",
+              "watch_for": [
+                "S",
+                "EPEN"
+              ],
+              "tip_ja": "results は ts ではなく、\nlts を母音なしで。",
+              "ipa": "/rizʌ́lts/"
+            },
+            {
+              "word": "survey",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "sur は ER の音。",
+              "ipa": "/sɚ́ːveɪ/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "intro-3-04",
+          "text": "If my voice cuts out, please let me know in the chat.",
+          "ja": "声が途切れたら、\n書き込み欄で知らせてください。",
+          "focus": [
+            {
+              "word": "voice",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "voice の v は歯を下くちびるに。",
+              "ipa": "/vɔ́ɪs/"
+            },
+            {
+              "word": "cuts",
+              "phone": "AH",
+              "watch_for": [
+                "AA"
+              ],
+              "tip_ja": "cuts は小さく短い「ア」。",
+              "ipa": "/kʌ́ts/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "intro-4",
+      "title_ja": "面接のはじめに",
+      "situation_ja": "就職の面接で、\n最初に自己紹介をします。",
+      "note_ja": "Aki は自分の名前に、\nengineer と six years は自分の職種と年数に、\nteam of four people は自分の仕事内容に変えて使えます。",
+      "lines": [
+        {
+          "id": "intro-4-01",
+          "text": "Thank you for taking the time to meet with me today.",
+          "ja": "本日はお時間をいただき、\nありがとうございます。",
+          "focus": [
+            {
+              "word": "thank",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "thank は舌先を前歯に当てて。",
+              "ipa": "/θǽŋk/"
+            },
+            {
+              "word": "time",
+              "phone": "AY",
+              "watch_for": [],
+              "tip_ja": "time と meet と today を強く。",
+              "ipa": "/táɪm/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-4-02",
+          "text": "My name is Aki, and I've worked as an engineer for six years.",
+          "ja": "Aki と申します。\n技術者として6年間働いてきました。",
+          "swap": [
+            {
+              "word": "Aki",
+              "note_ja": "自分の名前に変えます。"
+            },
+            {
+              "word": "engineer",
+              "note_ja": "自分の職種に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "worked",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AO"
+              ],
+              "tip_ja": "worked は ER の音。",
+              "ipa": "/wɚ́ːkt/"
+            },
+            {
+              "word": "engineer",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "engineer の最後に r の響き。",
+              "ipa": "/éndʒəníɚ/"
+            },
+            {
+              "word": "six",
+              "phone": "S",
+              "watch_for": [
+                "SH"
+              ],
+              "tip_ja": "six の s は「シ」にしません。",
+              "ipa": "/síks/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "intro-4-03",
+          "text": "In my current job, I lead a team of four people.",
+          "ja": "今の仕事では、\n4人の組をまとめています。",
+          "focus": [
+            {
+              "word": "current",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "cur は ER の音。",
+              "ipa": "/kɚ́ːənt/"
+            },
+            {
+              "word": "lead",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "lead は舌先を付けた L。\nread にしません。",
+              "ipa": "/líːd/"
+            },
+            {
+              "word": "four",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "four の最後に r の響き。",
+              "ipa": "/fɔ́ːr/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "intro-4-04",
+          "text": "I'm especially interested in this role because I enjoy solving problems with others.",
+          "ja": "人と一緒に問題を解決するのが好きなので、\n特にこの職に関心があります。",
+          "focus": [
+            {
+              "word": "role",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "role は r で始めて、\nl で終わります。",
+              "ipa": "/róʊl/"
+            },
+            {
+              "word": "solving",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "solving の l は舌先を付けて。",
+              "ipa": "/sɑ́lviŋ/"
+            },
+            {
+              "word": "others",
+              "phone": "DH",
+              "watch_for": [
+                "Z",
+                "D"
+              ],
+              "tip_ja": "others の th は声を出す th。",
+              "ipa": "/ʌ́ðɚz/"
+            }
+          ],
+          "difficulty": 4
+        }
+      ]
+    },
+    {
+      "id": "intro-5",
+      "title_ja": "趣味の話",
+      "situation_ja": "雑談で、\n休みの日の過ごし方を話します。",
+      "note_ja": "fishing with my father の部分を、\n自分の趣味と一緒にする人に変えて使えます。",
+      "lines": [
+        {
+          "id": "intro-5-01",
+          "text": "On weekends, I usually go fishing with my father.",
+          "ja": "週末はたいてい、\n父と釣りに行きます。",
+          "swap": [
+            {
+              "word": "go fishing with my father",
+              "note_ja": "自分の趣味に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "usually",
+              "phone": "ZH",
+              "watch_for": [
+                "JH"
+              ],
+              "tip_ja": "usually の s は声を出した「シュ」。",
+              "ipa": "/júːʒəwəli/"
+            },
+            {
+              "word": "fishing",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "fishing の f は歯を下くちびるに。",
+              "ipa": "/fíʃiŋ/"
+            },
+            {
+              "word": "father",
+              "phone": "DH",
+              "watch_for": [
+                "Z",
+                "D"
+              ],
+              "tip_ja": "father の th は声を出す th。",
+              "ipa": "/fɑ́ðɚ/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-5-02",
+          "text": "We leave early in the morning, before the sun comes up.",
+          "ja": "日がのぼる前、\n朝早くに出かけます。",
+          "focus": [
+            {
+              "word": "leave",
+              "phone": "IY",
+              "watch_for": [
+                "IH"
+              ],
+              "tip_ja": "leave は長い「イー」。",
+              "ipa": "/líːv/"
+            },
+            {
+              "word": "early",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "early は ER の音。",
+              "ipa": "/ɚ́ːli/"
+            },
+            {
+              "word": "sun",
+              "phone": "AH",
+              "watch_for": [
+                "AA"
+              ],
+              "tip_ja": "sun は小さく短い「ア」。",
+              "ipa": "/sʌ́n/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-5-03",
+          "text": "Last month, I caught a really big fish and took a picture of it.",
+          "ja": "先月はとても大きな魚が釣れて、\n写真を撮りました。",
+          "focus": [
+            {
+              "word": "caught",
+              "phone": "AA",
+              "watch_for": [
+                "OW"
+              ],
+              "tip_ja": "caught は口を縦に大きく開けた音。\n「オ」にしません。",
+              "ipa": "/kɑ́t/"
+            },
+            {
+              "word": "really",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "really は R、\nL の順。",
+              "ipa": "/ríli/"
+            },
+            {
+              "word": "picture",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "picture の最後の er は短く響かせます。",
+              "ipa": "/píktʃɚ/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "intro-5-04",
+          "text": "Do you have any hobbies you enjoy?",
+          "ja": "楽しんでいる趣味はありますか？",
+          "focus": [
+            {
+              "word": "hobbies",
+              "phone": "AA",
+              "watch_for": [
+                "AO",
+                "OW"
+              ],
+              "tip_ja": "hob は縦に大きく開けて。",
+              "ipa": "/hɑ́biz/"
+            },
+            {
+              "word": "enjoy",
+              "phone": "OY",
+              "watch_for": [],
+              "tip_ja": "最後の enjoy で声を上げて質問にします。",
+              "ipa": "/èndʒɔ́ɪ/"
+            }
+          ],
+          "difficulty": 2
+        }
+      ]
+    },
+    {
+      "id": "intro-6",
+      "title_ja": "旅先で",
+      "situation_ja": "旅行先で出会った人に、\n自分のことを話して、\nおすすめを聞きます。",
+      "note_ja": "Ken は自分の名前に、\nJapan は自分の国に、\na week は滞在する長さに変えて使えます。",
+      "lines": [
+        {
+          "id": "intro-6-01",
+          "text": "Hello! I'm Ken, and I'm visiting from Japan.",
+          "ja": "こんにちは！ Ken です。\n日本から旅行で来ています。",
+          "swap": [
+            {
+              "word": "Ken",
+              "note_ja": "自分の名前に変えます。"
+            },
+            {
+              "word": "Japan",
+              "note_ja": "自分の国に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "hello",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "hello の l は舌先を付けて。",
+              "ipa": "/həlóʊ/"
+            },
+            {
+              "word": "visiting",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "visiting の v は歯を下くちびるに。",
+              "ipa": "/vízitiŋ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "intro-6-02",
+          "text": "This is my first time here, and I'm staying for a week.",
+          "ja": "ここに来るのは初めてで、\n1週間滞在します。",
+          "swap": [
+            {
+              "word": "a week",
+              "note_ja": "滞在する長さに変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "first",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "first は ER の音。",
+              "ipa": "/fɚ́ːst/"
+            },
+            {
+              "word": "staying",
+              "phone": "S",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "st を母音なしで。",
+              "ipa": "/stéɪiŋ/"
+            },
+            {
+              "word": "week",
+              "phone": "IY",
+              "watch_for": [
+                "IH"
+              ],
+              "tip_ja": "week は長い「イー」。",
+              "ipa": "/wíːk/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-6-03",
+          "text": "I'd love to try some local food while I'm here.",
+          "ja": "滞在中に、\n地元の料理を食べてみたいです。",
+          "focus": [
+            {
+              "word": "love",
+              "phone": "V",
+              "watch_for": [
+                "B",
+                "EPEN"
+              ],
+              "tip_ja": "love の v は歯を下くちびるに。",
+              "ipa": "/lʌ́v/"
+            },
+            {
+              "word": "local",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "local は l で始めて l で終わります。",
+              "ipa": "/lóʊkəl/"
+            },
+            {
+              "word": "food",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "food の f は歯を下くちびるに。",
+              "ipa": "/fúːd/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "intro-6-04",
+          "text": "Do you know a good place that's not too expensive?",
+          "ja": "あまり高くない、\nいいお店を知っていますか？",
+          "focus": [
+            {
+              "word": "place",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "p のすぐあとに、\n舌先を付けて l。",
+              "ipa": "/pléɪs/"
+            },
+            {
+              "word": "expensive",
+              "phone": "V",
+              "watch_for": [
+                "B",
+                "EPEN"
+              ],
+              "tip_ja": "expensive の最後は v。",
+              "ipa": "/ikspénsiv/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "dlg-cafe",
+      "title_ja": "喫茶店で注文する",
+      "situation_ja": "店員に飲み物と食べ物を注文して、\n支払いをします。",
+      "turns": [
+        {
+          "id": "dlg-cafe-01",
+          "text": "Hi, what can I get for you today?",
+          "ja": "いらっしゃいませ。\n何になさいますか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "can",
+              "phone": "AH",
+              "watch_for": [
+                "AE"
+              ],
+              "tip_ja": "相手の can I は弱く短く、\nつながって聞こえます。",
+              "ipa": "/kən/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-cafe-02",
+          "text": "Can I have a medium coffee with milk, please?",
+          "ja": "中くらいの大きさの珈琲を、\n牛乳入りでお願いします。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "have",
+              "phone": "V",
+              "watch_for": [
+                "B",
+                "EPEN"
+              ],
+              "tip_ja": "have の v は歯を下くちびるに軽く。",
+              "ipa": "/hǽv/"
+            },
+            {
+              "word": "coffee",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "coffee の f は歯を下くちびるに。",
+              "ipa": "/kɑ́fi/"
+            },
+            {
+              "word": "milk",
+              "phone": "L",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "milk は l のあとに母音を入れず、\nすぐ k へ。",
+              "ipa": "/mílk/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-cafe-03",
+          "text": "Sure. For here or to go?",
+          "ja": "かしこまりました。\n店内でお召し上がりですか、\nお持ち帰りですか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "for",
+              "phone": "ER",
+              "watch_for": [
+                "AO"
+              ],
+              "tip_ja": "相手の for は弱く短く聞こえます。",
+              "ipa": "/fɚ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-cafe-04",
+          "text": "To go, please. And one of those cookies, too.",
+          "ja": "持ち帰りでお願いします。\nそれと、\nその焼き菓子を1つください。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "go",
+              "phone": "OW",
+              "watch_for": [
+                "AO"
+              ],
+              "tip_ja": "go は「オウ」と動かします。",
+              "ipa": "/góʊ/"
+            },
+            {
+              "word": "those",
+              "phone": "DH",
+              "watch_for": [
+                "Z",
+                "D"
+              ],
+              "tip_ja": "those は舌先を前歯に当てて。",
+              "ipa": "/ðóʊz/"
+            },
+            {
+              "word": "cookies",
+              "phone": "UH",
+              "watch_for": [
+                "UW"
+              ],
+              "tip_ja": "cook は短くゆるい「ウ」。",
+              "ipa": "/kúkiz/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-cafe-05",
+          "text": "That'll be six fifty.",
+          "ja": "6.50 になります。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "fifty",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "相手の fifty は f が2つ。\n数字をよく聞きます。",
+              "ipa": "/fífti/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-cafe-06",
+          "text": "Here you are. Thank you.",
+          "ja": "はい、\nどうぞ。\nありがとう。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "here",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "here の最後に r の響き。",
+              "ipa": "/híɚ/"
+            },
+            {
+              "word": "thank",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "thank は舌先を前歯に当てて。",
+              "ipa": "/θǽŋk/"
+            }
+          ],
+          "difficulty": 1
+        }
+      ]
+    },
+    {
+      "id": "dlg-directions",
+      "title_ja": "道をたずねる",
+      "situation_ja": "駅への行き方を、\n通りがかりの人に聞きます。",
+      "turns": [
+        {
+          "id": "dlg-directions-01",
+          "text": "Excuse me, could you tell me how to get to the station?",
+          "ja": "すみません、\n駅への行き方を教えてもらえますか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "tell",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "tell の l は舌先を付けて。",
+              "ipa": "/tél/"
+            },
+            {
+              "word": "get",
+              "phone": "T",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "get to は t を一つにつなげます。",
+              "ipa": "/gét/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-directions-02",
+          "text": "Sure. Go straight and turn left at the second light.",
+          "ja": "いいですよ。\nまっすぐ行って、\n2つ目の信号を左です。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "left",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "左（left）か右（right）か、\nl と r をよく聞きます。",
+              "ipa": "/léft/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-directions-03",
+          "text": "Is it far from here?",
+          "ja": "ここから遠いですか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "far",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "far の最後に r の響き。",
+              "ipa": "/fɑ́ːr/"
+            },
+            {
+              "word": "here",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "here の最後も r の響き。\n質問なので上げます。",
+              "ipa": "/híɚ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-directions-04",
+          "text": "Not really. It's about a five-minute walk.",
+          "ja": "それほどでも。\n歩いて5分くらいです。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "five",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "相手の five minute は数字をよく聞きます。",
+              "ipa": "/fáɪv/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-directions-05",
+          "text": "Great, thank you so much for your help.",
+          "ja": "よかった、\n助かりました。\nありがとうございます。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "great",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "g のすぐあとに、\n舌を付けない r。",
+              "ipa": "/gréɪt/"
+            },
+            {
+              "word": "thank",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "thank は舌先を前歯に。",
+              "ipa": "/θǽŋk/"
+            },
+            {
+              "word": "help",
+              "phone": "L",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "help の l のあとに母音を入れません。",
+              "ipa": "/hélp/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-directions-06",
+          "text": "You're welcome. Have a nice day.",
+          "ja": "どういたしまして。\nよい一日を。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "welcome",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "相手の welcome の l を聞き取ります。",
+              "ipa": "/wélkəm/"
+            }
+          ],
+          "difficulty": 1
+        }
+      ]
+    },
+    {
+      "id": "dlg-work",
+      "title_ja": "職場で雑談する",
+      "situation_ja": "週明けに、\n同僚と週末の話をします。",
+      "turns": [
+        {
+          "id": "dlg-work-01",
+          "text": "Hey, how was your weekend?",
+          "ja": "ねえ、\n週末はどうだった？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "weekend",
+              "phone": "IY",
+              "watch_for": [],
+              "tip_ja": "相手の weekend は week が高くなります。",
+              "ipa": "/wíːkènd/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-work-02",
+          "text": "It was really nice. I went hiking with some friends.",
+          "ja": "すごくよかったです。\n友だちと山歩きに行きました。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "really",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "really は R、\nL の順。",
+              "ipa": "/ríli/"
+            },
+            {
+              "word": "hiking",
+              "phone": "HH",
+              "watch_for": [
+                "F"
+              ],
+              "tip_ja": "hiking はのどから息を出します。",
+              "ipa": "/háɪkiŋ/"
+            },
+            {
+              "word": "friends",
+              "phone": "Z",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "friends の最後は ndz を母音なしで。",
+              "ipa": "/fréndz/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-work-03",
+          "text": "Oh, that sounds fun. Where did you go?",
+          "ja": "へえ、\n楽しそう。\nどこに行ったの？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "fun",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "相手の fun の f を聞き取ります。",
+              "ipa": "/fʌ́n/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-work-04",
+          "text": "We went to a mountain about an hour from the city.",
+          "ja": "街から1時間くらいの山に行きました。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "mountain",
+              "phone": "AW",
+              "watch_for": [],
+              "tip_ja": "moun は「アウ」と口を動かします。",
+              "ipa": "/máʊntən/"
+            },
+            {
+              "word": "hour",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "hour の最後に r の響き。",
+              "ipa": "/áʊɚ/"
+            },
+            {
+              "word": "city",
+              "phone": "T",
+              "watch_for": [],
+              "tip_ja": "city の t は軽くはじきます。",
+              "ipa": "/síti/",
+              "ipa_note_ja": "米国英語では、\nこの t は舌先で軽くはじく音（ラ行に近い音）になります。"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "dlg-work-05",
+          "text": "Wow. Was the weather okay?",
+          "ja": "へえ。\n天気はよかった？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "weather",
+              "phone": "DH",
+              "watch_for": [
+                "Z",
+                "D"
+              ],
+              "tip_ja": "相手の weather の th を聞き取ります。",
+              "ipa": "/wéðɚ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-work-06",
+          "text": "Yes, it was perfect. A little cold in the morning, though.",
+          "ja": "はい、\n最高でした。\n朝は少し寒かったですけど。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "perfect",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "per は ER の音。",
+              "ipa": "/pɚ́ːfikt/"
+            },
+            {
+              "word": "little",
+              "phone": "T",
+              "watch_for": [],
+              "tip_ja": "little の t は軽くはじきます。",
+              "ipa": "/lítəl/",
+              "ipa_note_ja": "米国英語では、\nこの t は舌先で軽くはじく音（ラ行に近い音）になります。"
+            },
+            {
+              "word": "though",
+              "phone": "DH",
+              "watch_for": [
+                "Z",
+                "D"
+              ],
+              "tip_ja": "though の th は声を出す th。",
+              "ipa": "/ðóʊ/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "dlg-hotel",
+      "title_ja": "宿で手続きをする",
+      "situation_ja": "宿の受付で、\n到着の手続きをして、\n朝食の時間を聞きます。",
+      "turns": [
+        {
+          "id": "dlg-hotel-01",
+          "text": "Good evening. How can I help you?",
+          "ja": "こんばんは。\nご用件をうかがいます。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "evening",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "相手の evening の v を聞き取ります。",
+              "ipa": "/íːvniŋ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-hotel-02",
+          "text": "Hi, I'd like to check in. My name is Ken.",
+          "ja": "こんにちは、\n到着の手続きをお願いします。\nKen です。",
+          "speaker": "you",
+          "swap": [
+            {
+              "word": "Ken",
+              "note_ja": "自分の名前に変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "like",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "like は舌先を付けて。",
+              "ipa": "/láɪk/"
+            },
+            {
+              "word": "check",
+              "phone": "K",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "check in は k を in にくっつけます。",
+              "ipa": "/tʃék/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-hotel-03",
+          "text": "Thank you. Could I see your passport, please?",
+          "ja": "ありがとうございます。\n旅券を見せていただけますか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "passport",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "相手の passport を聞き取ります。",
+              "ipa": "/pǽspɔ̀ːrt/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-hotel-04",
+          "text": "Sure, here it is.",
+          "ja": "はい、\nどうぞ。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "sure",
+              "phone": "SH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "sure はくちびるを突き出した sh。",
+              "ipa": "/ʃúɚ/"
+            },
+            {
+              "word": "here",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "here it is は r を it にくっつけます。",
+              "ipa": "/híɚ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-hotel-05",
+          "text": "You're in room four twelve, on the fourth floor.",
+          "ja": "お部屋は4階の412号室です。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "fourth",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "相手の fourth の最後の th を聞き取ります。",
+              "ipa": "/fɔ́ːrθ/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-hotel-06",
+          "text": "Thank you. What time is breakfast served?",
+          "ja": "ありがとう。\n朝食は何時からですか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "breakfast",
+              "phone": "AH",
+              "watch_for": [
+                "AA"
+              ],
+              "tip_ja": "BREAK·fast（●・）。\nfast は弱く。",
+              "ipa": "/brékfəst/"
+            },
+            {
+              "word": "served",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "served は ER の音。",
+              "ipa": "/sɚ́ːvd/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-hotel-07",
+          "text": "From seven to ten, in the restaurant on the first floor.",
+          "ja": "7時から10時まで、\n1階の食堂でお召し上がりいただけます。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "seven",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "相手の時間の数字をよく聞きます。",
+              "ipa": "/sévən/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-hotel-08",
+          "text": "Perfect. Thanks for your help.",
+          "ja": "わかりました。\nありがとうございます。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "perfect",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "perfect の f は歯を下くちびるに。",
+              "ipa": "/pɚ́ːfikt/"
+            },
+            {
+              "word": "thanks",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "thanks は舌先を前歯に。",
+              "ipa": "/θǽŋks/"
+            }
+          ],
+          "difficulty": 1
+        }
+      ]
+    },
+    {
+      "id": "dlg-phone",
+      "title_ja": "電話で予約する",
+      "situation_ja": "電話で、\n来週の予約を取ります。",
+      "turns": [
+        {
+          "id": "dlg-phone-01",
+          "text": "Hello, thank you for calling. How may I help you?",
+          "ja": "お電話ありがとうございます。\nご用件をうかがいます。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "calling",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "相手の calling の l を聞き取ります。",
+              "ipa": "/kɔ́ːliŋ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-phone-02",
+          "text": "Hi, I'd like to make an appointment for next week.",
+          "ja": "こんにちは、\n来週の予約を取りたいのですが。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "make",
+              "phone": "EY",
+              "watch_for": [
+                "EH"
+              ],
+              "tip_ja": "make は「エイ」と口を動かします。",
+              "ipa": "/méɪk/"
+            },
+            {
+              "word": "appointment",
+              "phone": "OY",
+              "watch_for": [],
+              "tip_ja": "ap·POINT·ment（・●・）。",
+              "ipa": "/əpɔ́ɪntmənt/"
+            },
+            {
+              "word": "next",
+              "phone": "T",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "next の最後は kst を母音なしで。",
+              "ipa": "/nékst/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-phone-03",
+          "text": "Sure. What day works best for you?",
+          "ja": "かしこまりました。\n何曜日がご都合よろしいですか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "works",
+              "phone": "ER",
+              "watch_for": [],
+              "tip_ja": "相手の works の ER を聞き取ります。",
+              "ipa": "/wɚ́ːks/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-phone-04",
+          "text": "Do you have anything in the afternoon?",
+          "ja": "午後に空いている時間はありますか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "have",
+              "phone": "V",
+              "watch_for": [
+                "B",
+                "EPEN"
+              ],
+              "tip_ja": "have の v は歯を下くちびるに。",
+              "ipa": "/hǽv/"
+            },
+            {
+              "word": "anything",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "thing の th は舌先を前歯に。",
+              "ipa": "/éniθìŋ/"
+            },
+            {
+              "word": "afternoon",
+              "phone": "UW",
+              "watch_for": [
+                "UH"
+              ],
+              "tip_ja": "noon は長い「ウー」。",
+              "ipa": "/æ̀ftɚnúːn/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-phone-05",
+          "text": "We have an opening at three thirty.",
+          "ja": "3時半に空きがあります。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "three",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "相手の three と thirty を聞き取ります。",
+              "ipa": "/θríː/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-phone-06",
+          "text": "Three thirty is fine. My name is Ken, K, E, N.",
+          "ja": "3時半で大丈夫です。\n名前は Ken、\nK、\nE、\nN です。",
+          "speaker": "you",
+          "swap": [
+            {
+              "word": "Ken, K, E, N",
+              "note_ja": "自分の名前と、そのつづりに変えます。"
+            }
+          ],
+          "focus": [
+            {
+              "word": "three",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "three は舌先を前歯に当ててから r。",
+              "ipa": "/θríː/"
+            },
+            {
+              "word": "thirty",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "thirty も th で始めます。",
+              "ipa": "/θɚ́ːdìː/"
+            },
+            {
+              "word": "fine",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "fine の f は歯を下くちびるに。",
+              "ipa": "/fáɪn/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "dlg-shop",
+      "title_ja": "お店で上着を買う",
+      "situation_ja": "店員に声をかけられて、\n上着を試着して買います。",
+      "turns": [
+        {
+          "id": "dlg-shop-01",
+          "text": "Hi there. Are you looking for anything special?",
+          "ja": "いらっしゃいませ。\n何かお探しですか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "special",
+              "phone": "SH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "相手の special の sh を聞き取ります。",
+              "ipa": "/spéʃəl/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-shop-02",
+          "text": "Yes, I'm looking for a warm jacket for the winter.",
+          "ja": "はい、\n冬用の暖かい上着を探しています。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "looking",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "looking は舌先を付けて。",
+              "ipa": "/lúkiŋ/"
+            },
+            {
+              "word": "warm",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "warm の最後に r の響き。",
+              "ipa": "/wɔ́ːrm/"
+            },
+            {
+              "word": "winter",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "winter の最後の er は短く響かせます。",
+              "ipa": "/wíntɚ/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-shop-03",
+          "text": "These are on sale this week. What size are you?",
+          "ja": "こちらは今週安くなっています。\n大きさはどれくらいですか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "size",
+              "phone": "Z",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "相手の size を聞き取ります。",
+              "ipa": "/sáɪz/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-shop-04",
+          "text": "Medium, I think. Can I try this one on?",
+          "ja": "中くらいだと思います。\nこれを試着してもいいですか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "think",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "think は舌先を前歯に当てて。",
+              "ipa": "/θíŋk/"
+            },
+            {
+              "word": "try",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "t のすぐあとに、\n舌を付けない r。",
+              "ipa": "/tráɪ/"
+            },
+            {
+              "word": "one",
+              "phone": "N",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "one on は n を on にくっつけます。",
+              "ipa": "/wʌ́n/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-shop-05",
+          "text": "Of course. The fitting room is over there.",
+          "ja": "もちろんです。\n試着室はあちらです。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "over",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "相手の over there を聞き取ります。",
+              "ipa": "/óʊvɚ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-shop-06",
+          "text": "It fits well. I'll take it.",
+          "ja": "ぴったりです。\nこれにします。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "fits",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "fits の f は歯を下くちびるに。",
+              "ipa": "/fíts/"
+            },
+            {
+              "word": "well",
+              "phone": "L",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "well の最後は舌先を付けて止めます。",
+              "ipa": "/wél/"
+            },
+            {
+              "word": "take",
+              "phone": "K",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "take it は k を it にくっつけます。",
+              "ipa": "/téɪk/"
+            }
+          ],
+          "difficulty": 2
+        }
+      ]
+    },
+    {
+      "id": "dlg-doctor",
+      "title_ja": "病院で症状を伝える",
+      "situation_ja": "医者に、\nのどの痛みと熱のことを伝えます。",
+      "turns": [
+        {
+          "id": "dlg-doctor-01",
+          "text": "What seems to be the problem today?",
+          "ja": "今日はどうされましたか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "problem",
+              "phone": "AA",
+              "watch_for": [],
+              "tip_ja": "相手の problem の pro は強く聞こえます。",
+              "ipa": "/prɑ́bləm/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-doctor-02",
+          "text": "I've had a sore throat and a fever since yesterday.",
+          "ja": "昨日から、\nのどが痛くて熱があります。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "sore",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "sore の最後に r の響き。",
+              "ipa": "/sɔ́ːr/"
+            },
+            {
+              "word": "throat",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "throat は th のすぐあとに r。",
+              "ipa": "/θróʊt/"
+            },
+            {
+              "word": "fever",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "fever の f は歯を下くちびるに。\n最後の v も同じ。",
+              "ipa": "/fíːvɚ/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "dlg-doctor-03",
+          "text": "I see. Do you have a cough, too?",
+          "ja": "なるほど。\nせきも出ますか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "cough",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "相手の cough の最後の f を聞き取ります。",
+              "ipa": "/kɑ́f/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-doctor-04",
+          "text": "Yes, a little, and I feel very tired.",
+          "ja": "はい、\n少し。\nそれに、\nとても疲れています。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "little",
+              "phone": "T",
+              "watch_for": [],
+              "tip_ja": "little の t は軽くはじきます。",
+              "ipa": "/lítəl/",
+              "ipa_note_ja": "米国英語では、\nこの t は舌先で軽くはじく音（ラ行に近い音）になります。"
+            },
+            {
+              "word": "feel",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "feel の f は歯を下くちびるに。",
+              "ipa": "/fíːl/"
+            },
+            {
+              "word": "very",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "very の v は歯を下くちびるに。",
+              "ipa": "/véri/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-doctor-05",
+          "text": "Let me check your throat. Please open your mouth.",
+          "ja": "のどを見ますね。\n口を開けてください。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "mouth",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "相手の mouth の th を聞き取ります。",
+              "ipa": "/máʊθ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-doctor-06",
+          "text": "Okay. Should I stay home from work?",
+          "ja": "わかりました。\n仕事は休んだほうがいいですか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "home",
+              "phone": "OW",
+              "watch_for": [
+                "AO"
+              ],
+              "tip_ja": "home は「オウ」と動かします。",
+              "ipa": "/hóʊm/"
+            },
+            {
+              "word": "work",
+              "phone": "ER",
+              "watch_for": [
+                "AA",
+                "AO"
+              ],
+              "tip_ja": "work は ER の音。\nwalk にしません。",
+              "ipa": "/wɚ́ːk/"
+            }
+          ],
+          "difficulty": 2
+        }
+      ]
+    },
+    {
+      "id": "dlg-airport",
+      "title_ja": "空港で手続きする",
+      "situation_ja": "空港の窓口で、\n荷物を預けて、\n搭乗口を確かめます。",
+      "turns": [
+        {
+          "id": "dlg-airport-01",
+          "text": "Good morning. Where are you flying to today?",
+          "ja": "おはようございます。\n今日はどちらまでですか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "flying",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "相手の flying の l を聞き取ります。",
+              "ipa": "/fláɪiŋ/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-airport-02",
+          "text": "I'm on the ten fifteen flight. Here's my passport.",
+          "ja": "10時15分の便です。\n旅券はこちらです。",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "fifteen",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "fifteen の f は歯を下くちびるに。",
+              "ipa": "/fiftíːn/"
+            },
+            {
+              "word": "flight",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "f のすぐあとに、\n舌先を付けて l。",
+              "ipa": "/fláɪt/"
+            },
+            {
+              "word": "passport",
+              "phone": "AE",
+              "watch_for": [
+                "AA"
+              ],
+              "tip_ja": "pass は「エ」の口で「ア」。",
+              "ipa": "/pǽspɔ̀ːrt/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-airport-03",
+          "text": "Thank you. Do you have any bags to check?",
+          "ja": "ありがとうございます。\n預ける荷物はありますか？",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "bags",
+              "phone": "AE",
+              "watch_for": [
+                "AA"
+              ],
+              "tip_ja": "相手の bags を聞き取ります。",
+              "ipa": "/bǽgz/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "dlg-airport-04",
+          "text": "Just one. Can I take this small bag on the plane?",
+          "ja": "1つだけです。\nこの小さなかばんは機内に持ち込めますか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "small",
+              "phone": "L",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "small の最後は舌先を付けて止めます。",
+              "ipa": "/smɔ́ːl/"
+            },
+            {
+              "word": "bag",
+              "phone": "AE",
+              "watch_for": [
+                "AA",
+                "AH"
+              ],
+              "tip_ja": "bag は「エ」の口で「ア」。",
+              "ipa": "/bǽg/"
+            },
+            {
+              "word": "plane",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "p のすぐあとに、\n舌先を付けて l。",
+              "ipa": "/pléɪn/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "dlg-airport-05",
+          "text": "Yes, that's fine. Your gate is thirty-four, and boarding starts at nine forty.",
+          "ja": "はい、\n大丈夫です。\n搭乗口は34番で、\n搭乗は9時40分に始まります。",
+          "speaker": "partner",
+          "focus": [
+            {
+              "word": "thirty",
+              "phone": "TH",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "相手の thirty-four と nine forty、\n数字をよく聞きます。",
+              "ipa": "/θɚ́ːdìː/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "dlg-airport-06",
+          "text": "Thanks. Is there somewhere to get coffee near the gate?",
+          "ja": "ありがとう。\n搭乗口の近くに、\n珈琲が買える所はありますか？",
+          "speaker": "you",
+          "focus": [
+            {
+              "word": "there",
+              "phone": "DH",
+              "watch_for": [
+                "Z",
+                "D"
+              ],
+              "tip_ja": "there は舌先を前歯に当てて。",
+              "ipa": "/ðéɚ/"
+            },
+            {
+              "word": "coffee",
+              "phone": "F",
+              "watch_for": [
+                "HH"
+              ],
+              "tip_ja": "coffee の f は歯を下くちびるに。",
+              "ipa": "/kɑ́fi/"
+            },
+            {
+              "word": "near",
+              "phone": "R",
+              "watch_for": [],
+              "tip_ja": "near の最後に r の響き。",
+              "ipa": "/níɚ/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    }
+  ]
+}

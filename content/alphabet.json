@@ -1,0 +1,1322 @@
+{
+  "version": 1,
+  "style_ja": "文字の名前の発音です。\n記号の読み方は ipa-legend.json と同じです。",
+  "letters": [
+    {
+      "letter": "A",
+      "ipa": "/éɪ/",
+      "name_ja": "エイと動く A",
+      "how_ja": "日本語では「エー」と伸ばしがちです。\n英語は「エ」から「イ」へ動く éɪ です。\n最後に口を閉じていくと、\nE と聞き分けてもらえます。",
+      "confusions": [
+        "a-e"
+      ]
+    },
+    {
+      "letter": "B",
+      "ipa": "/bíː/",
+      "name_ja": "くちびるを閉じる B",
+      "how_ja": "くちびる同士をしっかり閉じてから、\n長い「イー」を続けます。\nV と区別するため、\n上の歯はくちびるに当てません。",
+      "confusions": [
+        "b-v",
+        "p-b",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "C",
+      "ipa": "/síː/",
+      "name_ja": "息の s で始まる C",
+      "how_ja": "歯を近づけて細い息を出してから、\n長い「イー」へ。\n「シ」の音で始めると she に聞こえます。",
+      "confusions": [
+        "c-z-s",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "D",
+      "ipa": "/díː/",
+      "name_ja": "舌先を付ける D",
+      "how_ja": "舌先を上の歯ぐきに付けて、\n声を出しながら離し、\n長い「イー」へ。\nT との違いは、\n声が出ているかどうかです。",
+      "confusions": [
+        "t-d",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "E",
+      "ipa": "/íː/",
+      "name_ja": "長い iː だけの E",
+      "how_ja": "口を横に強く引いた、\n長い「イー」だけの音です。\nI や A と混ざらないよう、\n口の形を最後まで変えません。",
+      "confusions": [
+        "e-i",
+        "a-e",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "F",
+      "ipa": "/éf/",
+      "name_ja": "最後に歯を当てる F",
+      "how_ja": "「エ」のあと、\n上の歯を下くちびるに乗せて息を出します。\n最後に母音を足さないこと。\nS と聞き間違えられやすいので、\n歯を当てるのをはっきりさせます。",
+      "confusions": [
+        "f-s"
+      ]
+    },
+    {
+      "letter": "G",
+      "ipa": "/dʒíː/",
+      "name_ja": "dʒ で始まる G",
+      "how_ja": "舌先をいったん付けてから声を出し、\n長い「イー」へ。\nZ や J と混ざりやすい文字です。",
+      "confusions": [
+        "g-z-j",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "H",
+      "ipa": "/éɪtʃ/",
+      "name_ja": "エイと tʃ の H",
+      "how_ja": "「エ」から「イ」へ動いたあと、\nくちびるを突き出して tʃ で終わります。\n最後に母音を足さないこと。",
+      "confusions": []
+    },
+    {
+      "letter": "I",
+      "ipa": "/áɪ/",
+      "name_ja": "アイと動く I",
+      "how_ja": "口を大きく開けた「ア」から「イ」へ、\nひとつながりに動かします。\nE と取り違えられないよう、\n最初の「ア」をはっきり。",
+      "confusions": [
+        "e-i"
+      ]
+    },
+    {
+      "letter": "J",
+      "ipa": "/dʒéɪ/",
+      "name_ja": "dʒ とエイの J",
+      "how_ja": "舌先をいったん付けてから声を出し、\n「エイ」へ動かします。\nG との違いは、\n後ろが「エイ」か「イー」かです。",
+      "confusions": [
+        "g-z-j"
+      ]
+    },
+    {
+      "letter": "K",
+      "ipa": "/kéɪ/",
+      "name_ja": "息の k とエイの K",
+      "how_ja": "舌の奥で息を強く出してから、\n「エイ」へ動かします。\n「エー」と伸ばしません。",
+      "confusions": []
+    },
+    {
+      "letter": "L",
+      "ipa": "/él/",
+      "name_ja": "舌先を付けて止める L",
+      "how_ja": "「エ」のあと、\n舌先を前歯の付け根に付けたまま止めます。\n最後に母音を足すと、\nR と聞き分けにくくなります。",
+      "confusions": [
+        "l-r"
+      ]
+    },
+    {
+      "letter": "M",
+      "ipa": "/ém/",
+      "name_ja": "くちびるを閉じて終わる M",
+      "how_ja": "「エ」のあと、\nくちびるを閉じて鼻に響かせて終わります。\nN と区別するため、\n最後は必ずくちびるを閉じます。",
+      "confusions": [
+        "m-n"
+      ]
+    },
+    {
+      "letter": "N",
+      "ipa": "/én/",
+      "name_ja": "舌先を付けて終わる N",
+      "how_ja": "「エ」のあと、\n舌先を歯ぐきに付けて鼻に響かせて終わります。\n口は開けたまま、\nくちびるは閉じません。",
+      "confusions": [
+        "m-n"
+      ]
+    },
+    {
+      "letter": "O",
+      "ipa": "/óʊ/",
+      "name_ja": "オウと動く O",
+      "how_ja": "「オー」と伸ばさず、\n最後にくちびるをすぼめて「オウ」と動かします。",
+      "confusions": []
+    },
+    {
+      "letter": "P",
+      "ipa": "/píː/",
+      "name_ja": "息を破裂させる P",
+      "how_ja": "くちびるを閉じて息をため、\n強く破裂させてから長い「イー」へ。\nB と聞き間違えられないよう、\n息をしっかり出します。",
+      "confusions": [
+        "p-b",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "Q",
+      "ipa": "/kjúː/",
+      "name_ja": "k と j の Q",
+      "how_ja": "舌の奥で k を出してから、\n舌を上あごに近づけた j を入れて、\nくちびるを突き出した長い「ウー」へ。",
+      "confusions": []
+    },
+    {
+      "letter": "R",
+      "ipa": "/ɑ́ːr/",
+      "name_ja": "大きく開けて舌を引く R",
+      "how_ja": "口を縦に大きく開けた「アー」から、\n舌をどこにも付けずに奥へ引いて終わります。\n最後に l を付けないこと。",
+      "confusions": [
+        "l-r"
+      ]
+    },
+    {
+      "letter": "S",
+      "ipa": "/és/",
+      "name_ja": "エと細い息の S",
+      "how_ja": "「エ」のあと、\n歯を近づけて細い息で終わります。\n最後に母音を足さないこと。\nF と聞き間違えられやすい文字です。",
+      "confusions": [
+        "c-z-s",
+        "f-s"
+      ]
+    },
+    {
+      "letter": "T",
+      "ipa": "/tíː/",
+      "name_ja": "舌先ではじく T",
+      "how_ja": "舌先を歯ぐきの一点に当てて、\n息を強く出してから長い「イー」へ。\n「チ」にならないようにします。",
+      "confusions": [
+        "t-d",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "U",
+      "ipa": "/júː/",
+      "name_ja": "j と長い uː の U",
+      "how_ja": "舌を上あごに近づけてから、\nくちびるを突き出した長い「ウー」へ。\n最初の j を省くと、\n別の音に聞こえます。",
+      "confusions": []
+    },
+    {
+      "letter": "V",
+      "ipa": "/víː/",
+      "name_ja": "歯を下くちびるに当てる V",
+      "how_ja": "上の歯を下くちびるに乗せて声を出してから、\n長い「イー」へ。\nB と間違えられるいちばんの原因は、\nくちびる同士を閉じてしまうことです。",
+      "confusions": [
+        "b-v",
+        "ee-set"
+      ]
+    },
+    {
+      "letter": "W",
+      "ipa": "/dʌ́bljuː/",
+      "ipa_note_ja": "辞書では /dʌ́bljuː/ と書きます。\n弱い ə を入れて、\n3つの音節で言う人も多くいます。",
+      "name_ja": "3つの音節の W",
+      "how_ja": "dʌ́b、\nl、\njuː の3つに分けて、\n最初を強く言います。\nʌ は短く軽く、\n残りは弱く流します。",
+      "confusions": []
+    },
+    {
+      "letter": "X",
+      "ipa": "/éks/",
+      "name_ja": "エと ks の X",
+      "how_ja": "「エ」のあと、\nk と s を母音なしで続けて終わります。\n最後に母音を足さないこと。",
+      "confusions": []
+    },
+    {
+      "letter": "Y",
+      "ipa": "/wáɪ/",
+      "name_ja": "w とアイの Y",
+      "how_ja": "くちびるをすぼめた w から、\n「アイ」へ動かします。\n最初の w を省かないこと。",
+      "confusions": []
+    },
+    {
+      "letter": "Z",
+      "ipa": "/zíː/",
+      "name_ja": "声の z で始まる Z",
+      "how_ja": "s と同じ口で、\n舌先を付けずに声を響かせてから、\n長い「イー」へ。\n米国では zíː、\n英国では zéd と言います。",
+      "confusions": [
+        "g-z-j",
+        "c-z-s",
+        "ee-set"
+      ]
+    }
+  ],
+  "confusions": [
+    {
+      "id": "b-v",
+      "letters": [
+        "B",
+        "V"
+      ],
+      "tip_ja": "B はくちびる同士を閉じて、\nV は上の歯を下くちびるに当てて言います。"
+    },
+    {
+      "id": "l-r",
+      "letters": [
+        "L",
+        "R"
+      ],
+      "tip_ja": "L は「エ」のあと舌先を付けて止め、\nR は口を大きく開けてから舌を奥へ引きます。"
+    },
+    {
+      "id": "m-n",
+      "letters": [
+        "M",
+        "N"
+      ],
+      "tip_ja": "M はくちびるを閉じて終わり、\nN は口を開けたまま舌先を付けて終わります。"
+    },
+    {
+      "id": "g-z-j",
+      "letters": [
+        "G",
+        "Z",
+        "J"
+      ],
+      "tip_ja": "G は舌を付けて「イー」、\nZ は舌を付けずに「イー」、\nJ は舌を付けて「エイ」です。"
+    },
+    {
+      "id": "e-i",
+      "letters": [
+        "E",
+        "I"
+      ],
+      "tip_ja": "E は口を横に引いた長い「イー」、\nI は大きく開けた「ア」から「イ」へ動く音です。"
+    },
+    {
+      "id": "a-e",
+      "letters": [
+        "A",
+        "E"
+      ],
+      "tip_ja": "A は「エイ」と動かし、\nE は「イー」とのばします。\nA を「エー」と言わないこと。"
+    },
+    {
+      "id": "c-z-s",
+      "letters": [
+        "C",
+        "Z",
+        "S"
+      ],
+      "tip_ja": "C は息の s から「イー」、\nZ は声の z から「イー」、\nS は「エ」のあと息の s で終わります。"
+    },
+    {
+      "id": "p-b",
+      "letters": [
+        "P",
+        "B"
+      ],
+      "tip_ja": "P は息を強く破裂させ、\nB は声を出してくちびるを開きます。"
+    },
+    {
+      "id": "t-d",
+      "letters": [
+        "T",
+        "D"
+      ],
+      "tip_ja": "T は息を強く出し、\nD は声を出します。\nどちらも舌先は歯ぐきの一点に当てます。"
+    },
+    {
+      "id": "f-s",
+      "letters": [
+        "F",
+        "S"
+      ],
+      "tip_ja": "F は最後に上の歯を下くちびるに当て、\nS は最後に細い息を出します。"
+    },
+    {
+      "id": "ee-set",
+      "letters": [
+        "B",
+        "C",
+        "D",
+        "E",
+        "G",
+        "P",
+        "T",
+        "V",
+        "Z"
+      ],
+      "tip_ja": "長い「イー」で終わる文字は、\n最初の子音だけで聞き分けます。\n最初の子音をはっきり言います。"
+    }
+  ],
+  "practice": [
+    {
+      "id": "abc-b-v",
+      "title_ja": "B と V",
+      "confusion": "b-v",
+      "lines": [
+        {
+          "id": "abc-b-v-01",
+          "text": "My code starts with a V.",
+          "ja": "私の番号は V から始まります。",
+          "spell": [
+            "V"
+          ],
+          "focus": [
+            {
+              "word": "v",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "V は上の歯を下くちびるに当てて。",
+              "ipa": "/víː/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "abc-b-v-02",
+          "text": "We sat in row B.",
+          "ja": "私たちは B 列に座りました。",
+          "spell": [
+            "B"
+          ],
+          "focus": [
+            {
+              "word": "b",
+              "phone": "B",
+              "watch_for": [
+                "V"
+              ],
+              "tip_ja": "B はくちびる同士を閉じてから。",
+              "ipa": "/bíː/"
+            }
+          ],
+          "difficulty": 1
+        },
+        {
+          "id": "abc-b-v-03",
+          "text": "Is that B as in boy, or V as in very?",
+          "ja": "それは boy の B ですか、\nそれとも very の V ですか？",
+          "spell": [
+            "B",
+            "V"
+          ],
+          "focus": [
+            {
+              "word": "b",
+              "phone": "B",
+              "watch_for": [
+                "V"
+              ],
+              "tip_ja": "B はくちびる同士を閉じてから。",
+              "ipa": "/bíː/"
+            },
+            {
+              "word": "v",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "V は上の歯を下くちびるに当てて。",
+              "ipa": "/víː/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-b-v-04",
+          "text": "She works for the BBC.",
+          "ja": "彼女は BBC で働いています。",
+          "focus": [
+            {
+              "word": "bbc",
+              "phone": "B",
+              "watch_for": [
+                "V"
+              ],
+              "tip_ja": "B はくちびる同士を閉じてから。",
+              "ipa": "/bìːbisíː/"
+            }
+          ],
+          "difficulty": 2
+        }
+      ]
+    },
+    {
+      "id": "abc-l-r",
+      "title_ja": "L と R",
+      "confusion": "l-r",
+      "lines": [
+        {
+          "id": "abc-l-r-01",
+          "text": "Is that L as in lemon, or R as in rice?",
+          "ja": "それは lemon の L ですか、\nそれとも rice の R ですか？",
+          "spell": [
+            "L",
+            "R"
+          ],
+          "focus": [
+            {
+              "word": "l",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "L は「エ」のあと、\n舌先を付けて止めます。",
+              "ipa": "/él/"
+            },
+            {
+              "word": "r",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "R は大きく開けてから、\n舌を奥へ引きます。",
+              "ipa": "/ɑ́ːr/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-l-r-02",
+          "text": "Is it spelled with an R or an L?",
+          "ja": "つづりは R ですか、\nL ですか？",
+          "spell": [
+            "R",
+            "L"
+          ],
+          "focus": [
+            {
+              "word": "r",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "R は大きく開けてから、\n舌を奥へ引きます。",
+              "ipa": "/ɑ́ːr/"
+            },
+            {
+              "word": "l",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "L は「エ」のあと、\n舌先を付けて止めます。",
+              "ipa": "/él/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-l-r-03",
+          "text": "She works in PR.",
+          "ja": "彼女は広報の仕事をしています。",
+          "focus": [
+            {
+              "word": "pr",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "R は大きく開けてから、\n舌を奥へ引きます。",
+              "ipa": "/píːɑ́ːr/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-l-r-04",
+          "text": "My last name has an R and two L's.",
+          "ja": "私の名字には R が1つと L が2つあります。",
+          "spell": [
+            "R",
+            "L"
+          ],
+          "focus": [
+            {
+              "word": "r",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "R は大きく開けてから、\n舌を奥へ引きます。",
+              "ipa": "/ɑ́ːr/"
+            },
+            {
+              "word": "l's",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "L は「エ」のあと、\n舌先を付けて止めます。",
+              "ipa": "/élz/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "abc-m-n",
+      "title_ja": "M と N",
+      "confusion": "m-n",
+      "lines": [
+        {
+          "id": "abc-m-n-01",
+          "text": "Is that M as in money, or N as in name?",
+          "ja": "それは money の M ですか、\nそれとも name の N ですか？",
+          "spell": [
+            "M",
+            "N"
+          ],
+          "focus": [
+            {
+              "word": "m",
+              "phone": "M",
+              "watch_for": [
+                "N"
+              ],
+              "tip_ja": "M は最後にくちびるを閉じます。",
+              "ipa": "/ém/"
+            },
+            {
+              "word": "n",
+              "phone": "N",
+              "watch_for": [
+                "M"
+              ],
+              "tip_ja": "N は口を開けたまま、\n舌先を付けて終わります。",
+              "ipa": "/én/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-m-n-02",
+          "text": "My initials are M and N.",
+          "ja": "私の頭文字は M と N です。",
+          "spell": [
+            "M",
+            "N"
+          ],
+          "focus": [
+            {
+              "word": "m",
+              "phone": "M",
+              "watch_for": [
+                "N"
+              ],
+              "tip_ja": "M は最後にくちびるを閉じます。",
+              "ipa": "/ém/"
+            },
+            {
+              "word": "n",
+              "phone": "N",
+              "watch_for": [
+                "M"
+              ],
+              "tip_ja": "N は口を開けたまま、\n舌先を付けて終わります。",
+              "ipa": "/én/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-m-n-03",
+          "text": "Is there an ATM near here?",
+          "ja": "この近くに ATM はありますか？",
+          "focus": [
+            {
+              "word": "atm",
+              "phone": "M",
+              "watch_for": [
+                "N"
+              ],
+              "tip_ja": "M は最後にくちびるを閉じます。",
+              "ipa": "/éɪtìːém/"
+            }
+          ],
+          "difficulty": 2
+        }
+      ]
+    },
+    {
+      "id": "abc-a-e-i",
+      "title_ja": "A・E・I",
+      "confusion": "a-e",
+      "lines": [
+        {
+          "id": "abc-a-e-i-01",
+          "text": "Is that A as in apple, or E as in egg?",
+          "ja": "それは apple の A ですか、\nそれとも egg の E ですか？",
+          "spell": [
+            "A",
+            "E"
+          ],
+          "focus": [
+            {
+              "word": "a",
+              "phone": "EY",
+              "watch_for": [
+                "EH",
+                "IY"
+              ],
+              "tip_ja": "A は「エイ」と動かします。",
+              "ipa": "/éɪ/"
+            },
+            {
+              "word": "e",
+              "phone": "IY",
+              "watch_for": [
+                "EY"
+              ],
+              "tip_ja": "E は口を横に引いた「イー」。",
+              "ipa": "/íː/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-a-e-i-02",
+          "text": "Is it E as in easy, or I as in ice?",
+          "ja": "それは easy の E ですか、\nそれとも ice の I ですか？",
+          "spell": [
+            "E",
+            "I"
+          ],
+          "focus": [
+            {
+              "word": "e",
+              "phone": "IY",
+              "watch_for": [
+                "AY"
+              ],
+              "tip_ja": "E は口を横に引いた「イー」。",
+              "ipa": "/íː/"
+            },
+            {
+              "word": "i",
+              "phone": "AY",
+              "watch_for": [
+                "IY"
+              ],
+              "tip_ja": "I は大きく開けた「ア」から「イ」へ。",
+              "ipa": "/áɪ/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-a-e-i-03",
+          "text": "I got an A on the test.",
+          "ja": "試験で A を取りました。",
+          "spell": [
+            "A"
+          ],
+          "focus": [
+            {
+              "word": "a",
+              "phone": "EY",
+              "watch_for": [
+                "EH"
+              ],
+              "tip_ja": "A は「エイ」と動かします。",
+              "ipa": "/éɪ/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-a-e-i-04",
+          "text": "Please show me your I.D.",
+          "ja": "身分証を見せてください。",
+          "spell": [
+            "I",
+            "D"
+          ],
+          "focus": [
+            {
+              "word": "i",
+              "phone": "AY",
+              "watch_for": [
+                "IY"
+              ],
+              "tip_ja": "I は大きく開けた「ア」から「イ」へ。",
+              "ipa": "/áɪ/"
+            },
+            {
+              "word": "d",
+              "phone": "D",
+              "watch_for": [
+                "T"
+              ],
+              "tip_ja": "D は声を出して離します。",
+              "ipa": "/díː/"
+            }
+          ],
+          "difficulty": 2
+        }
+      ]
+    },
+    {
+      "id": "abc-g-z-j",
+      "title_ja": "G・Z・J",
+      "confusion": "g-z-j",
+      "lines": [
+        {
+          "id": "abc-g-z-j-01",
+          "text": "He works as a DJ.",
+          "ja": "彼は DJ として働いています。",
+          "focus": [
+            {
+              "word": "dj",
+              "phone": "JH",
+              "watch_for": [
+                "Z"
+              ],
+              "tip_ja": "J は舌先を付けてから「エイ」。",
+              "ipa": "/díːdʒéɪ/"
+            }
+          ],
+          "difficulty": 2
+        },
+        {
+          "id": "abc-g-z-j-02",
+          "text": "Is that G as in good, or Z as in zoo?",
+          "ja": "それは good の G ですか、\nそれとも zoo の Z ですか？",
+          "spell": [
+            "G",
+            "Z"
+          ],
+          "focus": [
+            {
+              "word": "g",
+              "phone": "JH",
+              "watch_for": [
+                "Z"
+              ],
+              "tip_ja": "G は舌先をいったん付けてから「イー」。",
+              "ipa": "/dʒíː/"
+            },
+            {
+              "word": "z",
+              "phone": "Z",
+              "watch_for": [
+                "JH"
+              ],
+              "tip_ja": "Z は舌先を付けずに、\n声を響かせてから「イー」。",
+              "ipa": "/zíː/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-g-z-j-03",
+          "text": "Our gate is J, not G.",
+          "ja": "私たちの搭乗口は G ではなく J です。",
+          "spell": [
+            "J",
+            "G"
+          ],
+          "focus": [
+            {
+              "word": "j",
+              "phone": "EY",
+              "watch_for": [
+                "IY"
+              ],
+              "tip_ja": "J は舌先を付けてから「エイ」。",
+              "ipa": "/dʒéɪ/"
+            },
+            {
+              "word": "g",
+              "phone": "IY",
+              "watch_for": [
+                "EY"
+              ],
+              "tip_ja": "G は舌先をいったん付けてから「イー」。",
+              "ipa": "/dʒíː/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-g-z-j-04",
+          "text": "Turn on the G.P.S., please.",
+          "ja": "GPS をつけてください。",
+          "spell": [
+            "G",
+            "P",
+            "S"
+          ],
+          "focus": [
+            {
+              "word": "g",
+              "phone": "JH",
+              "watch_for": [
+                "G"
+              ],
+              "tip_ja": "G は舌先をいったん付けてから「イー」。",
+              "ipa": "/dʒíː/"
+            },
+            {
+              "word": "p",
+              "phone": "P",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "P は息を強く破裂させます。",
+              "ipa": "/píː/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "abc-c-s-f",
+      "title_ja": "C・S・Z・F",
+      "confusion": "c-z-s",
+      "lines": [
+        {
+          "id": "abc-c-s-f-01",
+          "text": "Is that C as in city, or Z as in zero?",
+          "ja": "それは city の C ですか、\nそれとも zero の Z ですか？",
+          "spell": [
+            "C",
+            "Z"
+          ],
+          "focus": [
+            {
+              "word": "c",
+              "phone": "S",
+              "watch_for": [
+                "SH",
+                "Z"
+              ],
+              "tip_ja": "C は細い息の s から「イー」。",
+              "ipa": "/síː/"
+            },
+            {
+              "word": "z",
+              "phone": "Z",
+              "watch_for": [
+                "S",
+                "JH"
+              ],
+              "tip_ja": "Z は舌先を付けずに、\n声を響かせてから「イー」。",
+              "ipa": "/zíː/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-c-s-f-02",
+          "text": "Is it S as in sun, or F as in fun?",
+          "ja": "それは sun の S ですか、\nそれとも fun の F ですか？",
+          "spell": [
+            "S",
+            "F"
+          ],
+          "focus": [
+            {
+              "word": "s",
+              "phone": "S",
+              "watch_for": [
+                "F"
+              ],
+              "tip_ja": "S は「エ」のあと、\n細い息で終わります。",
+              "ipa": "/és/"
+            },
+            {
+              "word": "f",
+              "phone": "F",
+              "watch_for": [
+                "S"
+              ],
+              "tip_ja": "F は最後に上の歯を下くちびるに当てます。",
+              "ipa": "/éf/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-c-s-f-03",
+          "text": "The CEO will speak at six.",
+          "ja": "CEO が6時に話します。",
+          "focus": [
+            {
+              "word": "ceo",
+              "phone": "S",
+              "watch_for": [
+                "SH"
+              ],
+              "tip_ja": "C は細い息の s から「イー」。",
+              "ipa": "/síːìːóʊ/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "abc-p-b-t-d",
+      "title_ja": "P・B・T・D",
+      "confusion": "p-b",
+      "lines": [
+        {
+          "id": "abc-p-b-t-d-01",
+          "text": "Is that P as in park, or B as in boy?",
+          "ja": "それは park の P ですか、\nそれとも boy の B ですか？",
+          "spell": [
+            "P",
+            "B"
+          ],
+          "focus": [
+            {
+              "word": "p",
+              "phone": "P",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "P は息を強く破裂させます。",
+              "ipa": "/píː/"
+            },
+            {
+              "word": "b",
+              "phone": "B",
+              "watch_for": [
+                "P"
+              ],
+              "tip_ja": "B はくちびる同士を閉じてから。",
+              "ipa": "/bíː/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-p-b-t-d-02",
+          "text": "Is it T as in time, or D as in day?",
+          "ja": "それは time の T ですか、\nそれとも day の D ですか？",
+          "spell": [
+            "T",
+            "D"
+          ],
+          "focus": [
+            {
+              "word": "t",
+              "phone": "T",
+              "watch_for": [
+                "D"
+              ],
+              "tip_ja": "T は舌先の一点から、\n息を強く。",
+              "ipa": "/tíː/"
+            },
+            {
+              "word": "d",
+              "phone": "D",
+              "watch_for": [
+                "T"
+              ],
+              "tip_ja": "D は声を出して離します。",
+              "ipa": "/díː/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-p-b-t-d-03",
+          "text": "Can you send it as a PDF?",
+          "ja": "PDF で送ってもらえますか？",
+          "focus": [
+            {
+              "word": "pdf",
+              "phone": "P",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "P は息を強く破裂させます。",
+              "ipa": "/pìːdìːéf/"
+            },
+            {
+              "word": "pdf",
+              "phone": "D",
+              "watch_for": [
+                "T"
+              ],
+              "tip_ja": "D は声を出して離します。",
+              "ipa": "/pìːdìːéf/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-p-b-t-d-04",
+          "text": "I watched it on DVD.",
+          "ja": "それは DVD で見ました。",
+          "focus": [
+            {
+              "word": "dvd",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "V は上の歯を下くちびるに当てて。",
+              "ipa": "/dìːvìːdíː/"
+            },
+            {
+              "word": "dvd",
+              "phone": "D",
+              "watch_for": [
+                "T"
+              ],
+              "tip_ja": "D は声を出して離します。",
+              "ipa": "/dìːvìːdíː/"
+            }
+          ],
+          "difficulty": 3
+        }
+      ]
+    },
+    {
+      "id": "abc-spell",
+      "title_ja": "つづりと番号を伝える",
+      "confusion": "ee-set",
+      "lines": [
+        {
+          "id": "abc-spell-01",
+          "text": "My name is Ken. K, E, N.",
+          "ja": "名前は Ken です。\nK、\nE、\nN。",
+          "spell": [
+            "K",
+            "E",
+            "N"
+          ],
+          "focus": [
+            {
+              "word": "k",
+              "phone": "EY",
+              "watch_for": [
+                "EH"
+              ],
+              "tip_ja": "K は「エイ」と動かします。",
+              "ipa": "/kéɪ/"
+            },
+            {
+              "word": "e",
+              "phone": "IY",
+              "watch_for": [
+                "EY"
+              ],
+              "tip_ja": "E は口を横に引いた「イー」。",
+              "ipa": "/íː/"
+            },
+            {
+              "word": "n",
+              "phone": "N",
+              "watch_for": [
+                "M"
+              ],
+              "tip_ja": "N は口を開けたまま、\n舌先を付けて終わります。",
+              "ipa": "/én/"
+            }
+          ],
+          "difficulty": 3
+        },
+        {
+          "id": "abc-spell-02",
+          "text": "My last name is Sato. S, A, T, O.",
+          "ja": "名字は Sato です。\nS、\nA、\nT、\nO。",
+          "spell": [
+            "S",
+            "A",
+            "T",
+            "O"
+          ],
+          "focus": [
+            {
+              "word": "s",
+              "phone": "S",
+              "watch_for": [
+                "F"
+              ],
+              "tip_ja": "S は「エ」のあと、\n細い息で終わります。",
+              "ipa": "/és/"
+            },
+            {
+              "word": "a",
+              "phone": "EY",
+              "watch_for": [
+                "EH"
+              ],
+              "tip_ja": "A は「エイ」と動かします。",
+              "ipa": "/éɪ/"
+            },
+            {
+              "word": "t",
+              "phone": "T",
+              "watch_for": [
+                "CH",
+                "D"
+              ],
+              "tip_ja": "T は舌先の一点から、\n息を強く。",
+              "ipa": "/tíː/"
+            },
+            {
+              "word": "o",
+              "phone": "OW",
+              "watch_for": [
+                "AO"
+              ],
+              "tip_ja": "O は「オウ」と動かします。",
+              "ipa": "/óʊ/"
+            }
+          ],
+          "difficulty": 4
+        },
+        {
+          "id": "abc-spell-03",
+          "text": "My booking code is B, V, seven, two.",
+          "ja": "予約番号は B、\nV、\n7、\n2 です。",
+          "spell": [
+            "B",
+            "V"
+          ],
+          "focus": [
+            {
+              "word": "b",
+              "phone": "B",
+              "watch_for": [
+                "V"
+              ],
+              "tip_ja": "B はくちびる同士を閉じてから。",
+              "ipa": "/bíː/"
+            },
+            {
+              "word": "v",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "V は上の歯を下くちびるに当てて。",
+              "ipa": "/víː/"
+            },
+            {
+              "word": "seven",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "seven の v も歯を下くちびるに。",
+              "ipa": "/sévən/"
+            }
+          ],
+          "difficulty": 4
+        },
+        {
+          "id": "abc-spell-04",
+          "text": "That's K, E, N, at mail dot com.",
+          "ja": "K、\nE、\nN、\n@mail.com です。",
+          "spell": [
+            "K",
+            "E",
+            "N"
+          ],
+          "focus": [
+            {
+              "word": "k",
+              "phone": "EY",
+              "watch_for": [
+                "EH"
+              ],
+              "tip_ja": "K は「エイ」と動かします。",
+              "ipa": "/kéɪ/"
+            },
+            {
+              "word": "mail",
+              "phone": "L",
+              "watch_for": [
+                "EPEN"
+              ],
+              "tip_ja": "mail の最後は、\n舌先を付けて止めます。",
+              "ipa": "/méɪl/"
+            },
+            {
+              "word": "dot",
+              "phone": "AA",
+              "watch_for": [
+                "AO",
+                "OW"
+              ],
+              "tip_ja": "dot は口を縦に大きく開けて。",
+              "ipa": "/dɑ́t/"
+            }
+          ],
+          "difficulty": 5
+        },
+        {
+          "id": "abc-spell-05",
+          "text": "That's V as in very, R as in rice, and L as in lemon.",
+          "ja": "very の V、\nrice の R、\nlemon の L です。",
+          "spell": [
+            "V",
+            "R",
+            "L"
+          ],
+          "focus": [
+            {
+              "word": "v",
+              "phone": "V",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "V は上の歯を下くちびるに当てて。",
+              "ipa": "/víː/"
+            },
+            {
+              "word": "r",
+              "phone": "R",
+              "watch_for": [
+                "L"
+              ],
+              "tip_ja": "R は大きく開けてから、\n舌を奥へ引きます。",
+              "ipa": "/ɑ́ːr/"
+            },
+            {
+              "word": "l",
+              "phone": "L",
+              "watch_for": [
+                "R"
+              ],
+              "tip_ja": "L は「エ」のあと、\n舌先を付けて止めます。",
+              "ipa": "/él/"
+            }
+          ],
+          "difficulty": 5
+        },
+        {
+          "id": "abc-spell-06",
+          "text": "I'll send the PDF to the CEO ASAP.",
+          "ja": "その PDF を、\nできるだけ早く CEO に送ります。",
+          "focus": [
+            {
+              "word": "pdf",
+              "phone": "P",
+              "watch_for": [
+                "B"
+              ],
+              "tip_ja": "P は息を強く破裂させます。",
+              "ipa": "/pìːdìːéf/"
+            },
+            {
+              "word": "ceo",
+              "phone": "S",
+              "watch_for": [
+                "SH"
+              ],
+              "tip_ja": "C は細い息の s から「イー」。",
+              "ipa": "/síːìːóʊ/"
+            },
+            {
+              "word": "asap",
+              "phone": "EY",
+              "watch_for": [
+                "EH"
+              ],
+              "tip_ja": "A は「エイ」と動かします。",
+              "ipa": "/éɪéséɪpíː/"
+            }
+          ],
+          "difficulty": 5
+        }
+      ]
+    }
+  ]
+}

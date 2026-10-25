@@ -1,0 +1,16 @@
+[
+  {"id": "t01_rice", "text": "I really like rice."},
+  {"id": "t02_think", "text": "Think about it."},
+  {"id": "t03_very", "text": "Very good."},
+  {"id": "t04_street", "text": "Street."},
+  {"id": "t05_want", "text": "What do you want to do?"},
+  {"id": "t06_gonna", "text": "I'm gonna check it out."},
+  {"id": "t07_again", "text": "Could you say that again?"},
+  {"id": "t08_flap", "text": "Water, better, little."},
+
+  {"id": "t05_wanna", "text": "What do you want to do?", "tts_text": "What do you [want to](wanna) do?"},
+  {"id": "t05_wanna_plain", "text": "What do you want to do?", "tts_text": "What do you wanna do?"},
+  {"id": "t05_wanna_ipa", "text": "What do you want to do?", "tts_text": "What do you [want to](/wˈɑnə/) do?"},
+  {"id": "t06_linked", "text": "I'm gonna check it out.", "tts_text": "I'm [gonna](/ɡˈʌnə/) [check it out](/ʧˌɛkɪTˈWt/)."},
+  {"id": "t07_couldja", "text": "Could you say that again?", "tts_text": "[Could you](couldja) say that again?"}
+]
